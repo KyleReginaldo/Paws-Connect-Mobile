@@ -4,6 +4,8 @@ import 'package:paws_connect/core/router/app_route.dart';
 import 'package:paws_connect/dependency.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'core/theme/paws_theme.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
@@ -28,9 +30,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'Paws Connect',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
+      theme: PawsTheme.lightTheme,
+      darkTheme: PawsTheme.darkTheme,
+      themeMode: ThemeMode.system,
+
       routerConfig: appRouter.config(),
     );
   }

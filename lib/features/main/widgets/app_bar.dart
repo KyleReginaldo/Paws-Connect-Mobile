@@ -1,0 +1,40 @@
+import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:paws_connect/core/theme/paws_theme.dart';
+
+import '../../../core/widgets/text.dart';
+
+class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
+  const HomeAppBar({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBar(
+      centerTitle: false,
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          PawsText('Current location', fontSize: 13),
+          Row(
+            spacing: 4,
+            children: [
+              Icon(LucideIcons.mapPin, size: 16, color: PawsColors.primary),
+              PawsText(
+                'General Trias, Cavite',
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+              ),
+            ],
+          ),
+        ],
+      ),
+      actions: [
+        IconButton(onPressed: () {}, icon: Icon(LucideIcons.bell)),
+        IconButton(onPressed: () {}, icon: Icon(LucideIcons.circleUserRound)),
+      ],
+    );
+  }
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+}

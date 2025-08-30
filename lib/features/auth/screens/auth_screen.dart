@@ -2,8 +2,9 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:paws_connect/dependency.dart';
 import 'package:paws_connect/features/auth/repository/auth_repository.dart';
-import 'package:paws_connect/features/auth/screens/signin_screen.dart';
 import 'package:provider/provider.dart';
+
+import '../../../core/router/app_route.gr.dart';
 
 @RoutePage()
 class AuthScreen extends StatelessWidget implements AutoRouteWrapper {
@@ -12,18 +13,15 @@ class AuthScreen extends StatelessWidget implements AutoRouteWrapper {
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthRepository>(
-      builder: (context, authRepository, child) {
-        if (authRepository.user != null) {
-          return Container(color: Colors.green);
+      builder: (context, provider, child) {
+        if (provider.user == null) {
+          context.router.replace(const SignInRoute());
+        } else {
+          context.router.replace(const MainRoute());
         }
-        if (authRepository.errorMessage != null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(authRepository.errorMessage!)),
-            );
-          });
-        }
-        return const SignInScreen();
+        return Scaffold(
+          body: Center(child: CircularProgressIndicator.adaptive()),
+        );
       },
     );
   }

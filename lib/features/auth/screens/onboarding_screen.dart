@@ -9,7 +9,7 @@ class OnboardingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Image.asset(
-        'assets/images/onboarding_background.png',
+        'assets/images/onboarding_background.jpg',
         height: MediaQuery.sizeOf(context).height,
         width: MediaQuery.sizeOf(context).width,
         fit: BoxFit.cover,
