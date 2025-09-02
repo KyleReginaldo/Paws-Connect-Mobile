@@ -5,7 +5,8 @@ import 'package:paws_connect/core/theme/paws_theme.dart';
 import '../../../core/widgets/text.dart';
 
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const HomeAppBar({super.key});
+  final Function()? onOpenDrawer;
+  const HomeAppBar({super.key, this.onOpenDrawer});
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +31,10 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       actions: [
         IconButton(onPressed: () {}, icon: Icon(LucideIcons.bell)),
-        IconButton(onPressed: () {}, icon: Icon(LucideIcons.circleUserRound)),
+        IconButton(
+          onPressed: onOpenDrawer,
+          icon: Icon(LucideIcons.circleUserRound),
+        ),
       ],
     );
   }
