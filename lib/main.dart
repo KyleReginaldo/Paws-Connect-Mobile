@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp.router(
       title: 'Paws Connect',
       theme: PawsTheme.lightTheme,
-      darkTheme: PawsTheme.darkTheme,
+      // darkTheme: PawsTheme.darkTheme,
       themeMode: ThemeMode.system,
 
       routerConfig: appRouter.config(),

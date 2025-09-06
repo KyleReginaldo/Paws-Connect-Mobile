@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:paws_connect/core/theme/paws_theme.dart';
 
 class PawsTextField extends StatefulWidget {
   final String? label;
@@ -65,6 +66,7 @@ class _PawsTextFieldState extends State<PawsTextField> {
       maxLines: widget.maxLines,
       focusNode: widget.focusNode,
       decoration: InputDecoration(
+        hintStyle: TextStyle(color: PawsColors.textSecondary),
         labelText: widget.label,
         hintText: widget.hint,
         counterText: '', // hides counter unless needed
@@ -86,7 +88,7 @@ class _PawsTextFieldState extends State<PawsTextField> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.teal, width: 1.6),
+          borderSide: const BorderSide(color: PawsColors.primary, width: 1.6),
         ),
       ),
     );

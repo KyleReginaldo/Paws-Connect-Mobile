@@ -28,5 +28,9 @@ class AppRouter extends RootStackRouter {
         ),
       ],
     ),
+    CustomRoute(
+      page: MapRoute.page,
+      transitionsBuilder: TransitionsBuilders.fadeIn,
+    ),
   ];
 }

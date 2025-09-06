@@ -1,6 +1,8 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:paws_connect/core/router/app_route.gr.dart';
+import 'package:paws_connect/core/widgets/button.dart';
 
 import '../../../core/services/supabase_service.dart';
 import '../../../core/widgets/search_field.dart';
@@ -59,6 +61,9 @@ class _HomeScreenState extends State<HomeScreen> {
               title: PawsText('Log Out', color: Colors.redAccent),
               onTap: () {
                 supabase.auth.signOut();
+                if (!mounted) return;
+                Navigator.pop(context);
+                context.router.replacePath('/');
               },
             ),
           ],
@@ -67,6 +72,37 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: HomeAppBar(
         onOpenDrawer: () {
           scaffoldKey.currentState?.openEndDrawer();
+        },
+        onOpenCurrentLocation: () {
+          showModalBottomSheet(
+            context: context,
+            builder: (_) {
+              return Container(
+                padding: EdgeInsets.all(15),
+                decoration: BoxDecoration(color: Colors.white),
+                width: MediaQuery.sizeOf(context).width,
+                child: SafeArea(
+                  top: false,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      PawsText('Current Location'),
+                      PawsText('General Trias, Cavite', fontSize: 16),
+                      SizedBox(height: 10),
+                      PawsTextButton(
+                        label: 'Add New Address',
+                        icon: LucideIcons.mapPlus,
+                        onPressed: () {
+                          context.router.push(MapRoute());
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
         },
       ),
       body: SingleChildScrollView(
