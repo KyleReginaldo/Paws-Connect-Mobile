@@ -1,10 +1,14 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:paws_connect/features/pets/models/pet_model.dart';
 
 import '../../../core/theme/paws_theme.dart';
 import '../../../core/widgets/text.dart';
 
 class PetContainer extends StatelessWidget {
-  const PetContainer({super.key});
+  final Pet pet;
+  const PetContainer({super.key, required this.pet});
 
   @override
   Widget build(BuildContext context) {
@@ -21,8 +25,8 @@ class PetContainer extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(6),
-                child: Image.asset(
-                  'assets/images/onboarding_background.jpg',
+                child: Image.network(
+                  pet.photo,
                   width: MediaQuery.sizeOf(context).width * 0.40,
                   height: 120,
                   fit: BoxFit.cover,
@@ -38,7 +42,7 @@ class PetContainer extends StatelessWidget {
                     color: Colors.black26,
                   ),
                   child: PawsText(
-                    'Mon, June 23, 2025',
+                    DateFormat('MMM dd, yyyy').format(pet.createdAt),
                     fontSize: 12,
                     color: PawsColors.textLight,
                   ),
@@ -47,9 +51,9 @@ class PetContainer extends StatelessWidget {
             ],
           ),
           SizedBox(height: 4),
-          PawsText('Algod James', fontSize: 16, fontWeight: FontWeight.w500),
-          PawsText('Age: 1 year(s) old', fontSize: 14),
-          PawsText('Breed: Corgi', fontSize: 14),
+          PawsText(pet.name, fontSize: 16, fontWeight: FontWeight.w500),
+          PawsText('Age: ${pet.age} year(s) old', fontSize: 14),
+          PawsText('Breed: ${pet.breed}', fontSize: 14),
         ],
       ),
     );

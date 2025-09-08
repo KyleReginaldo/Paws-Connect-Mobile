@@ -6,7 +6,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
-        android:label="paws_connect"
+        android:label="Paws Connect"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         

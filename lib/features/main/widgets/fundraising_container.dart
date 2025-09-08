@@ -1,10 +1,15 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/material.dart';
+import 'package:paws_connect/core/extension/int.ext.dart';
+import 'package:paws_connect/features/fundraising/models/fundraising_model.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 import '../../../core/theme/paws_theme.dart';
 import '../../../core/widgets/text.dart';
 
 class FundraisingContainer extends StatelessWidget {
-  const FundraisingContainer({super.key});
+  final Fundraising fundraising;
+  const FundraisingContainer({super.key, required this.fundraising});
 
   @override
   Widget build(BuildContext context) {
@@ -23,33 +28,39 @@ class FundraisingContainer extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             spacing: 8,
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: Image.asset(
-                  'assets/images/onboarding_background.jpg',
-                  width: 64,
-                  height: 64,
-                  fit: BoxFit.cover,
+              if (fundraising.images.isNotEmpty)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: Image.network(
+                    fundraising.images[0],
+                    width: 64,
+                    height: 64,
+                    fit: BoxFit.cover,
+                  ),
                 ),
-              ),
               Expanded(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     PawsText(
-                      'For food of our dogs and cats',
+                      fundraising.title,
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                     ),
                     PawsText(
-                      'Every penny counts',
+                      fundraising.description,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
-                    PawsText('10% target reached', fontSize: 14),
-                    PawsText('12 hours left', fontSize: 14),
+                    PawsText(
+                      '${fundraising.raisedAmount.progress(fundraising.targetAmount).percentage}% target reached',
+                      fontSize: 14,
+                    ),
+                    PawsText(
+                      timeago.format(fundraising.createdAt),
+                      fontSize: 14,
+                    ),
                   ],
                 ),
               ),
@@ -59,9 +70,12 @@ class FundraisingContainer extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              PawsText('Raised: \$100', fontWeight: FontWeight.w500),
               PawsText(
-                'Goal: \$1000',
+                'Raised: ₱${fundraising.raisedAmount}',
+                fontWeight: FontWeight.w500,
+              ),
+              PawsText(
+                'Goal: ₱${fundraising.targetAmount}',
                 color: PawsColors.primary,
                 fontWeight: FontWeight.w500,
               ),
@@ -69,7 +83,7 @@ class FundraisingContainer extends StatelessWidget {
           ),
           SizedBox(height: 4),
           LinearProgressIndicator(
-            value: 0.1,
+            value: fundraising.raisedAmount.progress(fundraising.targetAmount),
             backgroundColor: PawsColors.border,
             borderRadius: BorderRadius.circular(8),
           ),

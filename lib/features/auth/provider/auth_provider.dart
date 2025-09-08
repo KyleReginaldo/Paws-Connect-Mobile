@@ -15,7 +15,7 @@ class AuthProvider {
         email: email,
         password: password,
       );
-      if (response.user?.userMetadata?['role'] == 2) {
+      if (response.user?.userMetadata?['role'] == 3) {
         return Result.success('Sign in successful');
       } else {
         return Result.error('Unauthorized');
@@ -41,7 +41,7 @@ class AuthProvider {
           'password': password,
           'phone_number': phoneNumber,
           'username': username,
-          'role': 2,
+          'role': 3,
         }),
       );
       final res = jsonDecode(response.body);

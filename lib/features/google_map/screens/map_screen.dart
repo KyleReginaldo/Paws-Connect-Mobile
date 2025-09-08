@@ -4,9 +4,17 @@ import 'dart:ui' as ui;
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:paws_connect/core/provider/common_provider.dart';
+import 'package:paws_connect/core/theme/paws_theme.dart';
+import 'package:paws_connect/core/widgets/text.dart';
+import 'package:paws_connect/core/widgets/text_field.dart';
+
+import '../../../core/supabase/client.dart';
+import '../../../core/transfer_object/address.dto.dart';
 
 @RoutePage()
 class MapScreen extends StatefulWidget {
@@ -17,46 +25,41 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
-  // Map Controllers
   GoogleMapController? _mapController;
   final Completer<GoogleMapController> _controllerCompleter = Completer();
 
-  // Location & Map State
   LatLng? _currentLocation;
   String? _errorMessage;
-  bool _isFollowingUser = false;
   double _currentZoom = 17.0;
   MapType _currentMapType = MapType.normal;
 
-  // UI State
   bool _isSearching = false;
   bool _showLocationDetails = false;
   bool _isLoading = false;
-  bool _showTraffic = false;
+  final bool _showTraffic = false;
 
-  // Search & Places
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   List<Location> _searchResults = [];
   LatLng? _selectedLocation;
   String? _selectedLocationName;
 
-  // Markers & UI
+  final GlobalKey<FormState> _addressFormKey = GlobalKey<FormState>();
+  final TextEditingController _streetController = TextEditingController();
+  final TextEditingController _cityController = TextEditingController();
+  final TextEditingController _stateController = TextEditingController();
+  final TextEditingController _zipController = TextEditingController();
+
   final Set<Marker> _markers = {};
   final Set<Circle> _circles = {};
 
-  // Animations
-  late AnimationController _fabAnimationController;
   late AnimationController _searchAnimationController;
   late AnimationController _pulseAnimationController;
-  late Animation<double> _fabScaleAnimation;
   late Animation<Offset> _searchSlideAnimation;
   late Animation<double> _pulseAnimation;
 
-  // Stream subscriptions
   StreamSubscription<Position>? _positionStreamSubscription;
 
-  // UI Constants
   static const EdgeInsets _defaultPadding = EdgeInsets.all(16.0);
   static const BorderRadius _defaultBorderRadius = BorderRadius.all(
     Radius.circular(12.0),
@@ -72,21 +75,19 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    _fabAnimationController.dispose();
     _searchAnimationController.dispose();
     _pulseAnimationController.dispose();
     _searchController.dispose();
+    _streetController.dispose();
+    _cityController.dispose();
+    _stateController.dispose();
+    _zipController.dispose();
     _searchFocusNode.dispose();
     _positionStreamSubscription?.cancel();
     super.dispose();
   }
 
   void _initializeAnimations() {
-    _fabAnimationController = AnimationController(
-      duration: _animationDuration,
-      vsync: this,
-    );
-
     _searchAnimationController = AnimationController(
       duration: const Duration(milliseconds: 400),
       vsync: this,
@@ -96,10 +97,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     )..repeat(reverse: true);
-
-    _fabScaleAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(
-      CurvedAnimation(parent: _fabAnimationController, curve: Curves.easeInOut),
-    );
 
     _searchSlideAnimation =
         Tween<Offset>(begin: const Offset(0, -1), end: Offset.zero).animate(
@@ -117,6 +114,31 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     );
   }
 
+  void handleAddAddress() async {
+    EasyLoading.show(status: 'Saving address...', dismissOnTap: false);
+    final result = await CommonProvider().addAddress(
+      AddAddressDTO(
+        street: _streetController.text,
+        city: _cityController.text,
+        state: _stateController.text,
+        zipCode: _zipController.text,
+        latitude: _selectedLocation?.latitude ?? 0.0,
+        longitude: _selectedLocation?.longitude ?? 0.0,
+        user: USER_ID,
+      ),
+    );
+    if (result.isError) {
+      EasyLoading.dismiss();
+      EasyLoading.showError(result.error);
+    } else {
+      EasyLoading.dismiss();
+      EasyLoading.showSuccess(result.value);
+      if (mounted) {
+        context.router.pop();
+      }
+    }
+  }
+
   Future<void> initLocation() async {
     setState(() {
       _isLoading = true;
@@ -124,7 +146,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     });
 
     try {
-      // Check if location services are enabled
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         setState(() {
@@ -135,10 +156,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         return;
       }
 
-      // Check current permission status
       LocationPermission permission = await Geolocator.checkPermission();
 
-      // Request permission if it's denied or not determined
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
@@ -151,7 +170,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         }
       }
 
-      // Handle permanently denied permissions
       if (permission == LocationPermission.deniedForever) {
         setState(() {
           _errorMessage =
@@ -161,7 +179,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         return;
       }
 
-      // Get current position if permission is granted
       final position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
@@ -175,10 +192,45 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         _isLoading = false;
       });
 
-      // Add current location marker
       await _addCurrentLocationMarker();
 
-      // Start location tracking
+      // Reverse-geocode the initial location and show the address sheet
+      try {
+        if (_currentLocation != null) {
+          final placemarks = await placemarkFromCoordinates(
+            _currentLocation!.latitude,
+            _currentLocation!.longitude,
+          );
+
+          String locationName = 'Current Location';
+          if (placemarks.isNotEmpty) {
+            final placemark = placemarks.first;
+
+            // Prefer the street field (thoroughfare) and include postal code for better parsing
+            final street = placemark.street ?? placemark.name ?? '';
+            final city = placemark.locality ?? '';
+            final state = placemark.administrativeArea ?? '';
+            final postal = placemark.postalCode ?? '';
+
+            locationName = [
+              street,
+              city,
+              [state, postal].where((s) => s.isNotEmpty).join(' '),
+            ].where((e) => e.isNotEmpty).join(', ');
+          }
+
+          // Add a marker for the detected area and open the address form
+          await _addSearchMarker(_currentLocation!, locationName);
+
+          setState(() {
+            _selectedLocation = _currentLocation;
+            _selectedLocationName = locationName;
+          });
+        }
+      } catch (e) {
+        debugPrint('Reverse geocoding for initial location failed: $e');
+      }
+
       _startLocationTracking();
     } catch (e) {
       setState(() {
@@ -194,7 +246,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         Geolocator.getPositionStream(
           locationSettings: const LocationSettings(
             accuracy: LocationAccuracy.high,
-            distanceFilter: 5, // Reduced for smoother tracking
+            distanceFilter: 5,
           ),
         ).listen(
           (Position position) {
@@ -203,22 +255,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
               _currentLocation = newLocation;
             });
 
-            // Update current location marker
             _addCurrentLocationMarker();
-
-            // Follow user if enabled with smooth animation
-            if (_isFollowingUser && _mapController != null) {
-              _mapController!.animateCamera(
-                CameraUpdate.newCameraPosition(
-                  CameraPosition(
-                    target: newLocation,
-                    zoom: _currentZoom,
-                    bearing: 0,
-                    tilt: 0,
-                  ),
-                ),
-              );
-            }
           },
           onError: (error) {
             debugPrint('Location stream error: $error');
@@ -227,35 +264,15 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _addCurrentLocationMarker() async {
+    // Intentionally remove the automatic current-location marker and circle
+    // to avoid showing a blue marker for the device location.
     if (_currentLocation == null) return;
-
-    final marker = Marker(
-      markerId: const MarkerId('current_location'),
-      position: _currentLocation!,
-      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-      infoWindow: const InfoWindow(
-        title: 'Your Location',
-        snippet: 'You are here',
-      ),
-    );
-
-    // Add animated accuracy circle
-    final circle = Circle(
-      circleId: const CircleId('current_location_accuracy'),
-      center: _currentLocation!,
-      radius: 30,
-      fillColor: Colors.blue.withValues(alpha: 0.15),
-      strokeColor: Colors.blue.withValues(alpha: 0.8),
-      strokeWidth: 2,
-    );
 
     setState(() {
       _markers.removeWhere((m) => m.markerId.value == 'current_location');
       _circles.removeWhere(
         (c) => c.circleId.value == 'current_location_accuracy',
       );
-      _markers.add(marker);
-      _circles.add(circle);
     });
   }
 
@@ -278,10 +295,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         final location = locations.first;
         final latLng = LatLng(location.latitude, location.longitude);
 
-        // Add search result marker
         await _addSearchMarker(latLng, query);
 
-        // Move camera to the location with smooth animation
         if (_mapController != null) {
           _mapController!.animateCamera(
             CameraUpdate.newCameraPosition(
@@ -295,7 +310,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
           _selectedLocationName = query;
         });
 
-        // Hide search after successful search
         Future.delayed(const Duration(milliseconds: 500), () {
           if (mounted) _toggleSearch();
         });
@@ -336,7 +350,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     final marker = Marker(
       markerId: const MarkerId('search_result'),
       position: position,
-      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+      // Change search-result color from red to blue per request
+      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
       infoWindow: InfoWindow(title: title, snippet: 'Tap for details'),
       onTap: () {
         setState(() {
@@ -349,34 +364,9 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       _markers.removeWhere((m) => m.markerId.value == 'search_result');
       _markers.add(marker);
     });
-  }
 
-  void _toggleLocationFollow() {
-    setState(() {
-      _isFollowingUser = !_isFollowingUser;
-    });
-
-    if (_isFollowingUser &&
-        _currentLocation != null &&
-        _mapController != null) {
-      _mapController!.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(
-            target: _currentLocation!,
-            zoom: _currentZoom,
-            bearing: 0,
-            tilt: 0,
-          ),
-        ),
-      );
-    }
-
-    // Animate FAB
-    if (_isFollowingUser) {
-      _fabAnimationController.forward();
-    } else {
-      _fabAnimationController.reverse();
-    }
+    _populateAddressFromPlacemark(title);
+    _showAddressFormSheet();
   }
 
   void _toggleSearch() {
@@ -399,19 +389,166 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     }
   }
 
-  void _toggleTraffic() {
-    setState(() {
-      _showTraffic = !_showTraffic;
-    });
+  void _populateAddressFromPlacemark(String placemarkText) {
+    final parts = placemarkText.split(',').map((s) => s.trim()).toList();
+    if (parts.isEmpty) return;
+    _streetController.text = parts.isNotEmpty ? parts[0] : '';
+    _cityController.text = parts.length > 1 ? parts[1] : '';
+    if (parts.length > 2) {
+      final stateZip = parts.sublist(2).join(', ');
 
-    _showCustomSnackBar(
-      _showTraffic ? 'Traffic layer enabled' : 'Traffic layer disabled',
-    );
+      final match = RegExp(r"([A-Za-z ]+)\s*(\d{5})?").firstMatch(stateZip);
+      if (match != null) {
+        _stateController.text = match.group(1)?.trim() ?? '';
+        _zipController.text = match.group(2) ?? '';
+      } else {
+        _stateController.text = stateZip;
+      }
+    } else {
+      _stateController.text = '';
+      _zipController.text = '';
+    }
   }
 
-  void _findNearbyPlaces() {
-    _showCustomSnackBar('Finding nearby places...');
-    // TODO: Implement nearby places search
+  void _showAddressFormSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          expand: false,
+          builder: (context, scrollController) {
+            return Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
+              ),
+              child: SingleChildScrollView(
+                controller: scrollController,
+                child: Form(
+                  key: _addressFormKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          margin: const EdgeInsets.only(top: 8, bottom: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      PawsText(
+                        'Address Details',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      const SizedBox(height: 8),
+                      PawsText(
+                        'Street',
+                        color: PawsColors.textSecondary,
+                        fontSize: 15,
+                      ),
+                      PawsTextField(
+                        hint: 'Street',
+                        controller: _streetController,
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Please enter street'
+                            : null,
+                      ),
+                      const SizedBox(height: 8),
+                      PawsText(
+                        'City',
+                        color: PawsColors.textSecondary,
+                        fontSize: 15,
+                      ),
+
+                      PawsTextField(
+                        hint: 'City',
+                        controller: _cityController,
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Please enter city'
+                            : null,
+                      ),
+                      const SizedBox(height: 8),
+                      PawsText(
+                        'State',
+                        color: PawsColors.textSecondary,
+                        fontSize: 15,
+                      ),
+
+                      PawsTextField(
+                        hint: 'State',
+                        controller: _stateController,
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Please enter state'
+                            : null,
+                      ),
+                      const SizedBox(height: 8),
+                      PawsText(
+                        'Zip Code',
+                        color: PawsColors.textSecondary,
+                        fontSize: 15,
+                      ),
+                      PawsTextField(
+                        hint: 'Zip Code',
+                        controller: _zipController,
+                        keyboardType: TextInputType.number,
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Please enter zip code'
+                            : null,
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () {
+                                setState(() {
+                                  _markers.removeWhere(
+                                    (m) => m.markerId.value == 'search_result',
+                                  );
+                                  _selectedLocation = null;
+                                  _selectedLocationName = null;
+                                });
+                                Navigator.of(context).pop();
+                              },
+                              child: const Text('Remove Marker'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                if (_addressFormKey.currentState?.validate() ??
+                                    false) {
+                                  Navigator.of(context).pop();
+                                  handleAddAddress();
+                                }
+                              },
+                              child: const Text('Save'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void _showDirections() {
@@ -441,7 +578,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     _mapController = controller;
     _controllerCompleter.complete(controller);
 
-    // Set map style (optional)
     _setMapStyle();
   }
 
@@ -450,21 +586,12 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       final String style = await rootBundle.loadString('assets/map_style.json');
       _mapController?.setMapStyle(style);
     } catch (e) {
-      // Map style file not found, continue with default style
       debugPrint('Map style not found: $e');
     }
   }
 
   void _onCameraMove(CameraPosition position) {
     _currentZoom = position.zoom;
-
-    // Stop following user if camera is moved manually
-    if (_isFollowingUser) {
-      setState(() {
-        _isFollowingUser = false;
-      });
-      _fabAnimationController.reverse();
-    }
   }
 
   Future<void> _onMapTap(LatLng position) async {
@@ -477,11 +604,16 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       String locationName = 'Unknown Location';
       if (placemarks.isNotEmpty) {
         final placemark = placemarks.first;
+        final street = placemark.street ?? placemark.name ?? '';
+        final city = placemark.locality ?? '';
+        final state = placemark.administrativeArea ?? '';
+        final postal = placemark.postalCode ?? '';
+
         locationName = [
-          placemark.name,
-          placemark.locality,
-          placemark.administrativeArea,
-        ].where((e) => e != null && e.isNotEmpty).join(', ');
+          street,
+          city,
+          [state, postal].where((s) => s.isNotEmpty).join(' '),
+        ].where((e) => e.isNotEmpty).join(', ');
       }
 
       await _addSearchMarker(position, locationName);
@@ -500,31 +632,28 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: _buildAppBar(isDark),
-      body: Stack(
-        children: [
-          // Main Map View
-          if (_errorMessage != null)
-            _buildErrorView()
-          else if (_currentLocation != null)
-            _buildMapView()
-          else
-            _buildLoadingView(),
+    return SafeArea(
+      top: false,
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        appBar: _buildAppBar(isDark),
+        body: Stack(
+          children: [
+            if (_errorMessage != null)
+              _buildErrorView()
+            else if (_currentLocation != null)
+              _buildMapView()
+            else
+              _buildLoadingView(),
 
-          // Search Bar Overlay
-          if (_isSearching) _buildSearchOverlay(),
+            if (_isSearching) _buildSearchOverlay(),
 
-          // Quick Actions Panel
-          _buildQuickActionsPanel(),
-
-          // Location Details Bottom Sheet
-          if (_showLocationDetails) _buildLocationDetails(),
-        ],
+            if (_showLocationDetails) _buildLocationDetails(),
+          ],
+        ),
+        floatingActionButton: _buildFloatingActionButtons(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       ),
-      floatingActionButton: _buildFloatingActionButtons(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
@@ -557,79 +686,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
           onPressed: _toggleSearch,
           tooltip: _isSearching ? 'Close search' : 'Search places',
         ),
-        IconButton(
-          icon: Icon(_showTraffic ? Icons.traffic : Icons.traffic_outlined),
-          onPressed: _toggleTraffic,
-          tooltip: 'Toggle traffic',
-        ),
       ],
-    );
-  }
-
-  Widget _buildQuickActionsPanel() {
-    return Positioned(
-      top: 120,
-      left: 16,
-      child: Column(
-        children: [
-          _buildQuickActionButton(
-            icon: Icons.near_me,
-            label: 'Near Me',
-            onPressed: _findNearbyPlaces,
-          ),
-          const SizedBox(height: 8),
-          _buildQuickActionButton(
-            icon: Icons.directions,
-            label: 'Directions',
-            onPressed: _showDirections,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickActionButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onPressed,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.9),
-        borderRadius: _defaultBorderRadius,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: _defaultBorderRadius,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 24, color: Colors.blue[700]),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.grey[700],
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -726,7 +783,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         target: _currentLocation!,
         zoom: _currentZoom,
       ),
-      myLocationEnabled: true,
+      // myLocationEnabled: true,
       myLocationButtonEnabled: false,
       zoomControlsEnabled: false,
       mapToolbarEnabled: false,
@@ -913,7 +970,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                 latLng,
                                 'Search Result ${index + 1}',
                               );
-
                               if (_mapController != null) {
                                 _mapController!.animateCamera(
                                   CameraUpdate.newCameraPosition(
@@ -926,7 +982,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                   ),
                                 );
                               }
-
                               _toggleSearch();
                             },
                             child: Container(
@@ -1170,35 +1225,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Location Follow FAB
-        AnimatedBuilder(
-          animation: _fabScaleAnimation,
-          builder: (context, child) {
-            return Transform.scale(
-              scale: _fabScaleAnimation.value,
-              child: FloatingActionButton(
-                heroTag: "follow_location",
-                onPressed: _toggleLocationFollow,
-                backgroundColor: _isFollowingUser
-                    ? Colors.blue[600]
-                    : Colors.white,
-                foregroundColor: _isFollowingUser
-                    ? Colors.white
-                    : Colors.blue[600],
-                elevation: 4,
-                child: Icon(
-                  _isFollowingUser
-                      ? Icons.my_location
-                      : Icons.location_searching,
-                  size: 28,
-                ),
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 12),
-
-        // Current Location FAB
         FloatingActionButton(
           heroTag: "current_location",
           onPressed: _goToCurrentLocation,
@@ -1209,7 +1235,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         ),
         const SizedBox(height: 12),
 
-        // Map Type FAB
         FloatingActionButton(
           heroTag: "map_type",
           onPressed: _showMapTypeDialog,
@@ -1233,7 +1258,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             end: Alignment.bottomCenter,
             colors: [Colors.white, Colors.grey[50]!],
           ),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1250,16 +1274,17 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  const PawsText(
                     'Map Type',
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 10),
                   _buildMapTypeOption(
                     title: 'Normal',
                     subtitle: 'Default map view',
@@ -1360,7 +1385,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      PawsText(
                         title,
                         style: TextStyle(
                           fontSize: 16,

@@ -2,13 +2,20 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/theme/paws_theme.dart';
+import 'package:paws_connect/features/google_map/models/address_model.dart';
 
 import '../../../core/widgets/text.dart';
 
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Function()? onOpenDrawer;
   final Function()? onOpenCurrentLocation;
-  const HomeAppBar({super.key, this.onOpenDrawer, this.onOpenCurrentLocation});
+  final Address? address;
+  const HomeAppBar({
+    super.key,
+    this.onOpenDrawer,
+    this.onOpenCurrentLocation,
+    this.address,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +32,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
               children: [
                 Icon(LucideIcons.mapPin, size: 16, color: PawsColors.primary),
                 PawsText(
-                  'General Trias, Cavite',
+                  address?.fullAddress ?? 'Add address',
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
                 ),

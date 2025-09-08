@@ -31,7 +31,7 @@ class HomeRoute extends _i7.PageRouteInfo<void> {
   static _i7.PageInfo page = _i7.PageInfo(
     name,
     builder: (data) {
-      return const _i1.HomeScreen();
+      return _i7.WrappedRoute(child: const _i1.HomeScreen());
     },
   );
 }

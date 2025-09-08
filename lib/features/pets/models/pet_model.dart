@@ -1,6 +1,8 @@
 import 'package:dart_mappable/dart_mappable.dart';
 
-@MappableClass()
+part 'pet_model.mapper.dart';
+
+@MappableClass(caseStyle: CaseStyle.snakeCase)
 class Pet with PetMappable {
   int id;
   DateTime createdAt;
@@ -15,7 +17,7 @@ class Pet with PetMappable {
   bool isVaccinated;
   bool isSpayedOrNeutured;
   String healthStatus;
-  List<dynamic> goodWith;
+  List<String> goodWith;
   bool isTrained;
   String rescueAddress;
   String description;

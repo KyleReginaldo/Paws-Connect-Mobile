@@ -27,6 +27,7 @@ class PetMapper extends ClassMapperBase<Pet> {
   static const Field<Pet, DateTime> _f$createdAt = Field(
     'createdAt',
     _$createdAt,
+    key: r'created_at',
   );
   static String _$name(Pet v) => v.name;
   static const Field<Pet, String> _f$name = Field('name', _$name);
@@ -42,6 +43,7 @@ class PetMapper extends ClassMapperBase<Pet> {
   static const Field<Pet, DateTime> _f$dateOfBirth = Field(
     'dateOfBirth',
     _$dateOfBirth,
+    key: r'date_of_birth',
   );
   static String _$size(Pet v) => v.size;
   static const Field<Pet, String> _f$size = Field('size', _$size);
@@ -51,28 +53,37 @@ class PetMapper extends ClassMapperBase<Pet> {
   static const Field<Pet, bool> _f$isVaccinated = Field(
     'isVaccinated',
     _$isVaccinated,
+    key: r'is_vaccinated',
   );
   static bool _$isSpayedOrNeutured(Pet v) => v.isSpayedOrNeutured;
   static const Field<Pet, bool> _f$isSpayedOrNeutured = Field(
     'isSpayedOrNeutured',
     _$isSpayedOrNeutured,
+    key: r'is_spayed_or_neutured',
   );
   static String _$healthStatus(Pet v) => v.healthStatus;
   static const Field<Pet, String> _f$healthStatus = Field(
     'healthStatus',
     _$healthStatus,
+    key: r'health_status',
   );
-  static List<dynamic> _$goodWith(Pet v) => v.goodWith;
-  static const Field<Pet, List<dynamic>> _f$goodWith = Field(
+  static List<String> _$goodWith(Pet v) => v.goodWith;
+  static const Field<Pet, List<String>> _f$goodWith = Field(
     'goodWith',
     _$goodWith,
+    key: r'good_with',
   );
   static bool _$isTrained(Pet v) => v.isTrained;
-  static const Field<Pet, bool> _f$isTrained = Field('isTrained', _$isTrained);
+  static const Field<Pet, bool> _f$isTrained = Field(
+    'isTrained',
+    _$isTrained,
+    key: r'is_trained',
+  );
   static String _$rescueAddress(Pet v) => v.rescueAddress;
   static const Field<Pet, String> _f$rescueAddress = Field(
     'rescueAddress',
     _$rescueAddress,
+    key: r'rescue_address',
   );
   static String _$description(Pet v) => v.description;
   static const Field<Pet, String> _f$description = Field(
@@ -83,13 +94,19 @@ class PetMapper extends ClassMapperBase<Pet> {
   static const Field<Pet, String> _f$specialNeeds = Field(
     'specialNeeds',
     _$specialNeeds,
+    key: r'special_needs',
   );
   static String _$addedBy(Pet v) => v.addedBy;
-  static const Field<Pet, String> _f$addedBy = Field('addedBy', _$addedBy);
+  static const Field<Pet, String> _f$addedBy = Field(
+    'addedBy',
+    _$addedBy,
+    key: r'added_by',
+  );
   static String _$requestStatus(Pet v) => v.requestStatus;
   static const Field<Pet, String> _f$requestStatus = Field(
     'requestStatus',
     _$requestStatus,
+    key: r'request_status',
   );
   static String _$photo(Pet v) => v.photo;
   static const Field<Pet, String> _f$photo = Field('photo', _$photo);
@@ -195,7 +212,7 @@ extension PetValueCopy<$R, $Out> on ObjectCopyWith<$R, Pet, $Out> {
 
 abstract class PetCopyWith<$R, $In extends Pet, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  ListCopyWith<$R, dynamic, ObjectCopyWith<$R, dynamic, dynamic>> get goodWith;
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>> get goodWith;
   $R call({
     int? id,
     DateTime? createdAt,
@@ -210,7 +227,7 @@ abstract class PetCopyWith<$R, $In extends Pet, $Out>
     bool? isVaccinated,
     bool? isSpayedOrNeutured,
     String? healthStatus,
-    List<dynamic>? goodWith,
+    List<String>? goodWith,
     bool? isTrained,
     String? rescueAddress,
     String? description,
@@ -230,12 +247,12 @@ class _PetCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Pet, $Out>
   @override
   late final ClassMapperBase<Pet> $mapper = PetMapper.ensureInitialized();
   @override
-  ListCopyWith<$R, dynamic, ObjectCopyWith<$R, dynamic, dynamic>>
-  get goodWith => ListCopyWith(
-    $value.goodWith,
-    (v, t) => ObjectCopyWith(v, $identity, t),
-    (v) => call(goodWith: v),
-  );
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>> get goodWith =>
+      ListCopyWith(
+        $value.goodWith,
+        (v, t) => ObjectCopyWith(v, $identity, t),
+        (v) => call(goodWith: v),
+      );
   @override
   $R call({
     int? id,
@@ -251,7 +268,7 @@ class _PetCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Pet, $Out>
     bool? isVaccinated,
     bool? isSpayedOrNeutured,
     String? healthStatus,
-    List<dynamic>? goodWith,
+    List<String>? goodWith,
     bool? isTrained,
     String? rescueAddress,
     String? description,
