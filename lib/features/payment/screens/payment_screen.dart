@@ -91,6 +91,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Widget build(BuildContext context) {
     final user = context.watch<ProfileRepository>().userProfile;
     final fundraising = context.watch<FundraisingRepository>().fundraising;
+    debugPrint('paymongo id: ${user?.paymongoId}');
     return Scaffold(
       appBar: AppBar(title: const Text('Payment')),
       body: RefreshIndicator(
@@ -204,21 +205,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   onPressed: user?.paymongoId == null
                       ? null
                       : () {
-                          if (user != null) {
-                            if (formKey.currentState!.validate()) {
-                              handlePayment(
-                                name: user.username,
-                                phoneNumber: user.phoneNumber,
-                                email: user.email,
-                                customerId: user.paymongoId!,
-                                amount: amount
-                                    .text
-                                    .toPaymongoAmount, // Replace with actual amount
-                              );
-                            }
-                          } else {
-                            EasyLoading.showError(
-                              'User information is incomplete.',
+                          if (formKey.currentState!.validate()) {
+                            handlePayment(
+                              name: user!.username,
+                              phoneNumber: user.phoneNumber,
+                              email: user.email,
+                              customerId: user.paymongoId!,
+                              amount: amount
+                                  .text
+                                  .toPaymongoAmount, // Replace with actual amount
                             );
                           }
                         },

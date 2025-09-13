@@ -68,12 +68,12 @@ class ForumRepository extends ChangeNotifier {
     }
   }
 
-  void setForumById(int forumId) async {
+  void setForumById(int forumId, String userId) async {
     debugPrint('calling setForumById with forumId: $forumId');
     _isLoadingForum = true;
     _forum = null;
     notifyListeners();
-    final result = await _provider.fetchForumById(forumId);
+    final result = await _provider.fetchForumById(forumId, userId);
     if (result.isError) {
       _isLoadingForum = false;
       _forum = null;

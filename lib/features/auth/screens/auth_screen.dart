@@ -44,6 +44,7 @@ class _SignInScreenState extends State<SignInScreen>
   bool rememberMe = false;
   bool isLoading = false;
   void _handleSignIn() async {
+    if (!mounted) return;
     if (formKey.currentState?.validate() ?? false) {
       setState(() => isLoading = true);
       try {
@@ -69,6 +70,7 @@ class _SignInScreenState extends State<SignInScreen>
   }
 
   void _handleSignUp() async {
+    if (!mounted) return;
     if (formKey.currentState?.validate() ?? false) {
       setState(() => isLoading = true);
       try {
@@ -130,9 +132,6 @@ class _SignInScreenState extends State<SignInScreen>
 
   @override
   Widget build(BuildContext context) {
-    context
-        .watch<AuthRepository>()
-        .errorMessage; // observed for side-effects (e.g. rebuilds)
     return SafeArea(
       top: false,
       child: Scaffold(

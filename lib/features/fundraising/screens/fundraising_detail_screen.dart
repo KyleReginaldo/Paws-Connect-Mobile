@@ -250,6 +250,13 @@ class _FundraisingDetailScreenState extends State<FundraisingDetailScreen> {
                       ? Column(
                           children: fundraising.donations!.map((e) {
                             return ListTile(
+                              onTap: () {
+                                if (e.donor.id != USER_ID) {
+                                  context.router.push(
+                                    ProfileRoute(id: e.donor.id),
+                                  );
+                                }
+                              },
                               visualDensity: VisualDensity.compact,
                               contentPadding: EdgeInsets.zero,
                               title: PawsText(

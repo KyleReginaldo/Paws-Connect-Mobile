@@ -88,8 +88,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         imageRepo.hasImageChanged;
 
     if (hasChanges != _hasChanges) {
-      setState(() {
-        _hasChanges = hasChanges;
+      // Defer updating state to the end of this frame to avoid calling
+      // setState during the widget build process (prevents '!_dirty' assert).
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        // Re-check because value may have changed before the callback runs.
+        final imageRepo2 = context.read<ImageRepository>();
+        final newHasChanges =
+            _usernameController.text != _originalProfile?.username ||
+            _emailController.text != _originalProfile?.email ||
+            _phoneController.text != _originalProfile?.phoneNumber ||
+            _paymentMethodController.text !=
+                (_originalProfile?.paymentMethod ?? '') ||
+            imageRepo2.hasImageChanged;
+        if (newHasChanges != _hasChanges) {
+          setState(() {
+            _hasChanges = newHasChanges;
+          });
+        }
       });
     }
   }
@@ -165,6 +181,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   void dispose() {
+    // Remove the listener we added to the image repository (if present)
+    try {
+      final imageRepo = context.read<ImageRepository>();
+      imageRepo.removeListener(_onFieldChanged);
+    } catch (_) {
+      // If reading the provider fails during dispose, ignore.
+    }
+
     _usernameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();

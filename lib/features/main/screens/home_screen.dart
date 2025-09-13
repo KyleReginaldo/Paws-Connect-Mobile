@@ -1,5 +1,4 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:lottie/lottie.dart';
@@ -181,9 +180,9 @@ class _HomeScreenState extends State<HomeScreen> {
         context.read<FundraisingRepository>().fetchFundraisings();
         context.read<AddressRepository>().fetchDefaultAddress(USER_ID ?? '');
         context.read<AddressRepository>().fetchAllAddresses(USER_ID ?? '');
+        context.read<ProfileRepository>().fetchUserProfile(USER_ID ?? '');
       }
     });
-    context.read<ProfileRepository>().fetchUserProfile(USER_ID ?? '');
 
     super.initState();
   }
@@ -198,7 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final pets = context.select((PetRepository bloc) => bloc.pets);
+    // final pets = context.select((PetRepository bloc) => bloc.pets);
     final recentPets = context.select((PetRepository bloc) => bloc.recentPets);
     final petError = context.select((PetRepository bloc) => bloc.errorMessage);
     final fundraisings = context.select(
@@ -222,153 +221,18 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     final user = context.watch<ProfileRepository>().userProfile;
     final isConnected = context.watch<InternetProvider>().isConnected;
-    debugPrint('user: ${user?.id}');
+    // Removed debug print to prevent console spam
     return Scaffold(
       key: scaffoldKey,
-      endDrawer: Drawer(
-        shape: RoundedRectangleBorder(),
-        child: Column(
-          children: [
-            if (user != null)
-              DrawerHeader(
-                padding: EdgeInsetsDirectional.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      PawsColors.primaryDark.withValues(alpha: 1),
-                      PawsColors.primaryDark.withValues(alpha: 0.8),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                margin: EdgeInsets.zero,
-                child: GestureDetector(
-                  onTap: () {
-                    scaffoldKey.currentState?.closeEndDrawer();
-                    context.router.push(const ProfileRoute());
-                  },
-                  child: Row(
-                    spacing: 8,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Container(
-                        width: 64,
-                        height: 64,
-                        decoration: BoxDecoration(
-                          color: PawsColors.primary.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: PawsColors.primary.withValues(alpha: 0.2),
-                            width: 3,
-                          ),
-                        ),
-                        child: user.profileImageLink == null
-                            ? Icon(
-                                Icons.person,
-                                size: 24,
-                                color: PawsColors.primary,
-                              )
-                            : ClipOval(
-                                child: CachedNetworkImage(
-                                  imageUrl: user.profileImageLink!,
-                                  fit: BoxFit.cover,
-                                  width: 64,
-                                  height: 64,
 
-                                  placeholder: (context, url) =>
-                                      CircularProgressIndicator(
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                              PawsColors.primary,
-                                            ),
-                                      ),
-                                  errorWidget: (context, url, error) => Icon(
-                                    Icons.person,
-                                    size: 24,
-                                    color: PawsColors.primary,
-                                  ),
-                                ),
-                              ),
-                      ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          spacing: 2,
-                          children: [
-                            PawsText(
-                              user.username,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white,
-                            ),
-                            PawsText(
-                              user.email,
-                              fontSize: 14,
-                              color: Colors.white,
-                            ),
-                            PawsText(
-                              user.phoneNumber,
-                              fontSize: 14,
-                              color: Colors.white,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-            ListTile(
-              leading: Icon(
-                LucideIcons.calendar,
-                color: PawsColors.textSecondary,
-              ),
-              title: PawsText(
-                'Adoption History',
-                color: PawsColors.textSecondary,
-              ),
-            ),
-            ListTile(
-              leading: Icon(
-                LucideIcons.bookmark,
-                color: PawsColors.textSecondary,
-              ),
-              title: PawsText(
-                'Recent Donations',
-                color: PawsColors.textSecondary,
-              ),
-            ),
-            if (user?.paymongoId != null)
-              ListTile(
-                onTap: () {
-                  context.router.push(
-                    PaymentMethodRoute(paymongoId: user?.paymongoId ?? ''),
-                  );
-                },
-                leading: Icon(
-                  LucideIcons.creditCard,
-                  color: PawsColors.textSecondary,
-                ),
-                title: PawsText(
-                  'Payment method',
-                  color: PawsColors.textSecondary,
-                ),
-              ),
-          ],
-        ),
-      ),
       appBar: HomeAppBar(
-        onOpenDrawer: () {
-          scaffoldKey.currentState?.openEndDrawer();
-        },
+        onProfileTap: user != null
+            ? () {
+                context.router.push(ProfileRoute(id: user.id));
+              }
+            : null,
         address: defaultAddress,
+        profile: user,
         onOpenCurrentLocation: isConnected
             ? () {
                 showModalBottomSheet(

@@ -14,26 +14,19 @@ class AuthRepository extends ChangeNotifier {
 
   AuthRepository(this._authProvider);
 
-  // void signIn({required String email, required String password}) async {
-  //   final result = await _authProvider.signIn(email: email, password: password);
-  //   if (result.isError) {
-  //     _errorMessage = result.error;
-  //     notifyListeners();
-  //   }
-  // }
-
-  void init() {
+  void init() async {
     supabase.auth.onAuthStateChange.listen((data) {
       if (data.session != null) {
         _user = data.session!.user;
+        Future.microtask(() => notifyListeners());
       } else {
         _user = null;
+        Future.microtask(() => notifyListeners());
       }
-      notifyListeners();
     });
   }
 
-  void signOut() async {
+  Future<void> signOut() async {
     _user = null;
     USER_ID = null;
     notifyListeners();

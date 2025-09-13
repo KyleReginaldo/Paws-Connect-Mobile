@@ -217,6 +217,12 @@ class MemberMapper extends ClassMapperBase<Member> {
   @override
   final String id = 'Member';
 
+  static int _$forumMemberId(Member v) => v.forumMemberId;
+  static const Field<Member, int> _f$forumMemberId = Field(
+    'forumMemberId',
+    _$forumMemberId,
+    key: r'forum_member_id',
+  );
   static String _$id(Member v) => v.id;
   static const Field<Member, String> _f$id = Field('id', _$id);
   static String _$username(Member v) => v.username;
@@ -237,21 +243,31 @@ class MemberMapper extends ClassMapperBase<Member> {
     _$joinedAt,
     key: r'joined_at',
   );
+  static String _$invitationStatus(Member v) => v.invitationStatus;
+  static const Field<Member, String> _f$invitationStatus = Field(
+    'invitationStatus',
+    _$invitationStatus,
+    key: r'invitation_status',
+  );
 
   @override
   final MappableFields<Member> fields = const {
+    #forumMemberId: _f$forumMemberId,
     #id: _f$id,
     #username: _f$username,
     #profileImageLink: _f$profileImageLink,
     #joinedAt: _f$joinedAt,
+    #invitationStatus: _f$invitationStatus,
   };
 
   static Member _instantiate(DecodingData data) {
     return Member(
+      forumMemberId: data.dec(_f$forumMemberId),
       id: data.dec(_f$id),
       username: data.dec(_f$username),
       profileImageLink: data.dec(_f$profileImageLink),
       joinedAt: data.dec(_f$joinedAt),
+      invitationStatus: data.dec(_f$invitationStatus),
     );
   }
 
@@ -302,10 +318,12 @@ extension MemberValueCopy<$R, $Out> on ObjectCopyWith<$R, Member, $Out> {
 abstract class MemberCopyWith<$R, $In extends Member, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   $R call({
+    int? forumMemberId,
     String? id,
     String? username,
     String? profileImageLink,
     DateTime? joinedAt,
+    String? invitationStatus,
   });
   MemberCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -318,24 +336,30 @@ class _MemberCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Member, $Out>
   late final ClassMapperBase<Member> $mapper = MemberMapper.ensureInitialized();
   @override
   $R call({
+    int? forumMemberId,
     String? id,
     String? username,
     Object? profileImageLink = $none,
     DateTime? joinedAt,
+    String? invitationStatus,
   }) => $apply(
     FieldCopyWithData({
+      if (forumMemberId != null) #forumMemberId: forumMemberId,
       if (id != null) #id: id,
       if (username != null) #username: username,
       if (profileImageLink != $none) #profileImageLink: profileImageLink,
       if (joinedAt != null) #joinedAt: joinedAt,
+      if (invitationStatus != null) #invitationStatus: invitationStatus,
     }),
   );
   @override
   Member $make(CopyWithData data) => Member(
+    forumMemberId: data.get(#forumMemberId, or: $value.forumMemberId),
     id: data.get(#id, or: $value.id),
     username: data.get(#username, or: $value.username),
     profileImageLink: data.get(#profileImageLink, or: $value.profileImageLink),
     joinedAt: data.get(#joinedAt, or: $value.joinedAt),
+    invitationStatus: data.get(#invitationStatus, or: $value.invitationStatus),
   );
 
   @override

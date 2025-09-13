@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/core/widgets/text_field.dart';
 import 'package:paws_connect/features/forum/provider/forum_provider.dart';
@@ -18,6 +19,11 @@ class AddForumScreen extends StatefulWidget {
 class _AddForumScreenState extends State<AddForumScreen> {
   final forumName = TextEditingController();
   bool _isLoading = false;
+  bool private = false;
+  List<(String, bool, IconData)> forumTypes = [
+    ('Public', false, LucideIcons.globe),
+    ('Private', true, LucideIcons.globeLock),
+  ];
 
   void handleAddForum({required String forumName}) async {
     if (forumName.trim().isEmpty) {
@@ -38,6 +44,7 @@ class _AddForumScreenState extends State<AddForumScreen> {
       await ForumProvider().addForum(
         userId: USER_ID ?? "",
         forumName: forumName.trim(),
+        private: private,
       );
 
       if (mounted) {
@@ -75,26 +82,30 @@ class _AddForumScreenState extends State<AddForumScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: const PawsText(
-          'Create Forum',
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: PawsColors.textPrimary,
+    return SafeArea(
+      top: false,
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          title: const PawsText(
+            'Create Forum',
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: PawsColors.textPrimary,
+          ),
+          centerTitle: true,
+          backgroundColor: Colors.white,
+          elevation: 0.5,
+          shadowColor: Colors.black12,
+          leading: IconButton(
+            icon: const Icon(
+              Icons.arrow_back_ios,
+              color: PawsColors.textPrimary,
+            ),
+            onPressed: () => context.router.pop(),
+          ),
         ),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        shadowColor: Colors.black12,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: PawsColors.textPrimary),
-          onPressed: () => context.router.pop(),
-        ),
-      ),
-      body: SafeArea(
-        child: Padding(
+        body: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,7 +193,72 @@ class _AddForumScreenState extends State<AddForumScreen> {
                       color: PawsColors.textPrimary,
                     ),
                     const SizedBox(height: 16),
-
+                    Row(
+                      children: forumTypes.map((type) {
+                        return Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                private = type.$2;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 12,
+                                horizontal: 16,
+                              ),
+                              margin: const EdgeInsets.only(right: 8),
+                              decoration: BoxDecoration(
+                                color: private == type.$2
+                                    ? PawsColors.primary
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: private == type.$2
+                                      ? PawsColors.primary
+                                      : Colors.grey.withValues(alpha: 0.3),
+                                  width: 1.5,
+                                ),
+                                boxShadow: [
+                                  if (private == type.$2)
+                                    BoxShadow(
+                                      color: PawsColors.primary.withValues(
+                                        alpha: 0.2,
+                                      ),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                ],
+                              ),
+                              child: Center(
+                                child: Row(
+                                  spacing: 5,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      type.$3,
+                                      color: private == type.$2
+                                          ? Colors.white
+                                          : PawsColors.textSecondary,
+                                      size: 16,
+                                    ),
+                                    PawsText(
+                                      type.$1,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: private == type.$2
+                                          ? Colors.white
+                                          : PawsColors.textPrimary,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 8),
                     const PawsText(
                       'Forum Name',
                       fontSize: 14,
@@ -207,52 +283,45 @@ class _AddForumScreenState extends State<AddForumScreen> {
                   ],
                 ),
               ),
-
-              const Spacer(),
-
-              // Create Button
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _isLoading
-                      ? null
-                      : () {
-                          handleAddForum(forumName: forumName.text);
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: PawsColors.primary,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    disabledBackgroundColor: PawsColors.primary.withValues(
-                      alpha: 0.6,
-                    ),
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
-                            ),
-                          ),
-                        )
-                      : const PawsText(
-                          'Create Forum',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
             ],
+          ),
+        ),
+        bottomNavigationBar: Container(
+          margin: const EdgeInsets.all(16),
+          width: double.infinity,
+          height: 52,
+          child: ElevatedButton(
+            onPressed: _isLoading
+                ? null
+                : () {
+                    handleAddForum(forumName: forumName.text);
+                  },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: PawsColors.primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              disabledBackgroundColor: PawsColors.primary.withValues(
+                alpha: 0.6,
+              ),
+            ),
+            child: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const PawsText(
+                    'Create Forum',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
           ),
         ),
       ),

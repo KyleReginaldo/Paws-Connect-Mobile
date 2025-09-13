@@ -1,20 +1,24 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/theme/paws_theme.dart';
 import 'package:paws_connect/features/google_map/models/address_model.dart';
+import 'package:paws_connect/features/profile/models/user_profile_model.dart';
 
 import '../../../core/widgets/text.dart';
 
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final Function()? onOpenDrawer;
+  final Function()? onProfileTap;
   final Function()? onOpenCurrentLocation;
   final Address? address;
+  final UserProfile? profile;
   const HomeAppBar({
     super.key,
-    this.onOpenDrawer,
+    this.onProfileTap,
     this.onOpenCurrentLocation,
     this.address,
+    this.profile,
   });
 
   @override
@@ -46,8 +50,17 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: [
         IconButton(onPressed: () {}, icon: Icon(LucideIcons.bell)),
         IconButton(
-          onPressed: onOpenDrawer,
-          icon: Icon(LucideIcons.circleUserRound),
+          onPressed: onProfileTap,
+          icon: profile != null && profile!.profileImageLink != null
+              ? ClipOval(
+                  child: CachedNetworkImage(
+                    imageUrl: profile!.profileImageLink!,
+                    height: 32,
+                    width: 32,
+                    fit: BoxFit.cover,
+                  ),
+                )
+              : Icon(LucideIcons.circleUserRound),
         ),
       ],
     );

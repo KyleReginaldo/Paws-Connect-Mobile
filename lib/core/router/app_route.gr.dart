@@ -342,18 +342,51 @@ class HomeRoute extends _i22.PageRouteInfo<void> {
 
 /// generated route for
 /// [_i10.MainScreen]
-class MainRoute extends _i22.PageRouteInfo<void> {
-  const MainRoute({List<_i22.PageRouteInfo>? children})
-    : super(MainRoute.name, initialChildren: children);
+class MainRoute extends _i22.PageRouteInfo<MainRouteArgs> {
+  MainRoute({
+    _i23.Key? key,
+    int? initialIndex,
+    List<_i22.PageRouteInfo>? children,
+  }) : super(
+         MainRoute.name,
+         args: MainRouteArgs(key: key, initialIndex: initialIndex),
+         initialChildren: children,
+       );
 
   static const String name = 'MainRoute';
 
   static _i22.PageInfo page = _i22.PageInfo(
     name,
     builder: (data) {
-      return const _i10.MainScreen();
+      final args = data.argsAs<MainRouteArgs>(
+        orElse: () => const MainRouteArgs(),
+      );
+      return _i10.MainScreen(key: args.key, initialIndex: args.initialIndex);
     },
   );
+}
+
+class MainRouteArgs {
+  const MainRouteArgs({this.key, this.initialIndex});
+
+  final _i23.Key? key;
+
+  final int? initialIndex;
+
+  @override
+  String toString() {
+    return 'MainRouteArgs{key: $key, initialIndex: $initialIndex}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! MainRouteArgs) return false;
+    return key == other.key && initialIndex == other.initialIndex;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ initialIndex.hashCode;
 }
 
 /// generated route for
@@ -675,18 +708,51 @@ class PetRoute extends _i22.PageRouteInfo<void> {
 
 /// generated route for
 /// [_i20.ProfileScreen]
-class ProfileRoute extends _i22.PageRouteInfo<void> {
-  const ProfileRoute({List<_i22.PageRouteInfo>? children})
-    : super(ProfileRoute.name, initialChildren: children);
+class ProfileRoute extends _i22.PageRouteInfo<ProfileRouteArgs> {
+  ProfileRoute({
+    _i23.Key? key,
+    required String id,
+    List<_i22.PageRouteInfo>? children,
+  }) : super(
+         ProfileRoute.name,
+         args: ProfileRouteArgs(key: key, id: id),
+         initialChildren: children,
+       );
 
   static const String name = 'ProfileRoute';
 
   static _i22.PageInfo page = _i22.PageInfo(
     name,
     builder: (data) {
-      return _i22.WrappedRoute(child: const _i20.ProfileScreen());
+      final args = data.argsAs<ProfileRouteArgs>();
+      return _i22.WrappedRoute(
+        child: _i20.ProfileScreen(key: args.key, id: args.id),
+      );
     },
   );
+}
+
+class ProfileRouteArgs {
+  const ProfileRouteArgs({this.key, required this.id});
+
+  final _i23.Key? key;
+
+  final String id;
+
+  @override
+  String toString() {
+    return 'ProfileRouteArgs{key: $key, id: $id}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! ProfileRouteArgs) return false;
+    return key == other.key && id == other.id;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ id.hashCode;
 }
 
 /// generated route for

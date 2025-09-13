@@ -80,8 +80,10 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
             value: widget.forumId,
           ),
           callback: (payload) {
-            // Instant update without delay
-            context.read<ForumRepository>().setForumChats(widget.forumId);
+            // Check if widget is still mounted before accessing context
+            if (mounted) {
+              context.read<ForumRepository>().setForumChats(widget.forumId);
+            }
           },
         )
         .subscribe();
@@ -89,6 +91,8 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
 
   @override
   void dispose() {
+    // Unsubscribe from realtime channel to prevent memory leaks
+    chatChannel.unsubscribe();
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();

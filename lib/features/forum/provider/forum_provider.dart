@@ -23,9 +23,9 @@ class ForumProvider {
     }
   }
 
-  Future<Result<Forum>> fetchForumById(int forumId) async {
+  Future<Result<Forum>> fetchForumById(int forumId, String userId) async {
     final response = await http.get(
-      Uri.parse('${dotenv.get('BASE_URL')}/forum/$forumId'),
+      Uri.parse('${dotenv.get('BASE_URL')}/forum/$forumId?userId=$userId'),
     );
 
     final data = jsonDecode(response.body);
@@ -107,11 +107,16 @@ class ForumProvider {
   Future<void> addForum({
     required String userId,
     required String forumName,
+    required bool private,
   }) async {
     final response = await http.post(
       Uri.parse('${dotenv.get('BASE_URL')}/forum'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({"created_by": userId, "forum_name": forumName}),
+      body: jsonEncode({
+        "created_by": userId,
+        "forum_name": forumName,
+        "private": private,
+      }),
     );
     if (response.statusCode != 201) {
       throw Exception('Failed to create forum');
@@ -127,6 +132,46 @@ class ForumProvider {
       Uri.parse('${dotenv.get('BASE_URL')}/forum/$forumId/members'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({"added_by": userId, "members": memberIds}),
+    );
+    final data = jsonDecode(response.body);
+    if (response.statusCode == 201) {
+      return Result.success(data['message']);
+    } else {
+      return Result.error('Failed to add members');
+    }
+  }
+
+  Future<Result<String>> approveOrRejectMember({
+    required int forumId,
+    required int forumMemberId,
+    required String status,
+  }) async {
+    final response = await http.put(
+      Uri.parse(
+        '${dotenv.get('BASE_URL')}/forum/$forumId/members/$forumMemberId?status=$status',
+      ),
+      headers: {'Content-Type': 'application/json'},
+    );
+    final data = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      return Result.success(data['message']);
+    } else {
+      return Result.error('Failed to add members');
+    }
+  }
+
+  Future<Result<String>> invitedMemberFromLink({
+    required String invitedBy,
+    required int forumId,
+    required String memberId,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${dotenv.get('BASE_URL')}/forum/$forumId/members'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        "added_by": invitedBy,
+        "members": [memberId],
+      }),
     );
     final data = jsonDecode(response.body);
     if (response.statusCode == 201) {

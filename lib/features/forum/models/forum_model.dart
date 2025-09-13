@@ -53,16 +53,20 @@ class Users with UsersMappable {
 
 @MappableClass(caseStyle: CaseStyle.snakeCase)
 class Member with MemberMappable {
+  final int forumMemberId;
   final String id;
   final String username;
   final String? profileImageLink;
   final DateTime joinedAt;
+  final String invitationStatus;
 
   Member({
+    required this.forumMemberId,
     required this.id,
     required this.username,
     this.profileImageLink,
     required this.joinedAt,
+    required this.invitationStatus,
   });
 }
 

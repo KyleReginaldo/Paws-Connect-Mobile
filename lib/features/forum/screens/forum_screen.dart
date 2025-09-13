@@ -112,13 +112,29 @@ class _ForumScreenState extends State<ForumScreen> {
                       fontSize: 12,
                       color: PawsColors.textSecondary,
                     ),
-                    trailing: const Icon(
-                      Icons.chevron_right,
-                      color: PawsColors.textSecondary,
-                    ),
-                    onTap: () {
-                      context.router.push(ForumChatRoute(forumId: forum.id));
-                    },
+                    trailing:
+                        (forum.members ?? []).any(
+                          (member) => member.id == USER_ID,
+                        )
+                        ? const Icon(
+                            Icons.chevron_right,
+                            color: PawsColors.textSecondary,
+                          )
+                        : PawsText(
+                            'Pending',
+                            fontSize: 12,
+                            color: PawsColors.warning,
+                          ),
+                    onTap:
+                        (forum.members ?? []).any(
+                          (member) => member.id == USER_ID,
+                        )
+                        ? () {
+                            context.router.push(
+                              ForumChatRoute(forumId: forum.id),
+                            );
+                          }
+                        : null,
                   );
                 },
               ),
