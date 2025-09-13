@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:paws_connect/core/services/supabase_service.dart';
+import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/features/auth/provider/auth_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -30,5 +31,12 @@ class AuthRepository extends ChangeNotifier {
       }
       notifyListeners();
     });
+  }
+
+  void signOut() async {
+    _user = null;
+    USER_ID = null;
+    notifyListeners();
+    await _authProvider.signOut();
   }
 }

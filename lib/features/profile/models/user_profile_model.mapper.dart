@@ -53,6 +53,27 @@ class UserProfileMapper extends ClassMapperBase<UserProfile> {
     key: r'house_images',
     opt: true,
   );
+  static String? _$paymongoId(UserProfile v) => v.paymongoId;
+  static const Field<UserProfile, String> _f$paymongoId = Field(
+    'paymongoId',
+    _$paymongoId,
+    key: r'paymongo_id',
+    opt: true,
+  );
+  static String? _$paymentMethod(UserProfile v) => v.paymentMethod;
+  static const Field<UserProfile, String> _f$paymentMethod = Field(
+    'paymentMethod',
+    _$paymentMethod,
+    key: r'payment_method',
+    opt: true,
+  );
+  static String? _$profileImageLink(UserProfile v) => v.profileImageLink;
+  static const Field<UserProfile, String> _f$profileImageLink = Field(
+    'profileImageLink',
+    _$profileImageLink,
+    key: r'profile_image_link',
+    opt: true,
+  );
 
   @override
   final MappableFields<UserProfile> fields = const {
@@ -64,6 +85,9 @@ class UserProfileMapper extends ClassMapperBase<UserProfile> {
     #role: _f$role,
     #phoneNumber: _f$phoneNumber,
     #houseImages: _f$houseImages,
+    #paymongoId: _f$paymongoId,
+    #paymentMethod: _f$paymentMethod,
+    #profileImageLink: _f$profileImageLink,
   };
 
   static UserProfile _instantiate(DecodingData data) {
@@ -76,6 +100,9 @@ class UserProfileMapper extends ClassMapperBase<UserProfile> {
       role: data.dec(_f$role),
       phoneNumber: data.dec(_f$phoneNumber),
       houseImages: data.dec(_f$houseImages),
+      paymongoId: data.dec(_f$paymongoId),
+      paymentMethod: data.dec(_f$paymentMethod),
+      profileImageLink: data.dec(_f$profileImageLink),
     );
   }
 
@@ -149,6 +176,9 @@ abstract class UserProfileCopyWith<$R, $In extends UserProfile, $Out>
     int? role,
     String? phoneNumber,
     List<String>? houseImages,
+    String? paymongoId,
+    String? paymentMethod,
+    String? profileImageLink,
   });
   UserProfileCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -180,6 +210,9 @@ class _UserProfileCopyWithImpl<$R, $Out>
     int? role,
     String? phoneNumber,
     Object? houseImages = $none,
+    Object? paymongoId = $none,
+    Object? paymentMethod = $none,
+    Object? profileImageLink = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -190,6 +223,9 @@ class _UserProfileCopyWithImpl<$R, $Out>
       if (role != null) #role: role,
       if (phoneNumber != null) #phoneNumber: phoneNumber,
       if (houseImages != $none) #houseImages: houseImages,
+      if (paymongoId != $none) #paymongoId: paymongoId,
+      if (paymentMethod != $none) #paymentMethod: paymentMethod,
+      if (profileImageLink != $none) #profileImageLink: profileImageLink,
     }),
   );
   @override
@@ -202,6 +238,9 @@ class _UserProfileCopyWithImpl<$R, $Out>
     role: data.get(#role, or: $value.role),
     phoneNumber: data.get(#phoneNumber, or: $value.phoneNumber),
     houseImages: data.get(#houseImages, or: $value.houseImages),
+    paymongoId: data.get(#paymongoId, or: $value.paymongoId),
+    paymentMethod: data.get(#paymentMethod, or: $value.paymentMethod),
+    profileImageLink: data.get(#profileImageLink, or: $value.profileImageLink),
   );
 
   @override

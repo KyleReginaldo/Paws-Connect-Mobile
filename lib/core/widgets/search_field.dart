@@ -41,6 +41,10 @@ class PawsSearchBar extends StatelessWidget {
       onChanged: onChanged,
       onTap: onTap,
       autoFocus: autoFocus,
+      constraints: const BoxConstraints(
+        minHeight: 45, // 👈 reduce height
+        maxHeight: 54, // 👈 cap max height
+      ),
       elevation: WidgetStatePropertyAll(0),
       textStyle: WidgetStateProperty.all(
         textStyle ??

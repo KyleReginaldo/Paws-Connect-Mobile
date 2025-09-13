@@ -23,20 +23,22 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       centerTitle: false,
       title: GestureDetector(
         onTap: onOpenCurrentLocation,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
+          spacing: 4,
           children: [
-            PawsText('Current location', fontSize: 13),
-            Row(
-              spacing: 4,
-              children: [
-                Icon(LucideIcons.mapPin, size: 16, color: PawsColors.primary),
-                PawsText(
-                  address?.fullAddress ?? 'Add address',
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                ),
-              ],
+            Icon(LucideIcons.mapPin, size: 24, color: PawsColors.primary),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  PawsText('Current location', fontSize: 13),
+                  PawsText(
+                    address?.fullAddress ?? 'Add address',
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ],
+              ),
             ),
           ],
         ),

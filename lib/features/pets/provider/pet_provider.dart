@@ -2,23 +2,113 @@ import 'dart:convert';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:paws_connect/core/config/result.dart';
 import 'package:paws_connect/features/pets/models/pet_model.dart';
 
 class PetProvider {
-  Future<Result<List<Pet>>> fetchPets() async {
-    final response = await http.get(
-      Uri.parse('${dotenv.get('BASE_URL')}/pets'),
-    );
-    if (response.statusCode == 200) {
-      List<Pet> pets = [];
-      final data = jsonDecode(response.body);
-      data['data'].forEach((petData) {
-        pets.add(PetMapper.fromMap(petData));
-      });
-      return Result.success(pets);
-    } else {
-      return Result.error('Failed to fetch pets');
+  Future<Result<List<Pet>>> fetchPets({
+    String? type,
+    String? breed,
+    String? gender,
+    String? size,
+    int? ageMin,
+    int? ageMax,
+    bool? isVaccinated,
+    bool? isSpayedOrNeutered,
+    bool? isTrained,
+    String? healthStatus,
+    String? requestStatus,
+    String? goodWith,
+    String? location,
+  }) async {
+    // Check internet connectivity first
+    final hasInternet = await InternetConnection().hasInternetAccess;
+    if (!hasInternet) {
+      return Result.error(
+        'No internet connection. Please check your network and try again.',
+      );
+    }
+
+    try {
+      // Build query parameters
+      final Map<String, String> queryParams = {};
+
+      if (type != null && type.isNotEmpty) queryParams['type'] = type;
+      if (breed != null && breed.isNotEmpty) queryParams['breed'] = breed;
+      if (gender != null && gender.isNotEmpty) queryParams['gender'] = gender;
+      if (size != null && size.isNotEmpty) queryParams['size'] = size;
+      if (ageMin != null) queryParams['age_min'] = ageMin.toString();
+      if (ageMax != null) queryParams['age_max'] = ageMax.toString();
+      if (isVaccinated != null)
+        queryParams['is_vaccinated'] = isVaccinated.toString();
+      if (isSpayedOrNeutered != null)
+        queryParams['is_spayed_or_neutured'] = isSpayedOrNeutered.toString();
+      if (isTrained != null) queryParams['is_trained'] = isTrained.toString();
+      if (healthStatus != null && healthStatus.isNotEmpty)
+        queryParams['health_status'] = healthStatus;
+      if (requestStatus != null && requestStatus.isNotEmpty)
+        queryParams['request_status'] = requestStatus;
+      if (goodWith != null && goodWith.isNotEmpty)
+        queryParams['good_with'] = goodWith;
+      if (location != null && location.isNotEmpty)
+        queryParams['location'] = location;
+
+      final uri = Uri.parse(
+        '${dotenv.get('BASE_URL')}/pets',
+      ).replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
+
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        List<Pet> pets = [];
+        final data = jsonDecode(response.body);
+        data['data'].forEach((petData) {
+          pets.add(PetMapper.fromMap(petData));
+        });
+        return Result.success(pets);
+      } else {
+        return Result.error(
+          'Failed to fetch pets. Server returned ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      return Result.error('Failed to fetch pets: ${e.toString()}');
+    }
+  }
+
+  Future<Result<List<Pet>>> fetchRecentPets() async {
+    // Check internet connectivity first
+    final hasInternet = await InternetConnection().hasInternetAccess;
+    if (!hasInternet) {
+      return Result.error(
+        'No internet connection. Please check your network and try again.',
+      );
+    }
+
+    try {
+      final uri = Uri.parse('${dotenv.get('BASE_URL')}/pets/recent');
+
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        List<Pet> pets = [];
+        final data = jsonDecode(response.body);
+        if (data['data'] != null && data['data'].isNotEmpty) {
+          data['data'].forEach((petData) {
+            pets.add(PetMapper.fromMap(petData));
+          });
+          return Result.success(pets);
+        } else {
+          return Result.error('No recent pets found');
+        }
+      } else {
+        return Result.error(
+          'Failed to fetch pets. Server returned ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      return Result.error('Failed to fetch pets: ${e.toString()}');
     }
   }
 }

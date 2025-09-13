@@ -1,17 +1,21 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:dart_mappable/dart_mappable.dart';
 
 part 'user_profile_model.mapper.dart';
 
 @MappableClass(caseStyle: CaseStyle.snakeCase)
 class UserProfile with UserProfileMappable {
-  String id;
-  String createdAt;
-  String username;
-  String email;
-  String status;
-  int role;
-  String phoneNumber;
-  List<String>? houseImages;
+  final String id;
+  final String createdAt;
+  final String username;
+  final String email;
+  final String status;
+  final int role;
+  final String phoneNumber;
+  final List<String>? houseImages;
+  final String? paymongoId;
+  final String? paymentMethod;
+  final String? profileImageLink;
 
   UserProfile({
     required this.id,
@@ -22,5 +26,8 @@ class UserProfile with UserProfileMappable {
     required this.role,
     required this.phoneNumber,
     this.houseImages,
+    this.paymongoId,
+    this.paymentMethod,
+    this.profileImageLink,
   });
 }

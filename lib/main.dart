@@ -1,13 +1,20 @@
+import 'package:app_links/app_links.dart';
+import 'package:auto_route/auto_route.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:paws_connect/core/router/app_route.dart';
+import 'package:paws_connect/core/router/app_route.gr.dart';
 import 'package:paws_connect/dependency.dart';
+import 'package:paws_connect/features/internet/internet.dart';
+import 'package:paymongo_sdk/paymongo_sdk.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/theme/paws_theme.dart';
+import 'features/payment/provider/payment_provider.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -28,25 +35,111 @@ void main() async {
   debugPrint(
     'OneSignal SDK initialized: ${await OneSignal.User.getExternalId()}',
   );
-  OneSignal.Notifications.requestPermission(false);
+  OneSignal.Notifications.requestPermission(true);
+  final publicSDK = PaymongoClient<PaymongoPublic>(
+    dotenv.get('MONGO_PUBLIC_KEY'),
+  );
+  final data = SourceAttributes(
+    type: 'gcash',
+    amount: 50,
+    currency: 'PHP',
+    redirect: const Redirect(
+      success: "https://google.com/success",
+      failed: "https://google.com/failed",
+    ),
+    billing: PayMongoBilling(
+      name: 'Kyle Reginaldo',
+      phone: '09923189664',
+      email: 'kyledennis099@gmail.com',
+      address: PayMongoAddress(
+        line1: 'Mabolo',
+        line2: 'Cebu City',
+        city: 'Cebu',
+        state: 'Cebu',
+        postalCode: '6000',
+        country: 'PH',
+      ),
+    ),
+  );
+
+  final result = await publicSDK.instance.source.create(data);
+  debugPrint('paymongo result: ${result.id}');
   init();
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
-  MyApp({super.key});
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
   final appRouter = AppRouter();
+  late AppLinks _appLinks;
+
+  @override
+  void initState() {
+    super.initState();
+    // _initAppLinks();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'Paws Connect',
-      theme: PawsTheme.lightTheme,
-      // darkTheme: PawsTheme.darkTheme,
-      themeMode: ThemeMode.system,
-      builder: EasyLoading.init(),
+    return ChangeNotifierProvider(
+      create: (context) => InternetProvider(),
+      child: MaterialApp.router(
+        title: 'Paws Connect',
+        debugShowCheckedModeBanner: false,
+        // debugShowMaterialGrid: true,
+        theme: PawsTheme.lightTheme,
+        // darkTheme: PawsTheme.darkTheme,
+        themeMode: ThemeMode.system,
+        builder: EasyLoading.init(),
+        routerConfig: appRouter.config(
+          deepLinkBuilder: (deepLink) {
+            final segments = deepLink.path.split('/');
+            // Example: ['', 'payment-success', '12345']
+            final id = segments.length > 2 ? segments[2] : null;
+            String? donor = deepLink.uri.queryParameters['donor'];
+            double? amount = double.tryParse(
+              deepLink.uri.queryParameters['amount'].toString(),
+            );
+            String? invitedBy = deepLink.uri.queryParameters['invitedBy'];
+            if (deepLink.path.contains('forum-invite') &&
+                id != null &&
+                invitedBy != null) {
+              // do the function for inviting the member and alread accepted and then navigate to the forum chat
+            }
+            if (deepLink.path.contains('payment-success') &&
+                id != null &&
+                donor != null &&
+                amount != null) {
+              PaymentProvider().confirmDonation(
+                donor: donor,
+                amount: amount,
+                fundraisingId: int.parse(id),
+              );
+              return DeepLink([PaymentSuccessRoute(id: int.parse(id))]);
+            }
+            if (deepLink.path.contains('fundraising') && id != null) {
+              return DeepLink([
+                MainRoute(),
+                FundraisingDetailRoute(id: int.parse(id)),
+              ]);
+            }
+            if (deepLink.path.contains('forum-chat') && id != null) {
+              return DeepLink([
+                MainRoute(),
+                ForumChatRoute(forumId: int.parse(id)),
+              ]);
+            }
 
-      routerConfig: appRouter.config(),
+            return DeepLink.defaultPath;
+          },
+        ),
+      ),
     );
   }
 }
