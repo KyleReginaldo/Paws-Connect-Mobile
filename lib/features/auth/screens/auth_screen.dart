@@ -283,7 +283,7 @@ class _SignInScreenState extends State<SignInScreen>
                                                 foregroundColor:
                                                     PawsColors.textSecondary,
                                               ),
-                                              hint: '123-456-7890',
+                                              hint: '9*********',
                                               validator: (value) =>
                                                   value != null &&
                                                       value.isNotEmpty

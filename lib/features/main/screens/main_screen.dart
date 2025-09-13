@@ -23,14 +23,20 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void handleOneSignalLogin() async {
-    await OneSignal.login(USER_ID);
+    await OneSignal.login(USER_ID ?? '');
   }
 
   @override
   Widget build(BuildContext context) {
     // final user = context.watch<AuthRepository>().user;
     return AutoTabsScaffold(
-      routes: [HomeRoute(), NotfoundRoute(), NotfoundRoute(), NotfoundRoute()],
+      routes: [
+        HomeRoute(),
+        FundraisingRoute(),
+        PetRoute(),
+        NotfoundRoute(),
+        ForumRoute(),
+      ],
       bottomNavigationBuilder: (_, tabsRouter) {
         return BottomNavigationBar(
           currentIndex: tabsRouter.activeIndex,
@@ -46,6 +52,7 @@ class _MainScreenState extends State<MainScreen> {
               label: '',
               icon: Icon(LucideIcons.heartHandshake),
             ),
+            BottomNavigationBarItem(label: '', icon: Icon(LucideIcons.dog)),
             BottomNavigationBarItem(label: '', icon: Icon(LucideIcons.heart)),
             BottomNavigationBarItem(
               label: '',

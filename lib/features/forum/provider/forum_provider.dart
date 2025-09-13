@@ -1,0 +1,138 @@
+import 'dart:convert';
+
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
+import 'package:paws_connect/core/config/result.dart';
+import 'package:paws_connect/features/forum/models/forum_model.dart';
+
+class ForumProvider {
+  Future<Result<List<Forum>>> fetchForums(String userId) async {
+    final response = await http.get(
+      Uri.parse('${dotenv.get('BASE_URL')}/forum/user/$userId'),
+    );
+
+    final data = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      List<Forum> forums = [];
+      data['data'].forEach((forum) {
+        forums.add(ForumMapper.fromMap(forum));
+      });
+      return Result.success(forums);
+    } else {
+      return Result.error(data['message'] ?? 'Failed to fetch forums');
+    }
+  }
+
+  Future<Result<Forum>> fetchForumById(int forumId) async {
+    final response = await http.get(
+      Uri.parse('${dotenv.get('BASE_URL')}/forum/$forumId'),
+    );
+
+    final data = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      return Result.success(ForumMapper.fromMap(data['data']));
+    } else {
+      return Result.error(data['message'] ?? 'Failed to fetch forums');
+    }
+  }
+
+  Future<Result<List<ForumChat>>> fetchForumChats(int forumId) async {
+    final response = await http.get(
+      Uri.parse('${dotenv.get('BASE_URL')}/forum/$forumId/chats'),
+    );
+    final data = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      List<ForumChat> chats = [];
+      data['data'].forEach((chat) {
+        chats.add(ForumChatMapper.fromMap(chat));
+      });
+      return Result.success(chats);
+    } else {
+      return Result.error(data['message'] ?? 'Failed to fetch forum chats');
+    }
+  }
+
+  Future<Result<List<AvailableUser>>> fetchAvailableUser(
+    int forumId, {
+    String? username,
+  }) async {
+    try {
+      final uri =
+          Uri.parse(
+            '${dotenv.get('BASE_URL')}/forum/$forumId/members/available',
+          ).replace(
+            queryParameters: {
+              if (username != null && username.isNotEmpty) 'search': username,
+            },
+          );
+      final response = await http.get(uri);
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        List<AvailableUser> users = [];
+        if (data['data'].isEmpty) {
+          return Result.error('No users found');
+        } else {
+          data['data'].forEach((user) {
+            users.add(AvailableUserMapper.fromMap(user));
+          });
+          return Result.success(users);
+        }
+      } else {
+        return Result.error(
+          data['message'] ?? 'Failed to fetch available users',
+        );
+      }
+    } catch (e) {
+      return Result.error('Something went wrong: $e');
+    }
+  }
+
+  Future<void> sendChat({
+    required String sender,
+    required String message,
+    required int forumId,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${dotenv.get('BASE_URL')}/forum/$forumId/chats'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'sender': sender, 'message': message}),
+    );
+    if (response.statusCode != 201) {
+      throw Exception('Failed to send message');
+    }
+  }
+
+  Future<void> addForum({
+    required String userId,
+    required String forumName,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${dotenv.get('BASE_URL')}/forum'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({"created_by": userId, "forum_name": forumName}),
+    );
+    if (response.statusCode != 201) {
+      throw Exception('Failed to create forum');
+    }
+  }
+
+  Future<Result<String>> addMembers({
+    required String userId,
+    required int forumId,
+    required List<String> memberIds,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${dotenv.get('BASE_URL')}/forum/$forumId/members'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({"added_by": userId, "members": memberIds}),
+    );
+    final data = jsonDecode(response.body);
+    if (response.statusCode == 201) {
+      return Result.success(data['message']);
+    } else {
+      return Result.error('Failed to add members');
+    }
+  }
+}

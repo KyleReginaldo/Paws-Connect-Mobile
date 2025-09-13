@@ -12,6 +12,8 @@ Future<bool?> showGlobalConfirmDialog(
   String? message,
   String confirmLabel = 'Yes',
   String cancelLabel = 'Cancel',
+  VoidCallback? onConfirm,
+  VoidCallback? onCancel,
 }) {
   return showDialog<bool>(
     context: context,
@@ -23,13 +25,13 @@ Future<bool?> showGlobalConfirmDialog(
           PawsTextButton(
             padding: EdgeInsets.zero,
             label: cancelLabel,
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: onCancel ?? () => Navigator.of(context).pop(false),
             foregroundColor: PawsColors.textSecondary,
           ),
           PawsTextButton(
             padding: EdgeInsets.zero,
             label: confirmLabel,
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: onConfirm ?? () => Navigator.of(context).pop(true),
             foregroundColor: PawsColors.error,
           ),
         ],

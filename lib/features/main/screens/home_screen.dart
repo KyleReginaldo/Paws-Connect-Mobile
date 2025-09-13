@@ -1,12 +1,13 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:lottie/lottie.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:paws_connect/core/router/app_route.gr.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/core/widgets/button.dart';
+import 'package:paws_connect/features/auth/repository/auth_repository.dart';
 import 'package:paws_connect/features/google_map/repository/address_repository.dart';
 import 'package:paws_connect/features/pets/repository/pet_repository.dart';
 import 'package:provider/provider.dart';
@@ -15,15 +16,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/provider/common_provider.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/theme/paws_theme.dart';
-import '../../../core/widgets/global_confirm_dialog.dart';
 import '../../../core/widgets/search_field.dart';
 import '../../../core/widgets/text.dart';
 import '../../../dependency.dart';
 import '../../fundraising/repository/fundraising_repository.dart';
+import '../../internet/internet.dart';
 import '../../profile/repository/profile_repository.dart';
 import '../widgets/app_bar.dart';
 import '../widgets/fundraising_container.dart';
-import '../widgets/home/categories_list.dart';
 import '../widgets/home/promotion_container.dart';
 import '../widgets/pet_container.dart';
 
@@ -38,21 +38,11 @@ class HomeScreen extends StatefulWidget implements AutoRouteWrapper {
   Widget wrappedRoute(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (context) => sl<PetRepository>()..fetchPets(),
-        ),
-        ChangeNotifierProvider(
-          create: (context) => sl<FundraisingRepository>()..fetchFundraisings(),
-        ),
-        ChangeNotifierProvider(
-          create: (context) => sl<AddressRepository>()
-            ..fetchDefaultAddress(USER_ID)
-            ..fetchAllAddresses(USER_ID),
-        ),
-        ChangeNotifierProvider(
-          create: (context) =>
-              sl<ProfileRepository>()..fetchUserProfile(USER_ID),
-        ),
+        ChangeNotifierProvider.value(value: sl<PetRepository>()),
+        ChangeNotifierProvider.value(value: sl<AuthRepository>()),
+        ChangeNotifierProvider.value(value: sl<FundraisingRepository>()),
+        ChangeNotifierProvider.value(value: sl<AddressRepository>()),
+        ChangeNotifierProvider.value(value: sl<ProfileRepository>()),
       ],
       child: this,
     );
@@ -65,6 +55,15 @@ class _HomeScreenState extends State<HomeScreen> {
   final fundraisingChannel = supabase.channel('public:fundraising');
   late RealtimeChannel addressChannel;
   void handleDeleteAddress(int addressId) async {
+    final isConnected = context.read<InternetProvider>().isConnected;
+    if (!isConnected) {
+      EasyLoading.showToast(
+        'You currently are offline',
+        toastPosition: EasyLoadingToastPosition.top,
+      );
+      return;
+    }
+
     EasyLoading.show(
       indicator: LottieBuilder.asset(
         'assets/json/paw_loader.json',
@@ -79,8 +78,8 @@ class _HomeScreenState extends State<HomeScreen> {
     if (result.isSuccess) {
       EasyLoading.showSuccess('Address deleted successfully');
       if (mounted) {
-        context.read<AddressRepository>().fetchDefaultAddress(USER_ID);
-        context.read<AddressRepository>().fetchAllAddresses(USER_ID);
+        context.read<AddressRepository>().fetchDefaultAddress(USER_ID ?? '');
+        context.read<AddressRepository>().fetchAllAddresses(USER_ID ?? '');
       }
     } else {
       EasyLoading.showError('Failed to delete address');
@@ -88,6 +87,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void handleSetDefaultAddress(int addressId) async {
+    final isConnected = context.read<InternetProvider>().isConnected;
+    if (!isConnected) {
+      EasyLoading.showToast(
+        'You currently are offline',
+        toastPosition: EasyLoadingToastPosition.top,
+      );
+      return;
+    }
+
     EasyLoading.show(
       indicator: LottieBuilder.asset(
         'assets/json/paw_loader.json',
@@ -97,13 +105,16 @@ class _HomeScreenState extends State<HomeScreen> {
       status: 'Setting default address...',
       dismissOnTap: false,
     );
-    final result = await CommonProvider().setDefaultAddress(USER_ID, addressId);
+    final result = await CommonProvider().setDefaultAddress(
+      USER_ID ?? '',
+      addressId,
+    );
     EasyLoading.dismiss();
     if (result.isSuccess) {
       EasyLoading.showSuccess('Address set as default successfully');
       if (mounted) {
-        context.read<AddressRepository>().fetchDefaultAddress(USER_ID);
-        context.read<AddressRepository>().fetchAllAddresses(USER_ID);
+        context.read<AddressRepository>().fetchDefaultAddress(USER_ID ?? '');
+        context.read<AddressRepository>().fetchAllAddresses(USER_ID ?? '');
       }
     } else {
       EasyLoading.showError('Failed to set default address');
@@ -147,8 +158,10 @@ class _HomeScreenState extends State<HomeScreen> {
             value: USER_ID,
           ),
           callback: (payload) {
-            context.read<AddressRepository>().fetchDefaultAddress(USER_ID);
-            context.read<AddressRepository>().fetchAllAddresses(USER_ID);
+            context.read<AddressRepository>().fetchDefaultAddress(
+              USER_ID ?? '',
+            );
+            context.read<AddressRepository>().fetchAllAddresses(USER_ID ?? '');
           },
         )
         .subscribe();
@@ -158,6 +171,20 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     initializeChannels();
     handleListeners();
+    debugPrint('current user id: $USER_ID');
+
+    // Defer initial data fetches until after the first frame to avoid
+    // calling notifyListeners during the build phase
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<PetRepository>().fetchRecentPets();
+        context.read<FundraisingRepository>().fetchFundraisings();
+        context.read<AddressRepository>().fetchDefaultAddress(USER_ID ?? '');
+        context.read<AddressRepository>().fetchAllAddresses(USER_ID ?? '');
+      }
+    });
+    context.read<ProfileRepository>().fetchUserProfile(USER_ID ?? '');
+
     super.initState();
   }
 
@@ -165,18 +192,37 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     petChannel.unsubscribe();
     fundraisingChannel.unsubscribe();
+    addressChannel.unsubscribe();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final pets = context.watch<PetRepository>().pets;
-    final fundraisings = context.watch<FundraisingRepository>().fundraisings;
-    final fundraisingLoading = context.watch<FundraisingRepository>().isLoading;
-    final petLoading = context.watch<PetRepository>().isLoading;
-    final defaultAddress = context.watch<AddressRepository>().defaultAddress;
-    final addresses = context.watch<AddressRepository>().addresses;
+    final pets = context.select((PetRepository bloc) => bloc.pets);
+    final recentPets = context.select((PetRepository bloc) => bloc.recentPets);
+    final petError = context.select((PetRepository bloc) => bloc.errorMessage);
+    final fundraisings = context.select(
+      (FundraisingRepository bloc) => bloc.fundraisings,
+    );
+    final fundraisingError = context.select(
+      (FundraisingRepository bloc) => bloc.errorMessage,
+    );
+    final fundraisingLoading = context.select(
+      (FundraisingRepository bloc) => bloc.isLoading,
+    );
+    final petLoading = context.select((PetRepository bloc) => bloc.isLoading);
+    final defaultAddress = context.select(
+      (AddressRepository bloc) => bloc.defaultAddress,
+    );
+    final addressError = context.select(
+      (AddressRepository bloc) => bloc.errorMessage,
+    );
+    final addresses = context.select(
+      (AddressRepository bloc) => bloc.addresses,
+    );
     final user = context.watch<ProfileRepository>().userProfile;
+    final isConnected = context.watch<InternetProvider>().isConnected;
+    debugPrint('user: ${user?.id}');
     return Scaffold(
       key: scaffoldKey,
       endDrawer: Drawer(
@@ -200,32 +246,82 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 margin: EdgeInsets.zero,
-                child: Row(
-                  spacing: 8,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Image.asset('assets/images/user.png', height: 64),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      spacing: 2,
-                      children: [
-                        PawsText(
-                          user.username,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
+                child: GestureDetector(
+                  onTap: () {
+                    scaffoldKey.currentState?.closeEndDrawer();
+                    context.router.push(const ProfileRoute());
+                  },
+                  child: Row(
+                    spacing: 8,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          color: PawsColors.primary.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: PawsColors.primary.withValues(alpha: 0.2),
+                            width: 3,
+                          ),
                         ),
-                        PawsText(user.email, fontSize: 14, color: Colors.white),
-                        PawsText(
-                          user.phoneNumber,
-                          fontSize: 14,
-                          color: Colors.white,
+                        child: user.profileImageLink == null
+                            ? Icon(
+                                Icons.person,
+                                size: 24,
+                                color: PawsColors.primary,
+                              )
+                            : ClipOval(
+                                child: CachedNetworkImage(
+                                  imageUrl: user.profileImageLink!,
+                                  fit: BoxFit.cover,
+                                  width: 64,
+                                  height: 64,
+
+                                  placeholder: (context, url) =>
+                                      CircularProgressIndicator(
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              PawsColors.primary,
+                                            ),
+                                      ),
+                                  errorWidget: (context, url, error) => Icon(
+                                    Icons.person,
+                                    size: 24,
+                                    color: PawsColors.primary,
+                                  ),
+                                ),
+                              ),
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          spacing: 2,
+                          children: [
+                            PawsText(
+                              user.username,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                            ),
+                            PawsText(
+                              user.email,
+                              fontSize: 14,
+                              color: Colors.white,
+                            ),
+                            PawsText(
+                              user.phoneNumber,
+                              fontSize: 14,
+                              color: Colors.white,
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
@@ -249,29 +345,22 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: PawsColors.textSecondary,
               ),
             ),
-            Spacer(),
-            ListTile(
-              iconColor: Colors.redAccent,
-              leading: Icon(LucideIcons.logOut),
-              title: PawsText('Log Out', color: Colors.redAccent),
-              onTap: () async {
-                // close drawer first so dialog is shown on top of main scaffold
-                Navigator.pop(context);
-                final should = await showGlobalConfirmDialog(
-                  context,
-                  title: 'Log Out',
-                  message: 'Are you sure you want to log out?',
-                  confirmLabel: 'Log Out',
-                  cancelLabel: 'Cancel',
-                );
-                if (should == true) {
-                  await supabase.auth.signOut();
-                  await OneSignal.logout();
-                  if (!mounted) return;
-                  context.router.replacePath('/');
-                }
-              },
-            ),
+            if (user?.paymongoId != null)
+              ListTile(
+                onTap: () {
+                  context.router.push(
+                    PaymentMethodRoute(paymongoId: user?.paymongoId ?? ''),
+                  );
+                },
+                leading: Icon(
+                  LucideIcons.creditCard,
+                  color: PawsColors.textSecondary,
+                ),
+                title: PawsText(
+                  'Payment method',
+                  color: PawsColors.textSecondary,
+                ),
+              ),
           ],
         ),
       ),
@@ -280,112 +369,139 @@ class _HomeScreenState extends State<HomeScreen> {
           scaffoldKey.currentState?.openEndDrawer();
         },
         address: defaultAddress,
-        onOpenCurrentLocation: () {
-          showModalBottomSheet(
-            context: context,
-            builder: (_) {
-              return Container(
-                padding: EdgeInsets.all(15),
-                decoration: BoxDecoration(color: Colors.white),
-                width: MediaQuery.sizeOf(context).width,
-                child: SafeArea(
-                  top: false,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      PawsText(
-                        'Select Address',
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      SizedBox(height: 10),
-                      if (addresses != null)
-                        Column(
-                          spacing: 8,
-                          children: addresses.map((e) {
-                            return ListTile(
-                              leading: GestureDetector(
-                                onTap: () {
-                                  Navigator.pop(context);
-                                  handleSetDefaultAddress(e.id);
-                                },
-                                child: Container(
-                                  height: 18,
-                                  width: 18,
-                                  padding: EdgeInsets.all(2),
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      width: 1,
-                                      color: PawsColors.primary,
-                                    ),
-                                  ),
-                                  child: e.isDefault
-                                      ? Container(
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: PawsColors.primary,
-                                          ),
-                                        )
-                                      : null,
-                                ),
-                              ),
-                              title: PawsText(e.fullAddress),
-                              trailing: e.isDefault
-                                  ? null
-                                  : GestureDetector(
+        onOpenCurrentLocation: isConnected
+            ? () {
+                showModalBottomSheet(
+                  context: context,
+                  builder: (_) {
+                    return Container(
+                      padding: EdgeInsets.all(15),
+                      decoration: BoxDecoration(color: Colors.white),
+                      width: MediaQuery.sizeOf(context).width,
+                      child: SafeArea(
+                        top: false,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            PawsText(
+                              'Select Address',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            SizedBox(height: 10),
+                            if (addresses != null)
+                              Column(
+                                spacing: 8,
+                                children: addresses.map((e) {
+                                  return ListTile(
+                                    leading: GestureDetector(
                                       onTap: () {
                                         Navigator.pop(context);
-                                        handleDeleteAddress(e.id);
+                                        handleSetDefaultAddress(e.id);
                                       },
                                       child: Container(
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 4,
-                                        ),
+                                        height: 18,
+                                        width: 18,
+                                        padding: EdgeInsets.all(2),
                                         decoration: BoxDecoration(
-                                          color: PawsColors.error.withValues(
-                                            alpha: 0.1,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            4,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            width: 1,
+                                            color: PawsColors.primary,
                                           ),
                                         ),
-                                        child: PawsText(
-                                          'Delete',
-                                          fontSize: 12,
-                                          color: PawsColors.error,
-                                        ),
+                                        child: e.isDefault
+                                            ? Container(
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  color: PawsColors.primary,
+                                                ),
+                                              )
+                                            : null,
                                       ),
                                     ),
-                            );
-                          }).toList(),
-                        ),
-                      SizedBox(height: 10),
+                                    title: PawsText(e.fullAddress),
+                                    trailing: e.isDefault
+                                        ? null
+                                        : GestureDetector(
+                                            onTap: () {
+                                              Navigator.pop(context);
+                                              handleDeleteAddress(e.id);
+                                            },
+                                            child: Container(
+                                              padding: EdgeInsets.symmetric(
+                                                horizontal: 8,
+                                                vertical: 4,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: PawsColors.error
+                                                    .withValues(alpha: 0.1),
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                              ),
+                                              child: PawsText(
+                                                'Delete',
+                                                fontSize: 12,
+                                                color: PawsColors.error,
+                                              ),
+                                            ),
+                                          ),
+                                  );
+                                }).toList(),
+                              ),
+                            SizedBox(height: 10),
 
-                      PawsTextButton(
-                        label: 'Add New Address',
-                        icon: LucideIcons.mapPlus,
-                        onPressed: () {
-                          Navigator.pop(context);
-                          context.router.push(MapRoute());
-                        },
+                            PawsTextButton(
+                              label: 'Add New Address',
+                              icon: LucideIcons.mapPlus,
+                              onPressed: () {
+                                final isConnected = context
+                                    .read<InternetProvider>()
+                                    .isConnected;
+                                if (!isConnected) {
+                                  Navigator.pop(context);
+                                  EasyLoading.showToast(
+                                    'You currently are offline',
+                                    toastPosition: EasyLoadingToastPosition.top,
+                                  );
+                                  return;
+                                }
+
+                                Navigator.pop(context);
+                                context.router.push(MapRoute());
+                              },
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          );
-        },
+                    );
+                  },
+                );
+              }
+            : () {
+                EasyLoading.showToast(
+                  'You currently are offline',
+                  toastPosition: EasyLoadingToastPosition.top,
+                );
+              },
       ),
       body: RefreshIndicator.adaptive(
         onRefresh: () async {
-          context.read<PetRepository>().fetchPets();
+          final isConnected = context.read<InternetProvider>().isConnected;
+          if (!isConnected) {
+            EasyLoading.showToast(
+              'You currently are offline',
+              toastPosition: EasyLoadingToastPosition.top,
+            );
+            return;
+          }
+
+          context.read<PetRepository>().fetchRecentPets();
           context.read<FundraisingRepository>().fetchFundraisings();
-          context.read<AddressRepository>().fetchDefaultAddress(USER_ID);
-          context.read<AddressRepository>().fetchAllAddresses(USER_ID);
+          context.read<AddressRepository>().fetchDefaultAddress(USER_ID ?? '');
+          context.read<AddressRepository>().fetchAllAddresses(USER_ID ?? '');
+          context.read<ProfileRepository>().fetchUserProfile(USER_ID ?? '');
         },
         child: SingleChildScrollView(
           physics: AlwaysScrollableScrollPhysics(),
@@ -396,75 +512,162 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               PawsSearchBar(hintText: 'Search for pets...'),
               PromotionContainer(),
-              PawsText('Category', fontSize: 16, fontWeight: FontWeight.w500),
-              CategoriesList(),
-              // PawsDivider(thickness: 2),
-              PawsText(
-                'Recently added',
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-              petLoading
-                  ? SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        spacing: 10,
-                        children: List.generate(3, (_) {
-                          return Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              color: Colors.grey.shade300,
-                            ),
-                            height: 120,
-                            width: MediaQuery.sizeOf(context).width * 0.30,
-                            margin: EdgeInsets.only(bottom: 10),
-                          );
-                        }),
-                      ),
-                    )
-                  : SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        spacing: 10,
-                        children: pets == null
-                            ? [Center(child: PawsText('No pets found'))]
-                            : List.generate(
-                                pets.length,
-                                (index) => PetContainer(pet: pets[index]),
-                              ),
-                      ),
+              // PawsText('Category', fontSize: 16, fontWeight: FontWeight.w500),
+              // CategoriesList(),
+              // Show address error if there is one
+              if (addressError != null)
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Colors.orange.withValues(alpha: 0.3),
                     ),
-              if (!fundraisingLoading)
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.location_off, color: Colors.orange, size: 20),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: PawsText(
+                          'Please set a default address to enable location features.',
+                          color: Colors.orange.shade700,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              // PawsDivider(thickness: 2),
+              if (recentPets != null)
                 PawsText(
-                  'Fundraising',
+                  'Recently added',
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                 ),
-              fundraisingLoading
-                  ? Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        color: Colors.grey.shade300,
-                      ),
-                      height: 120,
-                      width: MediaQuery.sizeOf(context).width * 0.90,
-                      margin: EdgeInsets.only(bottom: 10),
-                    )
-                  : SingleChildScrollView(
-                      physics: PageScrollPhysics(),
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        spacing: 10,
-                        children: fundraisings == null
-                            ? [Center(child: PawsText('No fundraisings found'))]
-                            : List.generate(
-                                fundraisings.length,
-                                (index) => FundraisingContainer(
-                                  fundraising: fundraisings[index],
-                                ),
-                              ),
-                      ),
+              if (petError != null)
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Colors.red.withValues(alpha: 0.3),
                     ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error_outline, color: Colors.red, size: 20),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: PawsText(
+                          petError,
+                          color: Colors.red,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                petLoading
+                    ? SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          spacing: 10,
+                          children: List.generate(3, (_) {
+                            return Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                color: Colors.grey.shade300,
+                              ),
+                              height: 120,
+                              width: MediaQuery.sizeOf(context).width * 0.30,
+                              margin: EdgeInsets.only(bottom: 10),
+                            );
+                          }),
+                        ),
+                      )
+                    : recentPets != null
+                    ? SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          spacing: 10,
+                          children: List.generate(
+                            recentPets.length,
+                            (index) => PetContainer(pet: recentPets[index]),
+                          ), // Empty when there's an error (error is shown above)
+                        ),
+                      )
+                    : SizedBox.shrink(),
+              if (!fundraisingLoading &&
+                  (fundraisings != null || fundraisingError != null))
+                PawsText(
+                  'Active Fundraising',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              if (fundraisingError != null)
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Colors.red.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error_outline, color: Colors.red, size: 20),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: PawsText(
+                          fundraisingError,
+                          color: Colors.red,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                fundraisingLoading
+                    ? Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.grey.shade300,
+                        ),
+                        height: 120,
+                        width: MediaQuery.sizeOf(context).width * 0.90,
+                        margin: EdgeInsets.only(bottom: 10),
+                      )
+                    : SingleChildScrollView(
+                        physics: PageScrollPhysics(),
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          spacing: 10,
+                          children:
+                              fundraisings == null && fundraisingError == null
+                              ? [
+                                  Center(
+                                    child: PawsText('No fundraisings found'),
+                                  ),
+                                ]
+                              : fundraisings != null
+                              ? List.generate(
+                                  fundraisings.length,
+                                  (index) => FundraisingContainer(
+                                    fundraising: fundraisings[index],
+                                  ),
+                                )
+                              : [], // Empty when there's an error (error is shown above)
+                        ),
+                      ),
             ],
           ),
         ),

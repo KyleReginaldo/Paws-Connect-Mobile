@@ -22,14 +22,80 @@ class AppRouter extends RootStackRouter {
           transitionsBuilder: TransitionsBuilders.fadeIn,
         ),
         CustomRoute(
+          page: FundraisingRoute.page,
+          transitionsBuilder: TransitionsBuilders.fadeIn,
+        ),
+        CustomRoute(
+          page: PetRoute.page,
+          transitionsBuilder: TransitionsBuilders.fadeIn,
+        ),
+        CustomRoute(
           page: NotfoundRoute.page,
           path: '*',
+          transitionsBuilder: TransitionsBuilders.fadeIn,
+        ),
+        CustomRoute(
+          page: ForumRoute.page,
           transitionsBuilder: TransitionsBuilders.fadeIn,
         ),
       ],
     ),
     CustomRoute(
       page: MapRoute.page,
+      transitionsBuilder: TransitionsBuilders.fadeIn,
+    ),
+    CustomRoute(
+      page: PetDetailRoute.page,
+      transitionsBuilder: TransitionsBuilders.fadeIn,
+    ),
+    CustomRoute(
+      page: FundraisingDetailRoute.page,
+      path: '/fundraising/:id',
+      transitionsBuilder: TransitionsBuilders.fadeIn,
+    ),
+    CustomRoute(
+      page: PaymentRoute.page,
+      path: '/payment',
+      transitionsBuilder: TransitionsBuilders.fadeIn,
+    ),
+    CustomRoute(
+      page: PaymentMethodRoute.page,
+      path: '/payment-method',
+      transitionsBuilder: TransitionsBuilders.fadeIn,
+    ),
+    CustomRoute(
+      page: PaymentSuccessRoute.page,
+      path: '/payment-success/:id',
+      transitionsBuilder: TransitionsBuilders.slideBottom,
+    ),
+    CustomRoute(
+      page: ForumChatRoute.page,
+      path: '/forum-chat/:forumId',
+      transitionsBuilder: TransitionsBuilders.fadeIn,
+    ),
+    CustomRoute(
+      page: AddForumRoute.page,
+      path: '/add-forum',
+      transitionsBuilder: TransitionsBuilders.fadeIn,
+    ),
+    CustomRoute(
+      page: ProfileRoute.page,
+      path: '/profile',
+      transitionsBuilder: TransitionsBuilders.fadeIn,
+    ),
+    CustomRoute(
+      page: EditProfileRoute.page,
+      path: '/edit-profile',
+      transitionsBuilder: TransitionsBuilders.fadeIn,
+    ),
+    CustomRoute(
+      page: ForumSettingsRoute.page,
+      path: '/forum-settings/:forumId',
+      transitionsBuilder: TransitionsBuilders.fadeIn,
+    ),
+    CustomRoute(
+      page: AddForumMemberRoute.page,
+      path: '/add-forum-member/:forumId',
       transitionsBuilder: TransitionsBuilders.fadeIn,
     ),
   ];

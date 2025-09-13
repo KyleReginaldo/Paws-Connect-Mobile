@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:dart_mappable/dart_mappable.dart';
 
 import '../../../core/hooks/mapping.hooks.dart';
@@ -16,9 +17,12 @@ class Fundraising with FundraisingMappable {
   double raisedAmount;
   String createdBy;
   String status;
-  List<String> images;
+  List<String>? images;
   CreatedByUser createdByUser;
-  List<DonationsCount> donationsCount;
+  final List<DonationsCount>? donationsCount;
+  final List<Donation>? donations;
+  final DateTime endDate;
+  final String? facebookLink;
 
   Fundraising({
     required this.id,
@@ -29,9 +33,12 @@ class Fundraising with FundraisingMappable {
     required this.raisedAmount,
     required this.createdBy,
     required this.status,
-    required this.images,
+    this.images,
     required this.createdByUser,
-    required this.donationsCount,
+    this.donationsCount,
+    this.donations,
+    required this.endDate,
+    this.facebookLink,
   });
 }
 
@@ -47,4 +54,30 @@ class CreatedByUser with CreatedByUserMappable {
 class DonationsCount with DonationsCountMappable {
   int count;
   DonationsCount({required this.count});
+}
+
+@MappableClass(caseStyle: CaseStyle.snakeCase)
+class Donation with DonationMappable {
+  final int id;
+  final Donor donor;
+  final int amount;
+  final String message;
+  final DateTime donatedAt;
+
+  Donation({
+    required this.id,
+    required this.donor,
+    required this.amount,
+    required this.message,
+    required this.donatedAt,
+  });
+}
+
+@MappableClass(caseStyle: CaseStyle.snakeCase)
+class Donor with DonorMappable {
+  final String id;
+  final String email;
+  final String username;
+
+  Donor({required this.id, required this.email, required this.username});
 }

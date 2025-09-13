@@ -51,5 +51,24 @@
 	<string>This app needs access to location to show your current position on the map and help you find nearby pets.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>This app needs access to location to show your current position on the map and help you find nearby pets.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>pawsconnect.deeplink</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>pawsconnect</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>pawsconnect.https</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>https</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

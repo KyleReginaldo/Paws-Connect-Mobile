@@ -23,6 +23,7 @@ class AddressRepository extends ChangeNotifier {
     if (result.isSuccess) {
       _defaultAddress = result.value;
       _isLoading = false;
+      _errorMessage = null;
       notifyListeners();
     } else {
       _defaultAddress = null;

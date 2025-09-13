@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/material.dart';
 
 /// 🐾 Elevated Button
@@ -6,7 +7,7 @@ class PawsElevatedButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final IconData? icon;
   final bool isFullWidth;
-
+  final double? size;
   // Editable design props
   final Color? backgroundColor;
   final Color? foregroundColor;
@@ -20,6 +21,7 @@ class PawsElevatedButton extends StatelessWidget {
     this.onPressed,
     this.icon,
     this.isFullWidth = true,
+    this.size,
     this.backgroundColor,
     this.foregroundColor,
     this.padding,
@@ -33,11 +35,13 @@ class PawsElevatedButton extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        if (icon != null) Icon(icon, size: 18, color: foregroundColor),
+        if (icon != null) Icon(icon, size: size ?? 18, color: foregroundColor),
         if (icon != null) const SizedBox(width: 8),
         Text(
           label,
-          style: textStyle ?? const TextStyle(fontWeight: FontWeight.w600),
+          style:
+              textStyle ??
+              TextStyle(fontWeight: FontWeight.w600, fontSize: size ?? 15),
         ),
       ],
     );

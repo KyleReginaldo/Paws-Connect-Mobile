@@ -124,7 +124,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         zipCode: _zipController.text,
         latitude: _selectedLocation?.latitude ?? 0.0,
         longitude: _selectedLocation?.longitude ?? 0.0,
-        user: USER_ID,
+        user: USER_ID ?? '',
       ),
     );
     if (result.isError) {

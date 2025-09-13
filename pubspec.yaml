@@ -54,6 +54,18 @@ dependencies:
   lottie: ^3.3.1
   firebase_core: ^4.1.0
   onesignal_flutter: ^5.3.4
+  internet_connection_checker_plus: ^2.7.2
+  iconify_flutter: ^0.0.7
+  url_launcher: ^6.3.2
+  app_links: ^6.3.2
+  share_plus: ^11.1.0
+  cached_network_image: ^3.4.1
+  paymongo_sdk:
+    git:
+      url: https://github.com/KyleReginaldo/paymongo_sdk.git
+  image_picker: ^1.2.0
+  path: ^1.9.1
+  cross_file: ^0.3.4+2
 
 dev_dependencies:
   flutter_test:
