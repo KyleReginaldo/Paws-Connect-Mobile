@@ -59,6 +59,7 @@ class Member with MemberMappable {
   final String? profileImageLink;
   final DateTime joinedAt;
   final String invitationStatus;
+  final bool mute;
 
   Member({
     required this.forumMemberId,
@@ -67,6 +68,7 @@ class Member with MemberMappable {
     this.profileImageLink,
     required this.joinedAt,
     required this.invitationStatus,
+    required this.mute,
   });
 }
 

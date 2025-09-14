@@ -1,4 +1,3 @@
-import 'package:app_links/app_links.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +13,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/theme/paws_theme.dart';
+import 'features/auth/provider/auth_provider.dart';
 import 'features/payment/provider/payment_provider.dart';
 import 'firebase_options.dart';
 
@@ -77,7 +77,6 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final appRouter = AppRouter();
-  late AppLinks _appLinks;
 
   @override
   void initState() {
@@ -98,7 +97,7 @@ class _MyAppState extends State<MyApp> {
         themeMode: ThemeMode.system,
         builder: EasyLoading.init(),
         routerConfig: appRouter.config(
-          deepLinkBuilder: (deepLink) {
+          deepLinkBuilder: (deepLink) async {
             final segments = deepLink.path.split('/');
             // Example: ['', 'payment-success', '12345']
             final id = segments.length > 2 ? segments[2] : null;
@@ -134,6 +133,24 @@ class _MyAppState extends State<MyApp> {
                 MainRoute(),
                 ForumChatRoute(forumId: int.parse(id)),
               ]);
+            }
+            if (deepLink.path.contains('signin')) {
+              String? email = deepLink.uri.queryParameters['email'];
+              String? password = deepLink.uri.queryParameters['password'];
+              debugPrint('${DateTime.now()}: Deep link email: $email');
+              debugPrint('${DateTime.now()}: Deep link password: $password');
+              if (email != null && password != null) {
+                final result = await AuthProvider().signIn(
+                  email: email,
+                  password: password,
+                );
+                if (result.isError) {
+                  EasyLoading.showError(result.error);
+                } else {
+                  EasyLoading.showSuccess('Sign in successful');
+                  // return DeepLink([MainRoute()]);
+                }
+              }
             }
 
             return DeepLink.defaultPath;

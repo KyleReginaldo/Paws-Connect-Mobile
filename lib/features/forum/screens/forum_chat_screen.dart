@@ -159,7 +159,6 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     final repo = context.watch<ForumRepository>();
     final forumChats = repo.forumChats;
     final isLoadingChats = repo.isLoadingChats; // Remove local loading state
-
     // Auto-scroll to bottom when new messages arrive - instant
     if (forumChats.length != _previousMessageCount) {
       _previousMessageCount = forumChats.length;

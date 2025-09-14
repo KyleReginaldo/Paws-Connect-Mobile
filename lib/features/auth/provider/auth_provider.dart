@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
@@ -81,6 +82,24 @@ class AuthProvider {
       return Result.error(e.message);
     } catch (e) {
       return Result.error('Sign up failed: ${e.toString()}');
+    }
+  }
+
+  Future<Result<String>> changeInitialPassword({
+    required String userId,
+    required String newPassword,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${dotenv.get('BASE_URL')}/users/change-password'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'userId': userId, 'newPassword': newPassword}),
+    );
+    final body = jsonDecode(response.body);
+    debugPrint('Change Password Response: $body');
+    if (response.statusCode == 200) {
+      return Result.success(body['message']);
+    } else {
+      return Result.error(body['message'] ?? 'Failed to change password');
     }
   }
 }

@@ -56,6 +56,10 @@
                     android:scheme="https"
                     android:host="paws-connect-sable.vercel.app"
                     android:pathPrefix="/forum-invite" />
+                <data
+                    android:scheme="https"
+                    android:host="paws-connect-sable.vercel.app"
+                    android:pathPrefix="/signin" />
 
             </intent-filter>
             <intent-filter>

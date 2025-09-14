@@ -16,6 +16,8 @@ class UserProfile with UserProfileMappable {
   final String? paymongoId;
   final String? paymentMethod;
   final String? profileImageLink;
+  final String? createdBy;
+  final bool? passwordChanged;
 
   UserProfile({
     required this.id,
@@ -29,5 +31,7 @@ class UserProfile with UserProfileMappable {
     this.paymongoId,
     this.paymentMethod,
     this.profileImageLink,
+    this.createdBy,
+    this.passwordChanged,
   });
 }

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:paws_connect/core/config/result.dart';
+import 'package:paws_connect/core/services/supabase_service.dart';
 import 'package:paws_connect/features/forum/models/forum_model.dart';
 
 class ForumProvider {
@@ -178,6 +179,23 @@ class ForumProvider {
       return Result.success(data['message']);
     } else {
       return Result.error('Failed to add members');
+    }
+  }
+
+  Future<Result<String>> toggleForumNotificationSettings({
+    required int forumMemberId,
+    required bool mute,
+  }) async {
+    try {
+      await supabase
+          .from('forum_members')
+          .update({'mute': mute})
+          .eq('id', forumMemberId);
+      return Result.success(
+        mute ? 'Notifications muted' : 'Notifications unmuted',
+      );
+    } catch (e) {
+      return Result.error('Something went wrong: $e');
     }
   }
 }

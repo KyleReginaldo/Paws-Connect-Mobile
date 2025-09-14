@@ -249,6 +249,8 @@ class MemberMapper extends ClassMapperBase<Member> {
     _$invitationStatus,
     key: r'invitation_status',
   );
+  static bool _$mute(Member v) => v.mute;
+  static const Field<Member, bool> _f$mute = Field('mute', _$mute);
 
   @override
   final MappableFields<Member> fields = const {
@@ -258,6 +260,7 @@ class MemberMapper extends ClassMapperBase<Member> {
     #profileImageLink: _f$profileImageLink,
     #joinedAt: _f$joinedAt,
     #invitationStatus: _f$invitationStatus,
+    #mute: _f$mute,
   };
 
   static Member _instantiate(DecodingData data) {
@@ -268,6 +271,7 @@ class MemberMapper extends ClassMapperBase<Member> {
       profileImageLink: data.dec(_f$profileImageLink),
       joinedAt: data.dec(_f$joinedAt),
       invitationStatus: data.dec(_f$invitationStatus),
+      mute: data.dec(_f$mute),
     );
   }
 
@@ -324,6 +328,7 @@ abstract class MemberCopyWith<$R, $In extends Member, $Out>
     String? profileImageLink,
     DateTime? joinedAt,
     String? invitationStatus,
+    bool? mute,
   });
   MemberCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -342,6 +347,7 @@ class _MemberCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Member, $Out>
     Object? profileImageLink = $none,
     DateTime? joinedAt,
     String? invitationStatus,
+    bool? mute,
   }) => $apply(
     FieldCopyWithData({
       if (forumMemberId != null) #forumMemberId: forumMemberId,
@@ -350,6 +356,7 @@ class _MemberCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Member, $Out>
       if (profileImageLink != $none) #profileImageLink: profileImageLink,
       if (joinedAt != null) #joinedAt: joinedAt,
       if (invitationStatus != null) #invitationStatus: invitationStatus,
+      if (mute != null) #mute: mute,
     }),
   );
   @override
@@ -360,6 +367,7 @@ class _MemberCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Member, $Out>
     profileImageLink: data.get(#profileImageLink, or: $value.profileImageLink),
     joinedAt: data.get(#joinedAt, or: $value.joinedAt),
     invitationStatus: data.get(#invitationStatus, or: $value.invitationStatus),
+    mute: data.get(#mute, or: $value.mute),
   );
 
   @override

@@ -74,6 +74,20 @@ class UserProfileMapper extends ClassMapperBase<UserProfile> {
     key: r'profile_image_link',
     opt: true,
   );
+  static String? _$createdBy(UserProfile v) => v.createdBy;
+  static const Field<UserProfile, String> _f$createdBy = Field(
+    'createdBy',
+    _$createdBy,
+    key: r'created_by',
+    opt: true,
+  );
+  static bool? _$passwordChanged(UserProfile v) => v.passwordChanged;
+  static const Field<UserProfile, bool> _f$passwordChanged = Field(
+    'passwordChanged',
+    _$passwordChanged,
+    key: r'password_changed',
+    opt: true,
+  );
 
   @override
   final MappableFields<UserProfile> fields = const {
@@ -88,6 +102,8 @@ class UserProfileMapper extends ClassMapperBase<UserProfile> {
     #paymongoId: _f$paymongoId,
     #paymentMethod: _f$paymentMethod,
     #profileImageLink: _f$profileImageLink,
+    #createdBy: _f$createdBy,
+    #passwordChanged: _f$passwordChanged,
   };
 
   static UserProfile _instantiate(DecodingData data) {
@@ -103,6 +119,8 @@ class UserProfileMapper extends ClassMapperBase<UserProfile> {
       paymongoId: data.dec(_f$paymongoId),
       paymentMethod: data.dec(_f$paymentMethod),
       profileImageLink: data.dec(_f$profileImageLink),
+      createdBy: data.dec(_f$createdBy),
+      passwordChanged: data.dec(_f$passwordChanged),
     );
   }
 
@@ -179,6 +197,8 @@ abstract class UserProfileCopyWith<$R, $In extends UserProfile, $Out>
     String? paymongoId,
     String? paymentMethod,
     String? profileImageLink,
+    String? createdBy,
+    bool? passwordChanged,
   });
   UserProfileCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -213,6 +233,8 @@ class _UserProfileCopyWithImpl<$R, $Out>
     Object? paymongoId = $none,
     Object? paymentMethod = $none,
     Object? profileImageLink = $none,
+    Object? createdBy = $none,
+    Object? passwordChanged = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -226,6 +248,8 @@ class _UserProfileCopyWithImpl<$R, $Out>
       if (paymongoId != $none) #paymongoId: paymongoId,
       if (paymentMethod != $none) #paymentMethod: paymentMethod,
       if (profileImageLink != $none) #profileImageLink: profileImageLink,
+      if (createdBy != $none) #createdBy: createdBy,
+      if (passwordChanged != $none) #passwordChanged: passwordChanged,
     }),
   );
   @override
@@ -241,6 +265,8 @@ class _UserProfileCopyWithImpl<$R, $Out>
     paymongoId: data.get(#paymongoId, or: $value.paymongoId),
     paymentMethod: data.get(#paymentMethod, or: $value.paymentMethod),
     profileImageLink: data.get(#profileImageLink, or: $value.profileImageLink),
+    createdBy: data.get(#createdBy, or: $value.createdBy),
+    passwordChanged: data.get(#passwordChanged, or: $value.passwordChanged),
   );
 
   @override

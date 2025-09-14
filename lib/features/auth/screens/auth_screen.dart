@@ -14,8 +14,10 @@ import '../../../core/theme/paws_theme.dart';
 @RoutePage()
 class SignInScreen extends StatefulWidget implements AutoRouteWrapper {
   final void Function(bool success)? onResult;
+  final String? email;
+  final String? password;
 
-  const SignInScreen({super.key, this.onResult});
+  const SignInScreen({super.key, this.onResult, this.email, this.password});
 
   @override
   State<SignInScreen> createState() => _SignInScreenState();
@@ -43,14 +45,14 @@ class _SignInScreenState extends State<SignInScreen>
   late final Animation<double> _fadeAnimation;
   bool rememberMe = false;
   bool isLoading = false;
-  void _handleSignIn() async {
+  void _handleSignIn({String? initEmail, String? initPassword}) async {
     if (!mounted) return;
     if (formKey.currentState?.validate() ?? false) {
       setState(() => isLoading = true);
       try {
         final result = await AuthProvider().signIn(
-          email: email.text.trim(),
-          password: password.text.trim(),
+          email: initEmail ?? email.text.trim(),
+          password: initPassword ?? password.text.trim(),
         );
 
         if (result.isError) {
@@ -97,9 +99,34 @@ class _SignInScreenState extends State<SignInScreen>
     }
   }
 
+  void initCredentials() {
+    Future.delayed(Duration(seconds: 2), () {
+      print(
+        'initCredentials called - widget.email: ${widget.email}, widget.password: ${widget.password}',
+      );
+      print('Email is null: ${widget.email == null}');
+      print('Password is null: ${widget.password == null}');
+
+      if (mounted) {
+        setState(() {
+          email.text = widget.email ?? '';
+          password.text = widget.password ?? '';
+        });
+        print(
+          'Form fields updated - email.text: "${email.text}", password.text: "${password.text}"',
+        );
+      }
+    });
+  }
+
   @override
   void initState() {
     super.initState();
+
+    print(
+      'initState called - widget.email: ${widget.email}, widget.password: ${widget.password}',
+    );
+
     _entranceController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 450),
@@ -116,8 +143,26 @@ class _SignInScreenState extends State<SignInScreen>
       curve: Curves.easeIn,
     );
 
-    // start entrance animation
+    // Initialize credentials immediately
+    initCredentials();
+
+    // Start animation after credentials are set
     _entranceController.forward();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    print(
+      'didChangeDependencies called - widget.email: ${widget.email}, widget.password: ${widget.password}',
+    );
+
+    // Try initializing credentials again in case they weren't available in initState
+    if ((widget.email != null || widget.password != null) &&
+        (email.text.isEmpty || password.text.isEmpty)) {
+      print('Re-initializing credentials in didChangeDependencies');
+      initCredentials();
+    }
   }
 
   @override

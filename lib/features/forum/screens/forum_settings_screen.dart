@@ -13,6 +13,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/router/app_route.gr.dart';
 import '../../../core/services/supabase_service.dart';
+import '../models/forum_model.dart';
 import '../provider/forum_provider.dart';
 import '../repository/forum_repository.dart';
 
@@ -38,6 +39,28 @@ class ForumSettingsScreen extends StatefulWidget implements AutoRouteWrapper {
 
 class _ForumSettingsScreenState extends State<ForumSettingsScreen> {
   late RealtimeChannel forumChannel;
+
+  void handleNotificationStatus(int forumMemberId, bool mute) async {
+    final result = await ForumProvider().toggleForumNotificationSettings(
+      forumMemberId: forumMemberId,
+      mute: mute,
+    );
+    if (result.isError) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.error)));
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.value)));
+      context.read<ForumRepository>().setForumById(
+        widget.forumId,
+        USER_ID ?? "",
+      );
+    }
+  }
 
   void listenToChanges() {
     debugPrint(
@@ -147,6 +170,7 @@ class _ForumSettingsScreenState extends State<ForumSettingsScreen> {
   Widget build(BuildContext context) {
     final forum = context.watch<ForumRepository>().forum;
     final isLoading = context.watch<ForumRepository>().isLoadingForums;
+    Member? myProfile = forum?.members?.singleWhere((e) => e.id == USER_ID);
     debugPrint('user id: $USER_ID');
     debugPrint('forum: ${forum?.createdBy}');
     debugPrint('private: ${forum?.private}');
@@ -272,6 +296,30 @@ class _ForumSettingsScreenState extends State<ForumSettingsScreen> {
                                 color: PawsColors.textLight,
                               ),
                             ),
+                          IconButton.filled(
+                            onPressed: () async {
+                              if (myProfile != null) {
+                                handleNotificationStatus(
+                                  myProfile.forumMemberId,
+                                  !(myProfile.mute),
+                                );
+                              }
+                            },
+                            style: ButtonStyle().copyWith(
+                              backgroundColor: WidgetStatePropertyAll(
+                                myProfile != null && myProfile.mute
+                                    ? PawsColors.primary
+                                    : PawsColors.textPrimary,
+                              ),
+                            ),
+                            icon: Icon(
+                              myProfile != null && myProfile.mute
+                                  ? LucideIcons.bellOff
+                                  : LucideIcons.bell,
+                              size: 16,
+                              color: PawsColors.textLight,
+                            ),
+                          ),
                         ],
                       ),
                       // PawsText('${forum.memberCount} member(s)'),

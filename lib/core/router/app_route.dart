@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:paws_connect/core/guard/auth.guard.dart';
+import 'package:paws_connect/core/guard/user.guard.dart';
 import 'package:paws_connect/core/router/app_route.gr.dart';
 
 @AutoRouterConfig()
@@ -14,7 +15,7 @@ class AppRouter extends RootStackRouter {
     CustomRoute(
       page: MainRoute.page,
       transitionsBuilder: TransitionsBuilders.fadeIn,
-      guards: [AuthGuard()],
+      guards: [AuthGuard(), UserGuard()],
       initial: true,
       children: [
         CustomRoute(
@@ -97,6 +98,11 @@ class AppRouter extends RootStackRouter {
       page: AddForumMemberRoute.page,
       path: '/add-forum-member/:forumId',
       transitionsBuilder: TransitionsBuilders.fadeIn,
+    ),
+    CustomRoute(
+      page: ChangePasswordRoute.page,
+      path: '/change-password',
+      transitionsBuilder: TransitionsBuilders.slideBottom,
     ),
   ];
 }

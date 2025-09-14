@@ -9,6 +9,7 @@ import '../../../core/router/app_route.gr.dart';
 import '../../../core/theme/paws_theme.dart';
 import '../../../core/widgets/text.dart';
 import '../../../dependency.dart';
+import '../models/forum_model.dart';
 import '../repository/forum_repository.dart';
 
 @RoutePage()
@@ -100,13 +101,33 @@ class _ForumScreenState extends State<ForumScreen> {
                 itemCount: forums.length,
                 itemBuilder: (context, index) {
                   final forum = forums[index];
+                  Member? myProfile = forum.members?.singleWhere(
+                    (e) => e.id == USER_ID,
+                  );
                   return ListTile(
-                    title: PawsText(
-                      forum.forumName,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: PawsColors.textPrimary,
-                    ),
+                    title: myProfile != null && myProfile.mute
+                        ? Row(
+                            spacing: 5,
+                            children: [
+                              Icon(
+                                LucideIcons.bellOff,
+                                size: 16,
+                                color: PawsColors.textSecondary,
+                              ),
+                              PawsText(
+                                forum.forumName,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: PawsColors.textPrimary,
+                              ),
+                            ],
+                          )
+                        : PawsText(
+                            forum.forumName,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: PawsColors.textPrimary,
+                          ),
                     subtitle: PawsText(
                       'Created ${DateFormat('MMM dd, yyyy').format(forum.createdAt)}',
                       fontSize: 12,
