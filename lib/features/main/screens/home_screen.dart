@@ -514,6 +514,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         physics: PageScrollPhysics(),
                         scrollDirection: Axis.horizontal,
                         child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           spacing: 10,
                           children:
                               fundraisings == null && fundraisingError == null
