@@ -7,11 +7,13 @@ import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:paws_connect/core/router/app_route.dart';
 import 'package:paws_connect/core/router/app_route.gr.dart';
 import 'package:paws_connect/dependency.dart';
+import 'package:paws_connect/features/forum/provider/forum_provider.dart';
 import 'package:paws_connect/features/internet/internet.dart';
 import 'package:paymongo_sdk/paymongo_sdk.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'core/supabase/client.dart';
 import 'core/theme/paws_theme.dart';
 import 'features/auth/provider/auth_provider.dart';
 import 'features/payment/provider/payment_provider.dart';
@@ -109,6 +111,16 @@ class _MyAppState extends State<MyApp> {
             if (deepLink.path.contains('forum-invite') &&
                 id != null &&
                 invitedBy != null) {
+              await ForumProvider().invitedMemberFromLink(
+                invitedBy: invitedBy,
+                forumId: int.parse(id),
+                memberId: USER_ID ?? '',
+              );
+              return DeepLink([
+                MainRoute(initialIndex: 4),
+                ForumChatRoute(forumId: int.parse(id)),
+                ForumSettingsRoute(forumId: int.parse(id)),
+              ]);
               // do the function for inviting the member and alread accepted and then navigate to the forum chat
             }
             if (deepLink.path.contains('payment-success') &&

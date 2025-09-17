@@ -78,7 +78,7 @@ Future<Result<String>> createPaymentMethod({
     Uri.parse('https://api.paymongo.com/v1/payment_methods'),
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': 'Basic c2tfdGVzdF9rU2tHREtnNDNMSkpFWWJlOTNHR2N6aEw6',
+      'Authorization': 'Basic c2tfdGVzdF9aQ0xCYldHa0pnVGtmeDVKb0FUbVY5RTE6',
     },
     body: jsonEncode({
       "data": {
@@ -106,7 +106,7 @@ Future<Result<String>> createPaymentIntent({required int amount}) async {
     Uri.parse('https://api.paymongo.com/v1/payment_intents'),
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': 'Basic c2tfdGVzdF9rU2tHREtnNDNMSkpFWWJlOTNHR2N6aEw6',
+      'Authorization': 'Basic c2tfdGVzdF9aQ0xCYldHa0pnVGtmeDVKb0FUbVY5RTE6',
     },
     body: jsonEncode({
       "data": {
@@ -148,7 +148,7 @@ Future<Result<String>> attachPaymentIntent({
     ),
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': 'Basic c2tfdGVzdF9rU2tHREtnNDNMSkpFWWJlOTNHR2N6aEw6',
+      'Authorization': 'Basic c2tfdGVzdF9aQ0xCYldHa0pnVGtmeDVKb0FUbVY5RTE6',
     },
     body: jsonEncode({
       "data": {
