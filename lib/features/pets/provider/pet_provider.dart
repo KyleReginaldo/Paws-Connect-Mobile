@@ -111,4 +111,36 @@ class PetProvider {
       return Result.error('Failed to fetch pets: ${e.toString()}');
     }
   }
+
+  Future<Result<Pet>> fetchPetById(int petId) async {
+    // Check internet connectivity first
+    final hasInternet = await InternetConnection().hasInternetAccess;
+    if (!hasInternet) {
+      return Result.error(
+        'No internet connection. Please check your network and try again.',
+      );
+    }
+
+    try {
+      final uri = Uri.parse('${dotenv.get('BASE_URL')}/pets/$petId');
+
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['data'] != null) {
+          final pet = PetMapper.fromMap(data['data']);
+          return Result.success(pet);
+        } else {
+          return Result.error('Pet not found');
+        }
+      } else {
+        return Result.error(
+          'Failed to fetch pet. Server returned ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      return Result.error('Failed to fetch pet: ${e.toString()}');
+    }
+  }
 }

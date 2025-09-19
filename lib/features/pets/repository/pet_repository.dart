@@ -6,6 +6,7 @@ class PetRepository extends ChangeNotifier {
   final PetProvider _petProvider;
   String? _errorMessage;
   List<Pet>? _pets;
+  Pet? _pet;
   List<Pet>? _recentPets;
   bool _isLoading = false;
 
@@ -27,6 +28,7 @@ class PetRepository extends ChangeNotifier {
   // Getters
   bool get isLoading => _isLoading;
   List<Pet>? get pets => _pets;
+  Pet? get pet => _pet;
   List<Pet>? get recentPets => _recentPets;
   String? get errorMessage => _errorMessage;
 
@@ -103,6 +105,21 @@ class PetRepository extends ChangeNotifier {
       notifyListeners();
     } else {
       _recentPets = null;
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void fetchPetById(int id) async {
+    _isLoading = true;
+    notifyListeners();
+    final result = await _petProvider.fetchPetById(id);
+    if (result.isSuccess) {
+      _pet = result.value;
+      _isLoading = false;
+      notifyListeners();
+    } else {
+      _pet = null;
       _isLoading = false;
       notifyListeners();
     }

@@ -4,6 +4,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:lottie/lottie.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/router/app_route.gr.dart';
+import 'package:paws_connect/core/services/shopee_service.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/core/widgets/button.dart';
 import 'package:paws_connect/features/auth/repository/auth_repository.dart';
@@ -404,7 +405,26 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
+
               // PawsDivider(thickness: 2),
+              FutureBuilder(
+                future: ShopeeService().getShopeeImageUrl(
+                  'https://shopee.ph/12pcs-DIY-Pet-Fence-Dog-Fence-Pet-Playpen-Dog-Playpen-Crate-For-Puppy-Cats-Rabbits-35cm-x-35cm-i.416734455.15992356947?sp_atk=dfabce33-1b3e-4906-98c1-6be8e8ce9a26&xptdk=dfabce33-1b3e-4906-98c1-6be8e8ce9a26',
+                ),
+                builder: (context, snapshot) {
+                  debugPrint('snapshot data; ${snapshot.data}');
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return SizedBox.shrink();
+                  } else if (snapshot.hasData && snapshot.data != null) {
+                    return Container(
+                      decoration: BoxDecoration(),
+                      child: Image.network(snapshot.data!, fit: BoxFit.cover),
+                    );
+                  } else {
+                    return SizedBox(height: 5);
+                  }
+                },
+              ),
               if (recentPets != null)
                 PawsText(
                   'Recently added',

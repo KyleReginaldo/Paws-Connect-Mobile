@@ -66,6 +66,7 @@ dependencies:
   image_picker: ^1.2.0
   path: ^1.9.1
   cross_file: ^0.3.4+2
+  html: ^0.15.6
 
 dev_dependencies:
   flutter_test:

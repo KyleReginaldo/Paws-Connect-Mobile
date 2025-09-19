@@ -1,0 +1,12 @@
+{
+  "name": "shopee-scraper",
+  "version": "0.1.0",
+  "description": "Headless Playwright scraper to extract Shopee product image URLs",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "playwright": "^1.40.0"
+  }
+}

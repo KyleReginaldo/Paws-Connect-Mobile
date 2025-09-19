@@ -104,5 +104,20 @@ class AppRouter extends RootStackRouter {
       path: '/change-password',
       transitionsBuilder: TransitionsBuilders.slideBottom,
     ),
+    CustomRoute(
+      page: CreateAdoptionRoute.page,
+      path: '/create-adoption/:petId',
+      transitionsBuilder: TransitionsBuilders.slideBottom,
+    ),
+    CustomRoute(
+      page: AdoptionHistoryRoute.page,
+      path: '/adoption-history',
+      transitionsBuilder: TransitionsBuilders.slideBottom,
+    ),
+    CustomRoute(
+      page: DonationHistoryRoute.page,
+      path: '/donation-history',
+      transitionsBuilder: TransitionsBuilders.slideBottom,
+    ),
   ];
 }

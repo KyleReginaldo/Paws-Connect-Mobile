@@ -7,6 +7,8 @@ import 'package:paws_connect/core/widgets/button.dart';
 import 'package:paws_connect/core/widgets/text.dart';
 import 'package:paws_connect/features/pets/models/pet_model.dart';
 
+import '../../../../core/router/app_route.gr.dart';
+
 @RoutePage()
 class PetDetailScreen extends StatelessWidget {
   final Pet pet;
@@ -201,7 +203,9 @@ class PetDetailScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: PawsElevatedButton(
             label: 'Adopt Now',
-            onPressed: () {},
+            onPressed: () {
+              context.router.push(CreateAdoptionRoute(petId: pet.id));
+            },
             borderRadius: 25,
           ),
         ),

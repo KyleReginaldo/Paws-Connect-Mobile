@@ -7,6 +7,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/core/widgets/button.dart';
+import 'package:paws_connect/features/adoption/repository/adoption_repository.dart';
+import 'package:paws_connect/features/donation/repository/donation_repository.dart';
 import 'package:paws_connect/features/profile/repository/profile_repository.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -34,6 +36,8 @@ class ProfileScreen extends StatefulWidget implements AutoRouteWrapper {
       providers: [
         ChangeNotifierProvider.value(value: sl<ProfileRepository>()),
         ChangeNotifierProvider.value(value: sl<AuthRepository>()),
+        ChangeNotifierProvider.value(value: sl<AdoptionRepository>()),
+        ChangeNotifierProvider.value(value: sl<DonationRepository>()),
       ],
       child: this,
     );
@@ -69,6 +73,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (!mounted) return;
       final repo = context.read<ProfileRepository>();
       repo.fetchVisitedProfile(widget.id);
+      context.read<AdoptionRepository>().fetchUserAdoptions(widget.id);
+      context.read<DonationRepository>().fetchUserDonations(widget.id);
       listenToChanges();
     });
     super.initState();
@@ -84,7 +90,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final repo = context.watch<ProfileRepository>();
     final visited = repo.visitedProfile;
     final isLoading = context.watch<ProfileRepository>().visitedProfileLoading;
-
+    final adoptions = context.select(
+      (AdoptionRepository bloc) => bloc.adoptions,
+    );
+    final donations = context.select(
+      (DonationRepository bloc) => bloc.donations,
+    );
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -241,13 +252,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _buildInfoRow(
                         icon: LucideIcons.history,
                         label: 'Adoption History',
-                        value: '1 adoption(s)',
+                        value: '${adoptions?.length ?? 0} adoption(s)',
+                        onTap: () {
+                          context.router.push(AdoptionHistoryRoute());
+                        },
                       ),
                       const SizedBox(height: 12),
                       _buildInfoRow(
                         icon: LucideIcons.handHelping,
-                        label: 'History of donations',
-                        value: '10 donation(s)',
+                        label: 'Donation History',
+                        value: '${donations?.length ?? 0} donation(s)',
+                        onTap: () {
+                          context.router.push(DonationHistoryRoute());
+                        },
                       ),
                     ],
                   ),
@@ -299,38 +316,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required IconData icon,
     required String label,
     required String value,
+    Function()? onTap,
   }) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: PawsColors.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
+    return InkWell(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: PawsColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 18, color: PawsColors.primary),
           ),
-          child: Icon(icon, size: 18, color: PawsColors.primary),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              PawsText(
-                label,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: PawsColors.textSecondary,
-              ),
-              PawsText(
-                value,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: PawsColors.textPrimary,
-              ),
-            ],
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                PawsText(
+                  label,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: PawsColors.textSecondary,
+                ),
+                PawsText(
+                  value,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: PawsColors.textPrimary,
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
