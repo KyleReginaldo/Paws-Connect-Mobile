@@ -221,4 +221,27 @@ class PetRepository extends ChangeNotifier {
     clearAllFilters();
     // clearAllFilters already notifies; no extra notify needed
   }
+
+  // Optimistically update favorite flag for a pet in local caches
+  void updatePetFavorite(int petId, bool isFav) {
+    bool changed = false;
+    if (_recentPets != null) {
+      for (var i = 0; i < _recentPets!.length; i++) {
+        if (_recentPets![i].id == petId) {
+          _recentPets![i].isFavorite = isFav;
+          changed = true;
+          break;
+        }
+      }
+    }
+    if (_pets != null) {
+      for (var i = 0; i < _pets!.length; i++) {
+        if (_pets![i].id == petId) {
+          _pets![i].isFavorite = isFav;
+          changed = true;
+        }
+      }
+    }
+    if (changed) notifyListeners();
+  }
 }

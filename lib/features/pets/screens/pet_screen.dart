@@ -1,7 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:paws_connect/core/supabase/client.dart';
-import 'package:paws_connect/features/favorite/provider/favorite_provider.dart';
+import 'package:paws_connect/features/favorite/repository/favorite_repository.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/router/app_route.gr.dart';
@@ -51,18 +51,45 @@ class _PetScreenState extends State<PetScreen> {
     );
   }
 
-  void _addFavorite(int pet) async {
-    final result = await FavoriteProvider().addFavorite(pet, USER_ID ?? "");
-    if (result.isError) {
+  void _toggleFavorite(int petId, bool isCurrentlyFavorite) async {
+    if (USER_ID == null || (USER_ID?.isEmpty ?? true)) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(result.error)));
-    } else {
+      context.router.push(
+        SignInRoute(
+          onResult: (success) {
+            if (!mounted) return;
+            if (success) {
+              // Refresh pets to reflect favorites after sign-in
+              context.read<PetRepository>().fetchPets(userId: USER_ID);
+            }
+          },
+        ),
+      );
+      return;
+    }
+
+    final repo = context.read<PetRepository>();
+    // Optimistic update
+    repo.updatePetFavorite(petId, !isCurrentlyFavorite);
+    try {
+      await sl<FavoriteRepository>().toggleFavorite(petId);
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Added to favorites')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            !isCurrentlyFavorite
+                ? 'Added to favorites'
+                : 'Removed from favorites',
+          ),
+        ),
+      );
+    } catch (e) {
+      // Rollback on failure
+      repo.updatePetFavorite(petId, isCurrentlyFavorite);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to update favorite')),
+      );
     }
   }
 
@@ -235,7 +262,10 @@ class _PetScreenState extends State<PetScreen> {
                                   ),
                                 ),
                                 onPressed: () {
-                                  _addFavorite(pet.id);
+                                  _toggleFavorite(
+                                    pet.id,
+                                    pet.isFavorite ?? false,
+                                  );
                                 },
                                 icon: Icon(
                                   pet.isFavorite ?? false

@@ -5,14 +5,48 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/theme/paws_theme.dart';
 import 'package:paws_connect/core/widgets/button.dart';
 import 'package:paws_connect/core/widgets/text.dart';
+import 'package:paws_connect/dependency.dart';
+import 'package:paws_connect/features/favorite/repository/favorite_repository.dart';
 import 'package:paws_connect/features/pets/models/pet_model.dart';
 
 import '../../../../core/router/app_route.gr.dart';
+import '../../../../core/supabase/client.dart';
 
 @RoutePage()
-class PetDetailScreen extends StatelessWidget {
+class PetDetailScreen extends StatefulWidget {
   final Pet pet;
   const PetDetailScreen({super.key, required this.pet});
+
+  @override
+  State<PetDetailScreen> createState() => _PetDetailScreenState();
+}
+
+class _PetDetailScreenState extends State<PetDetailScreen> {
+  void _toggleFavorite() async {
+    if (USER_ID == null || (USER_ID?.isEmpty ?? true)) {
+      // Not signed in; navigate to sign in
+      if (!mounted) return;
+      context.router.push(
+        SignInRoute(
+          onResult: (success) {
+            if (!mounted) return;
+            if (success) setState(() {});
+          },
+        ),
+      );
+      return;
+    }
+
+    final current = widget.pet.isFavorite ?? false;
+    setState(() => widget.pet.isFavorite = !current);
+    try {
+      await sl<FavoriteRepository>().toggleFavorite(widget.pet.id);
+    } catch (_) {
+      if (!mounted) return;
+      // Rollback on failure
+      setState(() => widget.pet.isFavorite = current);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +64,17 @@ class PetDetailScreen extends StatelessWidget {
           centerTitle: true,
           backgroundColor: Colors.transparent,
           elevation: 0,
+          actions: [
+            IconButton(
+              onPressed: _toggleFavorite,
+              icon: Icon(
+                (widget.pet.isFavorite ?? false)
+                    ? Icons.favorite
+                    : Icons.favorite_border,
+                color: Colors.white,
+              ),
+            ),
+          ],
         ),
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,7 +95,7 @@ class PetDetailScreen extends StatelessWidget {
               height: MediaQuery.sizeOf(context).height * 0.3,
               width: MediaQuery.sizeOf(context).width,
               child: Image.network(
-                pet.photo,
+                widget.pet.photo,
                 fit: BoxFit.cover,
                 opacity: Animation.fromValueListenable(
                   AlwaysStoppedAnimation(0.9),
@@ -64,7 +109,7 @@ class PetDetailScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   PawsText(
-                    pet.name,
+                    widget.pet.name,
                     fontSize: 18,
                     color: PawsColors.textPrimary,
                   ),
@@ -76,7 +121,7 @@ class PetDetailScreen extends StatelessWidget {
                         color: PawsColors.primaryDark,
                       ),
                       PawsText(
-                        pet.rescueAddress,
+                        widget.pet.rescueAddress,
                         fontSize: 15,
                         color: PawsColors.textSecondary,
                       ),
@@ -104,7 +149,7 @@ class PetDetailScreen extends StatelessWidget {
                           children: [
                             PawsText('Gender', fontSize: 16),
                             PawsText(
-                              pet.gender,
+                              widget.pet.gender,
                               fontWeight: FontWeight.w500,
                               fontSize: 16,
                             ),
@@ -129,7 +174,7 @@ class PetDetailScreen extends StatelessWidget {
                           children: [
                             PawsText('Age', fontSize: 16),
                             PawsText(
-                              pet.age.toString(),
+                              widget.pet.age.toString(),
                               fontWeight: FontWeight.w500,
                               fontSize: 16,
                             ),
@@ -154,7 +199,7 @@ class PetDetailScreen extends StatelessWidget {
                           children: [
                             PawsText('Weight', fontSize: 16),
                             PawsText(
-                              pet.weight,
+                              widget.pet.weight,
                               fontWeight: FontWeight.w500,
                               fontSize: 16,
                             ),
@@ -166,7 +211,7 @@ class PetDetailScreen extends StatelessWidget {
                   SizedBox(height: 8),
                   PawsText('Good with:'),
                   Row(
-                    children: pet.goodWith
+                    children: widget.pet.goodWith
                         .map(
                           (e) => Padding(
                             padding: const EdgeInsets.only(right: 8.0),
@@ -190,8 +235,8 @@ class PetDetailScreen extends StatelessWidget {
                   PawsText('Description'),
                   SizedBox(height: 5),
                   PawsText(
-                    pet.description.isNotEmpty
-                        ? pet.description
+                    widget.pet.description.isNotEmpty
+                        ? widget.pet.description
                         : 'No description available',
                   ),
                 ],
@@ -204,7 +249,7 @@ class PetDetailScreen extends StatelessWidget {
           child: PawsElevatedButton(
             label: 'Adopt Now',
             onPressed: () {
-              context.router.push(CreateAdoptionRoute(petId: pet.id));
+              context.router.push(CreateAdoptionRoute(petId: widget.pet.id));
             },
             borderRadius: 25,
           ),

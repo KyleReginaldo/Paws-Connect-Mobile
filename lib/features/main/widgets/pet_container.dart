@@ -15,6 +15,7 @@ class PetContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isFav = pet.isFavorite ?? false;
     return Stack(
       children: [
         InkWell(
@@ -76,7 +77,9 @@ class PetContainer extends StatelessWidget {
           child: IconButton.filled(
             style: ButtonStyle().copyWith(
               backgroundColor: WidgetStatePropertyAll(
-                PawsColors.primary.withValues(alpha: 0.2),
+                isFav
+                    ? PawsColors.primary
+                    : PawsColors.primary.withValues(alpha: 0.2),
               ),
             ),
             onPressed: onFavoriteToggle != null
@@ -85,8 +88,8 @@ class PetContainer extends StatelessWidget {
                   }
                 : null,
             icon: Icon(
-              pet.isFavorite ?? false ? Icons.favorite : Icons.favorite_border,
-              color: PawsColors.primary,
+              isFav ? Icons.favorite : Icons.favorite_border,
+              color: isFav ? Colors.white : PawsColors.primary,
             ),
           ),
         ),

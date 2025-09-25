@@ -21,6 +21,7 @@ import '../../../core/theme/paws_theme.dart';
 import '../../../core/widgets/search_field.dart';
 import '../../../core/widgets/text.dart';
 import '../../../dependency.dart';
+import '../../favorite/repository/favorite_repository.dart';
 import '../../fundraising/repository/fundraising_repository.dart';
 import '../../internet/internet.dart';
 import '../../profile/repository/profile_repository.dart';
@@ -45,6 +46,7 @@ class HomeScreen extends StatefulWidget implements AutoRouteWrapper {
         ChangeNotifierProvider.value(value: sl<FundraisingRepository>()),
         ChangeNotifierProvider.value(value: sl<AddressRepository>()),
         ChangeNotifierProvider.value(value: sl<ProfileRepository>()),
+        ChangeNotifierProvider.value(value: sl<FavoriteRepository>()),
       ],
       child: this,
     );
@@ -177,6 +179,47 @@ class _HomeScreenState extends State<HomeScreen> {
     debugPrint('shopee result: $result');
   }
 
+  void _toggleFavorite(int petId, bool isCurrentlyFavorite) async {
+    if (USER_ID == null || (USER_ID?.isEmpty ?? true)) {
+      if (!mounted) return;
+      context.router.push(
+        SignInRoute(
+          onResult: (success) async {
+            if (!success) return;
+            await SessionManager.bootstrapAfterSignIn(eager: false);
+            if (!mounted) return;
+            context.read<PetRepository>().fetchRecentPets(userId: USER_ID);
+          },
+        ),
+      );
+      return;
+    }
+
+    final petRepo = context.read<PetRepository>();
+    // Optimistic UI update
+    petRepo.updatePetFavorite(petId, !isCurrentlyFavorite);
+    try {
+      await sl<FavoriteRepository>().toggleFavorite(petId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            !isCurrentlyFavorite
+                ? 'Added to favorites'
+                : 'Removed from favorites',
+          ),
+        ),
+      );
+    } catch (e) {
+      // Rollback on failure
+      petRepo.updatePetFavorite(petId, isCurrentlyFavorite);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to update favorite')),
+      );
+    }
+  }
+
   @override
   void initState() {
     initializeChannels();
@@ -209,7 +252,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     // final pets = context.select((PetRepository bloc) => bloc.pets);
-    final recentPets = context.select((PetRepository bloc) => bloc.recentPets);
+    // Use watch here so UI updates when items inside the list change in place
+    final recentPets = context.watch<PetRepository>().recentPets;
     final petError = context.select((PetRepository bloc) => bloc.errorMessage);
     final fundraisings = context.select(
       (FundraisingRepository bloc) => bloc.fundraisings,
@@ -542,7 +586,15 @@ class _HomeScreenState extends State<HomeScreen> {
                           spacing: 10,
                           children: List.generate(
                             recentPets.length,
-                            (index) => PetContainer(pet: recentPets[index]),
+                            (index) => PetContainer(
+                              pet: recentPets[index],
+                              onFavoriteToggle: (petId) {
+                                _toggleFavorite(
+                                  petId,
+                                  recentPets[index].isFavorite ?? false,
+                                );
+                              },
+                            ),
                           ), // Empty when there's an error (error is shown above)
                         ),
                       )
