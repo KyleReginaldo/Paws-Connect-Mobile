@@ -31,8 +31,7 @@ class AppRouter extends RootStackRouter {
           transitionsBuilder: TransitionsBuilders.fadeIn,
         ),
         CustomRoute(
-          page: NotfoundRoute.page,
-          path: '*',
+          page: FavoriteRoute.page,
           transitionsBuilder: TransitionsBuilders.fadeIn,
         ),
         CustomRoute(

@@ -4,7 +4,6 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:lottie/lottie.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/router/app_route.gr.dart';
-import 'package:paws_connect/core/services/shopee_service.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/core/widgets/button.dart';
 import 'package:paws_connect/features/auth/repository/auth_repository.dart';
@@ -12,8 +11,10 @@ import 'package:paws_connect/features/google_map/repository/address_repository.d
 import 'package:paws_connect/features/pets/repository/pet_repository.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../core/provider/common_provider.dart';
+import '../../../core/services/shopee_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/theme/paws_theme.dart';
 import '../../../core/widgets/search_field.dart';
@@ -53,6 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
   final petChannel = supabase.channel('public:pets');
   final fundraisingChannel = supabase.channel('public:fundraising');
+  late final WebViewController webviewController;
   late RealtimeChannel addressChannel;
   void handleDeleteAddress(int addressId) async {
     final isConnected = context.read<InternetProvider>().isConnected;
@@ -133,7 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
           schema: 'public',
           table: 'pets',
           callback: (payload) {
-            context.read<PetRepository>().fetchPets();
+            context.read<PetRepository>().fetchPets(userId: USER_ID);
           },
         )
         .subscribe();
@@ -167,17 +169,24 @@ class _HomeScreenState extends State<HomeScreen> {
         .subscribe();
   }
 
+  void testFetchShopee() async {
+    final result = await scrapeProductImageWithHeadless(
+      'https://shopee.ph/Pet-Comb-Cat-Comb-Grooming-Dog-Comb-Grooming-Hair-i.416734455.13759810215',
+    );
+    debugPrint('shopee result: $result');
+  }
+
   @override
   void initState() {
     initializeChannels();
     handleListeners();
-    debugPrint('current user id: $USER_ID');
+    testFetchShopee();
 
     // Defer initial data fetches until after the first frame to avoid
     // calling notifyListeners during the build phase
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<PetRepository>().fetchRecentPets();
+        context.read<PetRepository>().fetchRecentPets(userId: USER_ID);
         context.read<FundraisingRepository>().fetchFundraisings();
         context.read<AddressRepository>().fetchDefaultAddress(USER_ID ?? '');
         context.read<AddressRepository>().fetchAllAddresses(USER_ID ?? '');
@@ -362,7 +371,7 @@ class _HomeScreenState extends State<HomeScreen> {
             return;
           }
 
-          context.read<PetRepository>().fetchRecentPets();
+          context.read<PetRepository>().fetchRecentPets(userId: USER_ID);
           context.read<FundraisingRepository>().fetchFundraisings();
           context.read<AddressRepository>().fetchDefaultAddress(USER_ID ?? '');
           context.read<AddressRepository>().fetchAllAddresses(USER_ID ?? '');
@@ -406,25 +415,61 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-              // PawsDivider(thickness: 2),
-              FutureBuilder(
-                future: ShopeeService().getShopeeImageUrl(
-                  'https://shopee.ph/12pcs-DIY-Pet-Fence-Dog-Fence-Pet-Playpen-Dog-Playpen-Crate-For-Puppy-Cats-Rabbits-35cm-x-35cm-i.416734455.15992356947?sp_atk=dfabce33-1b3e-4906-98c1-6be8e8ce9a26&xptdk=dfabce33-1b3e-4906-98c1-6be8e8ce9a26',
-                ),
-                builder: (context, snapshot) {
-                  debugPrint('snapshot data; ${snapshot.data}');
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return SizedBox.shrink();
-                  } else if (snapshot.hasData && snapshot.data != null) {
-                    return Container(
-                      decoration: BoxDecoration(),
-                      child: Image.network(snapshot.data!, fit: BoxFit.cover),
-                    );
-                  } else {
-                    return SizedBox(height: 5);
-                  }
-                },
-              ),
+              // Container(
+              //   width: double.infinity,
+              //   padding: const EdgeInsets.all(12),
+              //   decoration: BoxDecoration(
+              //     color: Colors.grey.shade100,
+              //     borderRadius: BorderRadius.circular(8),
+              //     border: Border.all(color: Colors.grey.shade200),
+              //   ),
+              //   child: Row(
+              //     children: [
+              //       Container(
+              //         height: 72,
+              //         width: 72,
+              //         decoration: BoxDecoration(
+              //           color: Colors.white,
+              //           borderRadius: BorderRadius.circular(8),
+              //           border: Border.all(color: Colors.grey.shade300),
+              //         ),
+              //         child: const Icon(Icons.shopping_cart_outlined, size: 36),
+              //       ),
+              //       const SizedBox(width: 12),
+              //       Expanded(
+              //         child: Column(
+              //           crossAxisAlignment: CrossAxisAlignment.start,
+              //           children: [
+              //             PawsText(
+              //               'Visit our Shopee Store(test)',
+              //               fontSize: 16,
+              //               fontWeight: FontWeight.w600,
+              //             ),
+              //             const SizedBox(height: 6),
+              //             PawsText(
+              //               'Tap the button to open shop in full screen',
+              //               color: Colors.grey,
+              //               fontSize: 13,
+              //             ),
+              //           ],
+              //         ),
+              //       ),
+              //       ElevatedButton(
+              //         onPressed: () {
+              //           Navigator.of(context).push(
+              //             MaterialPageRoute(
+              //               builder: (_) => const ShopeeScreen(
+              //                 initialUrl:
+              //                     'https://shopee.ph/Pet-Comb-Cat-Comb-Grooming-Dog-Comb-Grooming-Hair-i.416734455.13759810215',
+              //               ),
+              //             ),
+              //           );
+              //         },
+              //         child: const Text('Open(test)'),
+              //       ),
+              //     ],
+              //   ),
+              // ),
               if (recentPets != null)
                 PawsText(
                   'Recently added',

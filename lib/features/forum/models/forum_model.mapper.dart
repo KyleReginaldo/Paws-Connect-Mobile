@@ -407,6 +407,13 @@ class ForumChatMapper extends ClassMapperBase<ForumChat> {
   );
   static Users _$users(ForumChat v) => v.users;
   static const Field<ForumChat, Users> _f$users = Field('users', _$users);
+  static String? _$imageUrl(ForumChat v) => v.imageUrl;
+  static const Field<ForumChat, String> _f$imageUrl = Field(
+    'imageUrl',
+    _$imageUrl,
+    key: r'image_url',
+    opt: true,
+  );
 
   @override
   final MappableFields<ForumChat> fields = const {
@@ -415,6 +422,7 @@ class ForumChatMapper extends ClassMapperBase<ForumChat> {
     #sender: _f$sender,
     #message: _f$message,
     #users: _f$users,
+    #imageUrl: _f$imageUrl,
   };
 
   static ForumChat _instantiate(DecodingData data) {
@@ -424,6 +432,7 @@ class ForumChatMapper extends ClassMapperBase<ForumChat> {
       sender: data.dec(_f$sender),
       message: data.dec(_f$message),
       users: data.dec(_f$users),
+      imageUrl: data.dec(_f$imageUrl),
     );
   }
 
@@ -493,6 +502,7 @@ abstract class ForumChatCopyWith<$R, $In extends ForumChat, $Out>
     String? sender,
     String? message,
     Users? users,
+    String? imageUrl,
   });
   ForumChatCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -515,6 +525,7 @@ class _ForumChatCopyWithImpl<$R, $Out>
     String? sender,
     String? message,
     Users? users,
+    Object? imageUrl = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -522,6 +533,7 @@ class _ForumChatCopyWithImpl<$R, $Out>
       if (sender != null) #sender: sender,
       if (message != null) #message: message,
       if (users != null) #users: users,
+      if (imageUrl != $none) #imageUrl: imageUrl,
     }),
   );
   @override
@@ -531,6 +543,7 @@ class _ForumChatCopyWithImpl<$R, $Out>
     sender: data.get(#sender, or: $value.sender),
     message: data.get(#message, or: $value.message),
     users: data.get(#users, or: $value.users),
+    imageUrl: data.get(#imageUrl, or: $value.imageUrl),
   );
 
   @override

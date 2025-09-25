@@ -67,6 +67,13 @@ dependencies:
   path: ^1.9.1
   cross_file: ^0.3.4+2
   html: ^0.15.6
+  metadata_fetch: ^0.4.1
+  webview_flutter: ^4.4.2
+  webview_flutter_wkwebview: ^3.23.0
+  flutter_inappwebview: ^6.0.0
+  disposable_cached_images: ^1.2.1
+
+
 
 dev_dependencies:
   flutter_test:

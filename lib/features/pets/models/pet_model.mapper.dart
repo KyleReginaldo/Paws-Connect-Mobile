@@ -112,6 +112,13 @@ class PetMapper extends ClassMapperBase<Pet> {
   static const Field<Pet, String> _f$photo = Field('photo', _$photo);
   static String? _$color(Pet v) => v.color;
   static const Field<Pet, String> _f$color = Field('color', _$color);
+  static bool? _$isFavorite(Pet v) => v.isFavorite;
+  static const Field<Pet, bool> _f$isFavorite = Field(
+    'isFavorite',
+    _$isFavorite,
+    key: r'is_favorite',
+    opt: true,
+  );
 
   @override
   final MappableFields<Pet> fields = const {
@@ -137,6 +144,7 @@ class PetMapper extends ClassMapperBase<Pet> {
     #requestStatus: _f$requestStatus,
     #photo: _f$photo,
     #color: _f$color,
+    #isFavorite: _f$isFavorite,
   };
 
   static Pet _instantiate(DecodingData data) {
@@ -163,6 +171,7 @@ class PetMapper extends ClassMapperBase<Pet> {
       requestStatus: data.dec(_f$requestStatus),
       photo: data.dec(_f$photo),
       color: data.dec(_f$color),
+      isFavorite: data.dec(_f$isFavorite),
     );
   }
 
@@ -236,6 +245,7 @@ abstract class PetCopyWith<$R, $In extends Pet, $Out>
     String? requestStatus,
     String? photo,
     String? color,
+    bool? isFavorite,
   });
   PetCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -277,6 +287,7 @@ class _PetCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Pet, $Out>
     String? requestStatus,
     String? photo,
     Object? color = $none,
+    Object? isFavorite = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -301,6 +312,7 @@ class _PetCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Pet, $Out>
       if (requestStatus != null) #requestStatus: requestStatus,
       if (photo != null) #photo: photo,
       if (color != $none) #color: color,
+      if (isFavorite != $none) #isFavorite: isFavorite,
     }),
   );
   @override
@@ -330,6 +342,7 @@ class _PetCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Pet, $Out>
     requestStatus: data.get(#requestStatus, or: $value.requestStatus),
     photo: data.get(#photo, or: $value.photo),
     color: data.get(#color, or: $value.color),
+    isFavorite: data.get(#isFavorite, or: $value.isFavorite),
   );
 
   @override

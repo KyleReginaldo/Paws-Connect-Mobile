@@ -50,6 +50,7 @@ class PetRepository extends ChangeNotifier {
   PetRepository(this._petProvider);
 
   void fetchPets({
+    String? userId,
     String? type,
     String? breed,
     String? gender,
@@ -81,6 +82,7 @@ class PetRepository extends ChangeNotifier {
       requestStatus: requestStatus,
       goodWith: goodWith,
       location: location,
+      userId: userId,
     );
 
     if (result.isSuccess) {
@@ -95,10 +97,10 @@ class PetRepository extends ChangeNotifier {
     }
   }
 
-  void fetchRecentPets() async {
+  void fetchRecentPets({String? userId}) async {
     _isLoading = true;
     notifyListeners();
-    final result = await _petProvider.fetchRecentPets();
+    final result = await _petProvider.fetchRecentPets(userId: userId);
     if (result.isSuccess) {
       _recentPets = result.value;
       _isLoading = false;
@@ -110,10 +112,10 @@ class PetRepository extends ChangeNotifier {
     }
   }
 
-  void fetchPetById(int id) async {
+  void fetchPetById(int id, {String? userId}) async {
     _isLoading = true;
     notifyListeners();
-    final result = await _petProvider.fetchPetById(id);
+    final result = await _petProvider.fetchPetById(id, userId: userId);
     if (result.isSuccess) {
       _pet = result.value;
       _isLoading = false;

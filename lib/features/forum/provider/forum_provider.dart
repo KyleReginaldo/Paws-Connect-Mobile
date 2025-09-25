@@ -1,7 +1,9 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'package:paws_connect/core/config/result.dart';
 import 'package:paws_connect/core/services/supabase_service.dart';
 import 'package:paws_connect/features/forum/models/forum_model.dart';
@@ -94,11 +96,21 @@ class ForumProvider {
     required String sender,
     required String message,
     required int forumId,
+    XFile? imageFile,
   }) async {
+    String? imageUrl;
+    if (imageFile != null) {
+      imageUrl = await SupabaseService.uploadImage(imageFile);
+    }
+    debugPrint('Image URL: $imageUrl');
     final response = await http.post(
       Uri.parse('${dotenv.get('BASE_URL')}/forum/$forumId/chats'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'sender': sender, 'message': message}),
+      body: jsonEncode({
+        'sender': sender,
+        'message': message,
+        if (imageUrl != null) 'image_url': imageUrl,
+      }),
     );
     if (response.statusCode != 201) {
       throw Exception('Failed to send message');

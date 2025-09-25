@@ -10,7 +10,8 @@ import '../../../core/widgets/text.dart';
 
 class PetContainer extends StatelessWidget {
   final Pet pet;
-  const PetContainer({super.key, required this.pet});
+  final Function(int petId)? onFavoriteToggle;
+  const PetContainer({super.key, required this.pet, this.onFavoriteToggle});
 
   @override
   Widget build(BuildContext context) {
@@ -78,8 +79,15 @@ class PetContainer extends StatelessWidget {
                 PawsColors.primary.withValues(alpha: 0.2),
               ),
             ),
-            onPressed: () {},
-            icon: Icon(Icons.favorite_border, color: PawsColors.primary),
+            onPressed: onFavoriteToggle != null
+                ? () {
+                    onFavoriteToggle!(pet.id);
+                  }
+                : null,
+            icon: Icon(
+              pet.isFavorite ?? false ? Icons.favorite : Icons.favorite_border,
+              color: PawsColors.primary,
+            ),
           ),
         ),
       ],

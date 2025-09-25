@@ -24,9 +24,17 @@ class ForumRepository extends ChangeNotifier {
   bool get usersLoading => _usersLoading;
   bool get isLoadingForum => _isLoadingForum;
   String? get userErrorMessage => _userErrorMessage;
+  final List<String> _pendingChats = [];
+
+  List<String> get pendingChats => _pendingChats;
   final ForumProvider _provider;
 
   ForumRepository(this._provider);
+
+  void addPendingChat(String chat) {
+    _pendingChats.add(chat);
+    notifyListeners();
+  }
 
   void fetchAvailableUsers(int forumId, {String? username}) async {
     _usersLoading = true;
@@ -92,10 +100,11 @@ class ForumRepository extends ChangeNotifier {
     _isLoadingChats = false;
     if (result.isError) {
       _forumChats.clear();
+      _pendingChats.clear();
       notifyListeners();
     } else {
       notifyListeners();
-
+      _pendingChats.clear();
       _forumChats = result.value;
     }
   }
@@ -105,8 +114,10 @@ class ForumRepository extends ChangeNotifier {
     _isLoadingChats = false;
     if (result.isError) {
       _forumChats.clear();
+      _pendingChats.clear();
     } else {
       _forumChats = result.value;
+      _pendingChats.clear();
     }
     notifyListeners();
   }

@@ -8,6 +8,7 @@ import 'package:paws_connect/features/pets/models/pet_model.dart';
 
 class PetProvider {
   Future<Result<List<Pet>>> fetchPets({
+    String? userId,
     String? type,
     String? breed,
     String? gender,
@@ -53,6 +54,7 @@ class PetProvider {
         queryParams['good_with'] = goodWith;
       if (location != null && location.isNotEmpty)
         queryParams['location'] = location;
+      if (userId != null && userId.isNotEmpty) queryParams['user'] = userId;
 
       final uri = Uri.parse(
         '${dotenv.get('BASE_URL')}/pets',
@@ -77,7 +79,7 @@ class PetProvider {
     }
   }
 
-  Future<Result<List<Pet>>> fetchRecentPets() async {
+  Future<Result<List<Pet>>> fetchRecentPets({String? userId}) async {
     // Check internet connectivity first
     final hasInternet = await InternetConnection().hasInternetAccess;
     if (!hasInternet) {
@@ -87,7 +89,11 @@ class PetProvider {
     }
 
     try {
-      final uri = Uri.parse('${dotenv.get('BASE_URL')}/pets/recent');
+      final uri = Uri.parse('${dotenv.get('BASE_URL')}/pets/recent').replace(
+        queryParameters: userId != null && userId.isNotEmpty
+            ? {'user': userId}
+            : null,
+      );
 
       final response = await http.get(uri);
 
@@ -112,7 +118,7 @@ class PetProvider {
     }
   }
 
-  Future<Result<Pet>> fetchPetById(int petId) async {
+  Future<Result<Pet>> fetchPetById(int petId, {String? userId}) async {
     // Check internet connectivity first
     final hasInternet = await InternetConnection().hasInternetAccess;
     if (!hasInternet) {
@@ -122,7 +128,11 @@ class PetProvider {
     }
 
     try {
-      final uri = Uri.parse('${dotenv.get('BASE_URL')}/pets/$petId');
+      final uri = Uri.parse('${dotenv.get('BASE_URL')}/pets/$petId').replace(
+        queryParameters: userId != null && userId.isNotEmpty
+            ? {'user': userId}
+            : null,
+      );
 
       final response = await http.get(uri);
 

@@ -33,6 +33,7 @@ class ForumChat with ForumChatMappable {
   final String sender;
   final String message;
   final Users users;
+  final String? imageUrl;
 
   ForumChat({
     required this.id,
@@ -40,6 +41,7 @@ class ForumChat with ForumChatMappable {
     required this.sender,
     required this.message,
     required this.users,
+    this.imageUrl,
   });
 }
 

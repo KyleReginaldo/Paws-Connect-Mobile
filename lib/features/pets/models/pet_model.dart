@@ -26,6 +26,7 @@ class Pet with PetMappable {
   String requestStatus;
   String photo;
   String? color;
+  bool? isFavorite;
 
   Pet({
     required this.id,
@@ -50,5 +51,6 @@ class Pet with PetMappable {
     required this.requestStatus,
     required this.photo,
     required this.color,
+    this.isFavorite,
   });
 }

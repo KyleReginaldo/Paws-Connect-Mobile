@@ -1,5 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:paws_connect/core/supabase/client.dart';
+import 'package:paws_connect/features/favorite/provider/favorite_provider.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/router/app_route.gr.dart';
@@ -35,7 +37,7 @@ class _PetScreenState extends State<PetScreen> {
       // Use read instead of watch to avoid registering this callback as a listener
       // and to ensure we only call fetch once after mount.
       final repo = context.read<PetRepository>();
-      repo.fetchPets();
+      repo.fetchPets(userId: USER_ID);
     });
   }
 
@@ -47,6 +49,21 @@ class _PetScreenState extends State<PetScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => _FilterBottomSheet(repository: repo),
     );
+  }
+
+  void _addFavorite(int pet) async {
+    final result = await FavoriteProvider().addFavorite(pet, USER_ID ?? "");
+    if (result.isError) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.error)));
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Added to favorites')));
+    }
   }
 
   @override
@@ -217,9 +234,13 @@ class _PetScreenState extends State<PetScreen> {
                                     PawsColors.primary.withValues(alpha: 0.2),
                                   ),
                                 ),
-                                onPressed: () {},
+                                onPressed: () {
+                                  _addFavorite(pet.id);
+                                },
                                 icon: Icon(
-                                  Icons.favorite_border,
+                                  pet.isFavorite ?? false
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
                                   color: PawsColors.primary,
                                 ),
                               ),
@@ -289,7 +310,7 @@ class _PetScreenState extends State<PetScreen> {
               ElevatedButton.icon(
                 onPressed: () {
                   repo.clearAllFilters();
-                  repo.fetchPets();
+                  repo.fetchPets(userId: USER_ID);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: PawsColors.primary,
@@ -311,7 +332,7 @@ class _PetScreenState extends State<PetScreen> {
               OutlinedButton.icon(
                 onPressed: () {
                   final repo = context.read<PetRepository>();
-                  repo.fetchPets();
+                  repo.fetchPets(userId: USER_ID);
                 },
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(color: PawsColors.primary),

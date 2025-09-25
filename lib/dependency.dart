@@ -4,6 +4,7 @@ import 'package:paws_connect/features/auth/provider/auth_provider.dart';
 import 'package:paws_connect/features/auth/repository/auth_repository.dart';
 import 'package:paws_connect/features/donation/provider/donation_provider.dart';
 import 'package:paws_connect/features/donation/repository/donation_repository.dart';
+import 'package:paws_connect/features/favorite/provider/favorite_provider.dart';
 import 'package:paws_connect/features/forum/provider/forum_provider.dart';
 import 'package:paws_connect/features/forum/repository/forum_repository.dart';
 import 'package:paws_connect/features/fundraising/provider/fundraising_provider.dart';
@@ -15,6 +16,7 @@ import 'package:paws_connect/features/profile/repository/image_repository.dart';
 import 'package:paws_connect/features/profile/repository/profile_repository.dart';
 
 import 'features/adoption/provider/adoption_provider.dart';
+import 'features/favorite/repository/favorite_repository.dart';
 import 'features/google_map/repository/address_repository.dart';
 import 'features/pets/repository/pet_repository.dart';
 
@@ -38,4 +40,6 @@ Future<void> init() async {
   sl.registerLazySingleton(() => AdoptionProvider());
   sl.registerLazySingleton(() => DonationProvider());
   sl.registerLazySingleton(() => DonationRepository(sl()));
+  sl.registerLazySingleton(() => FavoriteProvider());
+  sl.registerLazySingleton(() => FavoriteRepository(provider: sl()));
 }

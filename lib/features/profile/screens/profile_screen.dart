@@ -375,7 +375,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       case 2:
         return 'Staff';
       case 3:
-        return 'Regular User';
+        return 'Registered User';
       case 4:
         return 'Volunteer';
       default:

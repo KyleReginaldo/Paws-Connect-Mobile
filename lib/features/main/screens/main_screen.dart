@@ -149,7 +149,7 @@ class _MainScreenState extends State<MainScreen> {
         HomeRoute(),
         FundraisingRoute(),
         PetRoute(),
-        NotfoundRoute(),
+        FavoriteRoute(),
         ForumRoute(),
       ],
 
