@@ -16,6 +16,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import '../../../core/provider/common_provider.dart';
 import '../../../core/services/shopee_service.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/session/session_manager.dart';
 import '../../../core/theme/paws_theme.dart';
 import '../../../core/widgets/search_field.dart';
 import '../../../core/widgets/text.dart';
@@ -236,11 +237,25 @@ class _HomeScreenState extends State<HomeScreen> {
       key: scaffoldKey,
 
       appBar: HomeAppBar(
-        onProfileTap: user != null
-            ? () {
-                context.router.push(ProfileRoute(id: user.id));
-              }
-            : null,
+        onProfileTap: () {
+          if (USER_ID == null || (USER_ID?.isEmpty ?? true)) {
+            context.router.push(
+              SignInRoute(
+                onResult: (success) async {
+                  if (!success) return;
+                  await SessionManager.bootstrapAfterSignIn(eager: false);
+                  if (context.mounted &&
+                      USER_ID != null &&
+                      USER_ID!.isNotEmpty) {
+                    context.router.replace(ProfileRoute(id: USER_ID!));
+                  }
+                },
+              ),
+            );
+          } else {
+            context.router.push(ProfileRoute(id: USER_ID!));
+          }
+        },
         address: defaultAddress,
         profile: user,
         onOpenCurrentLocation: isConnected

@@ -15,7 +15,7 @@ class FundraisingRepository extends ChangeNotifier {
   List<Fundraising>? get fundraisings => _fundraisings;
   Fundraising? get fundraising => _fundraising;
   String? get errorMessage => _errorMessage;
-  void fetchFundraisings() async {
+  Future<void> fetchFundraisings() async {
     _isLoading = true;
     notifyListeners();
     final result = await _provider.fetchFundraisings();
@@ -30,7 +30,7 @@ class FundraisingRepository extends ChangeNotifier {
     }
   }
 
-  void fetchFundraisingById(int id) async {
+  Future<void> fetchFundraisingById(int id) async {
     _isLoading = true;
     notifyListeners();
     final result = await _provider.fetchFundraisingById(id);
@@ -44,5 +44,13 @@ class FundraisingRepository extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  void reset() {
+    _fundraisings = null;
+    _fundraising = null;
+    _errorMessage = null;
+    _isLoading = false;
+    notifyListeners();
   }
 }

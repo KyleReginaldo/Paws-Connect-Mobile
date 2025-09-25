@@ -48,20 +48,40 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
       actions: [
-        IconButton(onPressed: () {}, icon: Icon(LucideIcons.bell)),
-        IconButton(
-          onPressed: onProfileTap,
-          icon: profile != null && profile!.profileImageLink != null
-              ? ClipOval(
-                  child: CachedNetworkImage(
-                    imageUrl: profile!.profileImageLink!,
-                    height: 32,
-                    width: 32,
-                    fit: BoxFit.cover,
+        IconButton(onPressed: () {}, icon: Icon(LucideIcons.bell, size: 20)),
+        profile != null
+            ? IconButton(
+                onPressed: onProfileTap,
+                icon: profile!.profileImageLink != null
+                    ? ClipOval(
+                        child: CachedNetworkImage(
+                          imageUrl: profile!.profileImageLink!,
+                          height: 24,
+                          width: 24,
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    : Icon(
+                        Icons.account_circle,
+                        size: 24,
+                        color: PawsColors.textSecondary,
+                      ),
+              )
+            : InkWell(
+                onTap: onProfileTap,
+                child: Container(
+                  margin: const EdgeInsets.only(right: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
                   ),
-                )
-              : Icon(LucideIcons.circleUserRound),
-        ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: PawsColors.primary, width: 1.5),
+                  ),
+                  child: PawsText('Sign In', color: PawsColors.primary),
+                ),
+              ),
       ],
     );
   }

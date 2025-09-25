@@ -1,6 +1,5 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:paws_connect/core/guard/auth.guard.dart';
-import 'package:paws_connect/core/guard/user.guard.dart';
 import 'package:paws_connect/core/router/app_route.gr.dart';
 
 @AutoRouterConfig()
@@ -15,7 +14,7 @@ class AppRouter extends RootStackRouter {
     CustomRoute(
       page: MainRoute.page,
       transitionsBuilder: TransitionsBuilders.fadeIn,
-      guards: [AuthGuard(), UserGuard()],
+      // guards: [UserGuard()],
       initial: true,
       children: [
         CustomRoute(
@@ -43,6 +42,7 @@ class AppRouter extends RootStackRouter {
     CustomRoute(
       page: MapRoute.page,
       transitionsBuilder: TransitionsBuilders.fadeIn,
+      guards: [AuthGuard()],
     ),
     CustomRoute(
       page: PetDetailRoute.page,
@@ -57,6 +57,7 @@ class AppRouter extends RootStackRouter {
       page: PaymentRoute.page,
       path: '/payment',
       transitionsBuilder: TransitionsBuilders.fadeIn,
+      guards: [AuthGuard()],
     ),
     CustomRoute(
       page: PaymentMethodRoute.page,
@@ -77,10 +78,13 @@ class AppRouter extends RootStackRouter {
       page: AddForumRoute.page,
       path: '/add-forum',
       transitionsBuilder: TransitionsBuilders.fadeIn,
+      guards: [AuthGuard()],
     ),
     CustomRoute(
       page: ProfileRoute.page,
       path: '/profile',
+      guards: [AuthGuard()],
+
       transitionsBuilder: TransitionsBuilders.fadeIn,
     ),
     CustomRoute(
@@ -107,6 +111,7 @@ class AppRouter extends RootStackRouter {
       page: CreateAdoptionRoute.page,
       path: '/create-adoption/:petId',
       transitionsBuilder: TransitionsBuilders.slideBottom,
+      guards: [AuthGuard()],
     ),
     CustomRoute(
       page: AdoptionHistoryRoute.page,

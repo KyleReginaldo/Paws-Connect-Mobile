@@ -1,5 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:auto_route/auto_route.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:paws_connect/core/widgets/button.dart';
 import 'package:paws_connect/core/widgets/text.dart';
@@ -8,7 +9,10 @@ import 'package:paws_connect/dependency.dart';
 import 'package:paws_connect/features/auth/provider/auth_provider.dart';
 import 'package:paws_connect/features/auth/repository/auth_repository.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/config/result.dart';
+import '../../../core/session/session_manager.dart';
 import '../../../core/theme/paws_theme.dart';
 
 @RoutePage()
@@ -45,14 +49,15 @@ class _SignInScreenState extends State<SignInScreen>
   late final Animation<double> _fadeAnimation;
   bool rememberMe = false;
   bool isLoading = false;
+  bool agreedToTerms = false;
   void _handleSignIn({String? initEmail, String? initPassword}) async {
     if (!mounted) return;
     if (formKey.currentState?.validate() ?? false) {
       setState(() => isLoading = true);
       try {
         final result = await AuthProvider().signIn(
-          email: initEmail ?? email.text.trim(),
-          password: initPassword ?? password.text.trim(),
+          email: initEmail ?? email.text,
+          password: initPassword ?? password.text,
         );
 
         if (result.isError) {
@@ -63,6 +68,8 @@ class _SignInScreenState extends State<SignInScreen>
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text('Sign in successful')));
+          // Preload user data after successful sign in
+          await SessionManager.bootstrapAfterSignIn(eager: false);
           widget.onResult?.call(true);
         }
       } finally {
@@ -88,10 +95,43 @@ class _SignInScreenState extends State<SignInScreen>
             context,
           ).showSnackBar(SnackBar(content: Text(result.error)));
         } else {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(result.value)));
-          _handleSignIn();
+          // Try automatic sign in after successful registration
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Account created! Signing you in...')),
+          );
+
+          Result<String>? lastError;
+          for (var attempt = 0; attempt < 3; attempt++) {
+            // Small backoff to allow backend propagation
+            await Future.delayed(Duration(milliseconds: 500 * (attempt + 1)));
+            final signInResult = await AuthProvider().signIn(
+              email: email.text.trim(),
+              password: password.text.trim(),
+            );
+            if (!signInResult.isError) {
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Welcome! You are now signed in.'),
+                ),
+              );
+              await SessionManager.bootstrapAfterSignIn(eager: false);
+              widget.onResult?.call(true);
+              return;
+            }
+            lastError = signInResult;
+          }
+
+          if (!mounted) return;
+          // If automatic sign-in failed after retries, fall back to manual login
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Account created, but automatic sign-in failed. Please sign in manually.\nReason: ${lastError?.error ?? 'Unknown error'}',
+              ),
+            ),
+          );
+          setState(() => selectedTab = 0);
         }
       } finally {
         if (mounted) setState(() => isLoading = false);
@@ -378,13 +418,58 @@ class _SignInScreenState extends State<SignInScreen>
                                       PawsTextButton(label: 'Forgot password?'),
                                     ],
                                   ),
+                                if (selectedTab == 1)
+                                  Row(
+                                    children: [
+                                      Checkbox(
+                                        value: agreedToTerms,
+                                        onChanged: (value) => setState(() {
+                                          agreedToTerms = value ?? false;
+                                        }),
+                                        visualDensity: VisualDensity.compact,
+                                      ),
+                                      RichText(
+                                        text: TextSpan(
+                                          text: 'I agree to the ',
+                                          style: TextStyle(
+                                            color: PawsColors.textSecondary,
+                                          ),
+                                          children: [
+                                            TextSpan(
+                                              text: 'Terms and Conditions',
+                                              style: TextStyle(
+                                                color: PawsColors.primary,
+                                                decoration:
+                                                    TextDecoration.underline,
+                                              ),
+                                              recognizer: TapGestureRecognizer()
+                                                ..onTap = () {
+                                                  launchUrl(
+                                                    Uri.parse(
+                                                      'https://paws-connect-sable.vercel.app/terms-and-condition',
+                                                    ),
+                                                  );
+                                                  // Add your navigation or action here
+                                                  // Example: context.router.push(TermsRoute());
+                                                },
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 PawsElevatedButton(
                                   label: selectedTab == 0
                                       ? 'Sign In'
                                       : 'Sign Up',
-                                  backgroundColor: PawsColors.primary,
+                                  backgroundColor:
+                                      (selectedTab == 1 && !agreedToTerms)
+                                      ? PawsColors.disabled
+                                      : PawsColors.primary,
                                   borderRadius: 25,
-                                  onPressed: isLoading
+                                  onPressed:
+                                      (isLoading) ||
+                                          (selectedTab == 1 && !agreedToTerms)
                                       ? null
                                       : () {
                                           if (selectedTab == 0) {

@@ -70,4 +70,14 @@ class ProfileRepository extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // Clear cached profile state on sign out
+  void reset() {
+    _users = [];
+    _visitedProfile = null;
+    _userProfile = null;
+    _profileLoading = false;
+    _visitedProfileLoading = false;
+    notifyListeners();
+  }
 }

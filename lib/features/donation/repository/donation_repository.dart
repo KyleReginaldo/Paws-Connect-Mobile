@@ -20,4 +20,9 @@ class DonationRepository extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void reset() {
+    _donations = null;
+    notifyListeners();
+  }
 }

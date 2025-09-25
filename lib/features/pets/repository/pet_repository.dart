@@ -97,7 +97,7 @@ class PetRepository extends ChangeNotifier {
     }
   }
 
-  void fetchRecentPets({String? userId}) async {
+  Future<void> fetchRecentPets({String? userId}) async {
     _isLoading = true;
     notifyListeners();
     final result = await _petProvider.fetchRecentPets(userId: userId);
@@ -209,5 +209,16 @@ class PetRepository extends ChangeNotifier {
         _selectedRequestStatus != null ||
         _selectedGoodWith != null ||
         _selectedLocation != null;
+  }
+
+  // Clear all cached data and filters when signing out
+  void reset() {
+    _errorMessage = null;
+    _pets = null;
+    _pet = null;
+    _recentPets = null;
+    _isLoading = false;
+    clearAllFilters();
+    // clearAllFilters already notifies; no extra notify needed
   }
 }

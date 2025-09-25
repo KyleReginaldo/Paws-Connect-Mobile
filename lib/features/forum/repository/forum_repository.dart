@@ -57,7 +57,7 @@ class ForumRepository extends ChangeNotifier {
     }
   }
 
-  void setForums(String userId) async {
+  Future<void> setForums(String userId) async {
     _isLoadingForums = true;
     _errorMessage = '';
     notifyListeners();
@@ -119,6 +119,21 @@ class ForumRepository extends ChangeNotifier {
       _forumChats = result.value;
       _pendingChats.clear();
     }
+    notifyListeners();
+  }
+
+  void reset() {
+    _forums = [];
+    _forum = null;
+    _forumChats = [];
+    _availableUsers = [];
+    _pendingChats.clear();
+    _errorMessage = '';
+    _userErrorMessage = null;
+    _isLoadingForums = false;
+    _isLoadingForum = false;
+    _isLoadingChats = false;
+    _usersLoading = false;
     notifyListeners();
   }
 }

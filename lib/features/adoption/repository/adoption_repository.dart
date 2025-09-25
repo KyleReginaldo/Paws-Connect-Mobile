@@ -11,7 +11,7 @@ class AdoptionRepository extends ChangeNotifier {
 
   AdoptionRepository({required this.adoptionProvider});
 
-  void fetchUserAdoptions(String userId) async {
+  Future<void> fetchUserAdoptions(String userId) async {
     final result = await adoptionProvider.fetchUserAdoptions(userId);
     if (result.isError) {
       _adoptions = null;
@@ -20,5 +20,10 @@ class AdoptionRepository extends ChangeNotifier {
       _adoptions = result.value;
       notifyListeners();
     }
+  }
+
+  void reset() {
+    _adoptions = null;
+    notifyListeners();
   }
 }

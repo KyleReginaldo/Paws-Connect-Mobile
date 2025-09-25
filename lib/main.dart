@@ -9,10 +9,10 @@ import 'package:paws_connect/core/router/app_route.gr.dart';
 import 'package:paws_connect/dependency.dart';
 import 'package:paws_connect/features/forum/provider/forum_provider.dart';
 import 'package:paws_connect/features/internet/internet.dart';
-import 'package:paymongo_sdk/paymongo_sdk.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'core/session/session_manager.dart';
 import 'core/supabase/client.dart';
 import 'core/theme/paws_theme.dart';
 import 'features/auth/provider/auth_provider.dart';
@@ -38,34 +38,7 @@ void main() async {
     'OneSignal SDK initialized: ${await OneSignal.User.getExternalId()}',
   );
   OneSignal.Notifications.requestPermission(true);
-  final publicSDK = PaymongoClient<PaymongoPublic>(
-    dotenv.get('MONGO_PUBLIC_KEY'),
-  );
-  final data = SourceAttributes(
-    type: 'gcash',
-    amount: 50,
-    currency: 'PHP',
-    redirect: const Redirect(
-      success: "https://google.com/success",
-      failed: "https://google.com/failed",
-    ),
-    billing: PayMongoBilling(
-      name: 'Kyle Reginaldo',
-      phone: '09923189664',
-      email: 'kyledennis099@gmail.com',
-      address: PayMongoAddress(
-        line1: 'Mabolo',
-        line2: 'Cebu City',
-        city: 'Cebu',
-        state: 'Cebu',
-        postalCode: '6000',
-        country: 'PH',
-      ),
-    ),
-  );
 
-  final result = await publicSDK.instance.source.create(data);
-  debugPrint('paymongo result: ${result.id}');
   init();
   runApp(const MyApp());
 }
@@ -101,7 +74,6 @@ class _MyAppState extends State<MyApp> {
         routerConfig: appRouter.config(
           deepLinkBuilder: (deepLink) async {
             final segments = deepLink.path.split('/');
-            // Example: ['', 'payment-success', '12345']
             final id = segments.length > 2 ? segments[2] : null;
             String? donor = deepLink.uri.queryParameters['donor'];
             double? amount = double.tryParse(
@@ -160,6 +132,8 @@ class _MyAppState extends State<MyApp> {
                   EasyLoading.showError(result.error);
                 } else {
                   EasyLoading.showSuccess('Sign in successful');
+                  // Preload user-related data
+                  await SessionManager.bootstrapAfterSignIn(eager: false);
                   // return DeepLink([MainRoute()]);
                 }
               }

@@ -10,7 +10,7 @@ class FavoriteRepository extends ChangeNotifier {
   List<Favorite>? _favorites;
   List<Favorite>? get favorites => _favorites;
 
-  void getFavorites(String userId) async {
+  Future<void> getFavorites(String userId) async {
     final result = await provider.fetchFavorites(userId);
     if (result.isError) {
       _favorites = null;
@@ -19,5 +19,10 @@ class FavoriteRepository extends ChangeNotifier {
       _favorites = result.value;
       notifyListeners();
     }
+  }
+
+  void reset() {
+    _favorites = null;
+    notifyListeners();
   }
 }

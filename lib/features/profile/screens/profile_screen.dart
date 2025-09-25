@@ -15,6 +15,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/router/app_route.gr.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/session/session_manager.dart';
 import '../../../core/theme/paws_theme.dart';
 import '../../../core/widgets/global_confirm_dialog.dart';
 import '../../../core/widgets/text.dart';
@@ -293,13 +294,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             }
 
                             Navigator.pop(context);
-                            context.read<AuthRepository>().signOut().then((
-                              _,
-                            ) async {
-                              if (!mounted) return;
-                              await OneSignal.logout();
-                              context.router.replaceAll([MainRoute()]);
-                            });
+                            // Sign out from backend and clear all app state
+                            await SessionManager.signOutAndClear();
+                            if (!mounted) return;
+                            await OneSignal.logout();
+                            context.router.replaceAll([MainRoute()]);
                           },
                           cancelLabel: 'Cancel',
                         );

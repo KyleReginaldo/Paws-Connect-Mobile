@@ -48,4 +48,13 @@ class AddressRepository extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // Clear cached data when signing out
+  void reset() {
+    _defaultAddress = null;
+    _addresses = null;
+    _errorMessage = null;
+    _isLoading = false;
+    notifyListeners();
+  }
 }
