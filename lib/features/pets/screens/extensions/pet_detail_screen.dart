@@ -2,6 +2,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:paws_connect/core/components/components.dart';
 import 'package:paws_connect/core/theme/paws_theme.dart';
 import 'package:paws_connect/core/widgets/button.dart';
 import 'package:paws_connect/core/widgets/text.dart';
@@ -94,11 +95,13 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
               ),
               height: MediaQuery.sizeOf(context).height * 0.3,
               width: MediaQuery.sizeOf(context).width,
-              child: Image.network(
-                widget.pet.photo,
-                fit: BoxFit.cover,
-                opacity: Animation.fromValueListenable(
-                  AlwaysStoppedAnimation(0.9),
+              child: Opacity(
+                opacity: 0.9,
+                child: NetworkImageView(
+                  widget.pet.photo,
+                  fit: BoxFit.cover,
+                  height: MediaQuery.sizeOf(context).height * 0.3,
+                  width: MediaQuery.sizeOf(context).width,
                 ),
               ),
             ),

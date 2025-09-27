@@ -50,6 +50,7 @@ class _SignInScreenState extends State<SignInScreen>
   bool rememberMe = false;
   bool isLoading = false;
   bool agreedToTerms = false;
+  bool _didSignalResult = false;
   void _handleSignIn({String? initEmail, String? initPassword}) async {
     if (!mounted) return;
     if (formKey.currentState?.validate() ?? false) {
@@ -70,7 +71,13 @@ class _SignInScreenState extends State<SignInScreen>
           ).showSnackBar(SnackBar(content: Text('Sign in successful')));
           // Preload user data after successful sign in
           await SessionManager.bootstrapAfterSignIn(eager: false);
-          widget.onResult?.call(true);
+          if (!_didSignalResult) {
+            _didSignalResult = true;
+            widget.onResult?.call(true);
+          }
+          if (mounted) {
+            context.router.maybePop(true);
+          }
         }
       } finally {
         if (mounted) setState(() => isLoading = false);
@@ -116,7 +123,13 @@ class _SignInScreenState extends State<SignInScreen>
                 ),
               );
               await SessionManager.bootstrapAfterSignIn(eager: false);
-              widget.onResult?.call(true);
+              if (!_didSignalResult) {
+                _didSignalResult = true;
+                widget.onResult?.call(true);
+              }
+              if (mounted) {
+                context.router.maybePop(true);
+              }
               return;
             }
             lastError = signInResult;

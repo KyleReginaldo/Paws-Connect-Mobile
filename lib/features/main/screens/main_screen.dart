@@ -41,7 +41,17 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void handleOneSignalLogin() async {
-    await OneSignal.login(USER_ID ?? '');
+    final id = USER_ID;
+    if (id != null && id.isNotEmpty) {
+      try {
+        await OneSignal.login(id);
+        debugPrint('🔔 OneSignal login ok for user: $id');
+      } catch (e) {
+        debugPrint('❌ OneSignal login failed: $e');
+      }
+    } else {
+      debugPrint('⚠️ OneSignal login skipped: USER_ID is null/empty');
+    }
   }
 
   Future<void> initPlatformState() async {

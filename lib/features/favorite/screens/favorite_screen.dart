@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:paws_connect/core/components/components.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/dependency.dart';
 import 'package:paws_connect/features/favorite/provider/favorite_provider.dart';
@@ -149,46 +150,10 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                                         // Image area with fixed aspect ratio
                                         AspectRatio(
                                           aspectRatio: 4 / 3,
-                                          child: Image.network(
+                                          child: NetworkImageView(
                                             pet.photo,
                                             fit: BoxFit.cover,
                                             width: double.infinity,
-                                            loadingBuilder:
-                                                (
-                                                  context,
-                                                  child,
-                                                  loadingProgress,
-                                                ) {
-                                                  if (loadingProgress == null) {
-                                                    return child;
-                                                  }
-                                                  return Container(
-                                                    color: Colors.grey.shade200,
-                                                    child: const Center(
-                                                      child: SizedBox(
-                                                        width: 24,
-                                                        height: 24,
-                                                        child:
-                                                            CircularProgressIndicator(
-                                                              strokeWidth: 2,
-                                                            ),
-                                                      ),
-                                                    ),
-                                                  );
-                                                },
-                                            errorBuilder:
-                                                (context, error, stackTrace) {
-                                                  return Container(
-                                                    color: Colors.grey.shade200,
-                                                    child: const Center(
-                                                      child: Icon(
-                                                        Icons.pets,
-                                                        size: 40,
-                                                        color: Colors.grey,
-                                                      ),
-                                                    ),
-                                                  );
-                                                },
                                           ),
                                         ),
                                         // Text content

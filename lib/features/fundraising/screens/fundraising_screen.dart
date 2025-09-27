@@ -1,6 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:paws_connect/core/components/components.dart';
 import 'package:paws_connect/core/extension/int.ext.dart';
 import 'package:paws_connect/dependency.dart';
 import 'package:paws_connect/features/fundraising/models/fundraising_model.dart';
@@ -291,7 +292,7 @@ class _FundraisingScreenState extends State<FundraisingScreen>
                               )
                             : ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
-                                child: Image.network(
+                                child: NetworkImageView(
                                   fundraising.images![0],
                                   fit: BoxFit.cover,
                                   width: 80,

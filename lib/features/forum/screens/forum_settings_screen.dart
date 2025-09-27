@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/components/components.dart';
 import '../../../core/router/app_route.gr.dart';
 import '../../../core/services/supabase_service.dart';
 import '../models/forum_model.dart';
@@ -355,17 +356,11 @@ class _ForumSettingsScreenState extends State<ForumSettingsScreen> {
                                           horizontal: 0,
                                           vertical: -4,
                                         ),
-                                        leading: member.profileImageLink != null
-                                            ? CircleAvatar(
-                                                backgroundImage: NetworkImage(
-                                                  member.profileImageLink!,
-                                                ),
-                                              )
-                                            : CircleAvatar(
-                                                backgroundImage: AssetImage(
-                                                  'assets/images/user.png',
-                                                ),
-                                              ),
+                                        leading: UserAvatar(
+                                          imageUrl: member.profileImageLink,
+                                          initials: member.username,
+                                          size: 32,
+                                        ),
                                         title: PawsText(
                                           '${member.username}(${member.id == USER_ID
                                               ? "You"

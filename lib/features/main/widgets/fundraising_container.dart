@@ -1,6 +1,7 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:paws_connect/core/components/components.dart';
 import 'package:paws_connect/core/extension/int.ext.dart';
 import 'package:paws_connect/core/router/app_route.gr.dart';
 import 'package:paws_connect/features/fundraising/models/fundraising_model.dart';
@@ -38,7 +39,7 @@ class FundraisingContainer extends StatelessWidget {
                     fundraising.images!.isNotEmpty)
                   ClipRRect(
                     borderRadius: BorderRadius.circular(6),
-                    child: Image.network(
+                    child: NetworkImageView(
                       fundraising.images![0],
                       width: 64,
                       height: 64,

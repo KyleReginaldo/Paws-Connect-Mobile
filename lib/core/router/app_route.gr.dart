@@ -9,17 +9,17 @@
 // coverage:ignore-file
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'package:auto_route/auto_route.dart' as _i28;
-import 'package:flutter/material.dart' as _i29;
+import 'package:auto_route/auto_route.dart' as _i29;
+import 'package:flutter/material.dart' as _i30;
 import 'package:paws_connect/features/adoption/screens/adoption_history_screen.dart'
     as _i3;
 import 'package:paws_connect/features/adoption/screens/create_adoption_screen.dart'
     as _i5;
-import 'package:paws_connect/features/auth/screens/auth_screen.dart' as _i27;
+import 'package:paws_connect/features/auth/screens/auth_screen.dart' as _i28;
 import 'package:paws_connect/features/auth/screens/change_password_screen.dart'
     as _i4;
 import 'package:paws_connect/features/auth/screens/onboarding_screen.dart'
-    as _i19;
+    as _i20;
 import 'package:paws_connect/features/donation/screens/donation_history_screen.dart'
     as _i6;
 import 'package:paws_connect/features/favorite/screens/favorite_screen.dart'
@@ -45,30 +45,32 @@ import 'package:paws_connect/features/main/screens/no_internet_screen.dart'
     as _i17;
 import 'package:paws_connect/features/main/screens/notfound_screen.dart'
     as _i18;
+import 'package:paws_connect/features/notifications/screens/notification_screen.dart'
+    as _i19;
 import 'package:paws_connect/features/payment/screens/payment_method_screen.dart'
-    as _i20;
-import 'package:paws_connect/features/payment/screens/payment_screen.dart'
     as _i21;
-import 'package:paws_connect/features/payment/screens/payment_success_screen.dart'
+import 'package:paws_connect/features/payment/screens/payment_screen.dart'
     as _i22;
-import 'package:paws_connect/features/pets/models/pet_model.dart' as _i30;
-import 'package:paws_connect/features/pets/screens/extensions/pet_detail_screen.dart'
+import 'package:paws_connect/features/payment/screens/payment_success_screen.dart'
     as _i23;
-import 'package:paws_connect/features/pets/screens/pet_screen.dart' as _i24;
+import 'package:paws_connect/features/pets/models/pet_model.dart' as _i31;
+import 'package:paws_connect/features/pets/screens/extensions/pet_detail_screen.dart'
+    as _i24;
+import 'package:paws_connect/features/pets/screens/pet_screen.dart' as _i25;
 import 'package:paws_connect/features/profile/screens/edit_profile_screen.dart'
     as _i7;
 import 'package:paws_connect/features/profile/screens/profile_screen.dart'
-    as _i25;
-import 'package:paws_connect/features/shopee/screens/shopee_screen.dart'
     as _i26;
+import 'package:paws_connect/features/shopee/screens/shopee_screen.dart'
+    as _i27;
 
 /// generated route for
 /// [_i1.AddForumMemberScreen]
-class AddForumMemberRoute extends _i28.PageRouteInfo<AddForumMemberRouteArgs> {
+class AddForumMemberRoute extends _i29.PageRouteInfo<AddForumMemberRouteArgs> {
   AddForumMemberRoute({
-    _i29.Key? key,
+    _i30.Key? key,
     required int forumId,
-    List<_i28.PageRouteInfo>? children,
+    List<_i29.PageRouteInfo>? children,
   }) : super(
          AddForumMemberRoute.name,
          args: AddForumMemberRouteArgs(key: key, forumId: forumId),
@@ -77,11 +79,11 @@ class AddForumMemberRoute extends _i28.PageRouteInfo<AddForumMemberRouteArgs> {
 
   static const String name = 'AddForumMemberRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
       final args = data.argsAs<AddForumMemberRouteArgs>();
-      return _i28.WrappedRoute(
+      return _i29.WrappedRoute(
         child: _i1.AddForumMemberScreen(key: args.key, forumId: args.forumId),
       );
     },
@@ -91,7 +93,7 @@ class AddForumMemberRoute extends _i28.PageRouteInfo<AddForumMemberRouteArgs> {
 class AddForumMemberRouteArgs {
   const AddForumMemberRouteArgs({this.key, required this.forumId});
 
-  final _i29.Key? key;
+  final _i30.Key? key;
 
   final int forumId;
 
@@ -113,13 +115,13 @@ class AddForumMemberRouteArgs {
 
 /// generated route for
 /// [_i2.AddForumScreen]
-class AddForumRoute extends _i28.PageRouteInfo<void> {
-  const AddForumRoute({List<_i28.PageRouteInfo>? children})
+class AddForumRoute extends _i29.PageRouteInfo<void> {
+  const AddForumRoute({List<_i29.PageRouteInfo>? children})
     : super(AddForumRoute.name, initialChildren: children);
 
   static const String name = 'AddForumRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
       return const _i2.AddForumScreen();
@@ -129,27 +131,27 @@ class AddForumRoute extends _i28.PageRouteInfo<void> {
 
 /// generated route for
 /// [_i3.AdoptionHistoryScreen]
-class AdoptionHistoryRoute extends _i28.PageRouteInfo<void> {
-  const AdoptionHistoryRoute({List<_i28.PageRouteInfo>? children})
+class AdoptionHistoryRoute extends _i29.PageRouteInfo<void> {
+  const AdoptionHistoryRoute({List<_i29.PageRouteInfo>? children})
     : super(AdoptionHistoryRoute.name, initialChildren: children);
 
   static const String name = 'AdoptionHistoryRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
-      return _i28.WrappedRoute(child: const _i3.AdoptionHistoryScreen());
+      return _i29.WrappedRoute(child: const _i3.AdoptionHistoryScreen());
     },
   );
 }
 
 /// generated route for
 /// [_i4.ChangePasswordScreen]
-class ChangePasswordRoute extends _i28.PageRouteInfo<ChangePasswordRouteArgs> {
+class ChangePasswordRoute extends _i29.PageRouteInfo<ChangePasswordRouteArgs> {
   ChangePasswordRoute({
-    _i29.Key? key,
+    _i30.Key? key,
     void Function(bool)? onResult,
-    List<_i28.PageRouteInfo>? children,
+    List<_i29.PageRouteInfo>? children,
   }) : super(
          ChangePasswordRoute.name,
          args: ChangePasswordRouteArgs(key: key, onResult: onResult),
@@ -158,13 +160,13 @@ class ChangePasswordRoute extends _i28.PageRouteInfo<ChangePasswordRouteArgs> {
 
   static const String name = 'ChangePasswordRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
       final args = data.argsAs<ChangePasswordRouteArgs>(
         orElse: () => const ChangePasswordRouteArgs(),
       );
-      return _i28.WrappedRoute(
+      return _i29.WrappedRoute(
         child: _i4.ChangePasswordScreen(key: args.key, onResult: args.onResult),
       );
     },
@@ -174,7 +176,7 @@ class ChangePasswordRoute extends _i28.PageRouteInfo<ChangePasswordRouteArgs> {
 class ChangePasswordRouteArgs {
   const ChangePasswordRouteArgs({this.key, this.onResult});
 
-  final _i29.Key? key;
+  final _i30.Key? key;
 
   final void Function(bool)? onResult;
 
@@ -196,11 +198,11 @@ class ChangePasswordRouteArgs {
 
 /// generated route for
 /// [_i5.CreateAdoptionScreen]
-class CreateAdoptionRoute extends _i28.PageRouteInfo<CreateAdoptionRouteArgs> {
+class CreateAdoptionRoute extends _i29.PageRouteInfo<CreateAdoptionRouteArgs> {
   CreateAdoptionRoute({
-    _i29.Key? key,
+    _i30.Key? key,
     required int petId,
-    List<_i28.PageRouteInfo>? children,
+    List<_i29.PageRouteInfo>? children,
   }) : super(
          CreateAdoptionRoute.name,
          args: CreateAdoptionRouteArgs(key: key, petId: petId),
@@ -210,7 +212,7 @@ class CreateAdoptionRoute extends _i28.PageRouteInfo<CreateAdoptionRouteArgs> {
 
   static const String name = 'CreateAdoptionRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
       final pathParams = data.inheritedPathParams;
@@ -218,7 +220,7 @@ class CreateAdoptionRoute extends _i28.PageRouteInfo<CreateAdoptionRouteArgs> {
         orElse: () =>
             CreateAdoptionRouteArgs(petId: pathParams.getInt('petId')),
       );
-      return _i28.WrappedRoute(
+      return _i29.WrappedRoute(
         child: _i5.CreateAdoptionScreen(key: args.key, petId: args.petId),
       );
     },
@@ -228,7 +230,7 @@ class CreateAdoptionRoute extends _i28.PageRouteInfo<CreateAdoptionRouteArgs> {
 class CreateAdoptionRouteArgs {
   const CreateAdoptionRouteArgs({this.key, required this.petId});
 
-  final _i29.Key? key;
+  final _i30.Key? key;
 
   final int petId;
 
@@ -250,59 +252,59 @@ class CreateAdoptionRouteArgs {
 
 /// generated route for
 /// [_i6.DonationHistoryScreen]
-class DonationHistoryRoute extends _i28.PageRouteInfo<void> {
-  const DonationHistoryRoute({List<_i28.PageRouteInfo>? children})
+class DonationHistoryRoute extends _i29.PageRouteInfo<void> {
+  const DonationHistoryRoute({List<_i29.PageRouteInfo>? children})
     : super(DonationHistoryRoute.name, initialChildren: children);
 
   static const String name = 'DonationHistoryRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
-      return _i28.WrappedRoute(child: const _i6.DonationHistoryScreen());
+      return _i29.WrappedRoute(child: const _i6.DonationHistoryScreen());
     },
   );
 }
 
 /// generated route for
 /// [_i7.EditProfileScreen]
-class EditProfileRoute extends _i28.PageRouteInfo<void> {
-  const EditProfileRoute({List<_i28.PageRouteInfo>? children})
+class EditProfileRoute extends _i29.PageRouteInfo<void> {
+  const EditProfileRoute({List<_i29.PageRouteInfo>? children})
     : super(EditProfileRoute.name, initialChildren: children);
 
   static const String name = 'EditProfileRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
-      return _i28.WrappedRoute(child: const _i7.EditProfileScreen());
+      return _i29.WrappedRoute(child: const _i7.EditProfileScreen());
     },
   );
 }
 
 /// generated route for
 /// [_i8.FavoriteScreen]
-class FavoriteRoute extends _i28.PageRouteInfo<void> {
-  const FavoriteRoute({List<_i28.PageRouteInfo>? children})
+class FavoriteRoute extends _i29.PageRouteInfo<void> {
+  const FavoriteRoute({List<_i29.PageRouteInfo>? children})
     : super(FavoriteRoute.name, initialChildren: children);
 
   static const String name = 'FavoriteRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
-      return _i28.WrappedRoute(child: const _i8.FavoriteScreen());
+      return _i29.WrappedRoute(child: const _i8.FavoriteScreen());
     },
   );
 }
 
 /// generated route for
 /// [_i9.ForumChatScreen]
-class ForumChatRoute extends _i28.PageRouteInfo<ForumChatRouteArgs> {
+class ForumChatRoute extends _i29.PageRouteInfo<ForumChatRouteArgs> {
   ForumChatRoute({
-    _i29.Key? key,
+    _i30.Key? key,
     required int forumId,
-    List<_i28.PageRouteInfo>? children,
+    List<_i29.PageRouteInfo>? children,
   }) : super(
          ForumChatRoute.name,
          args: ForumChatRouteArgs(key: key, forumId: forumId),
@@ -312,14 +314,14 @@ class ForumChatRoute extends _i28.PageRouteInfo<ForumChatRouteArgs> {
 
   static const String name = 'ForumChatRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
       final pathParams = data.inheritedPathParams;
       final args = data.argsAs<ForumChatRouteArgs>(
         orElse: () => ForumChatRouteArgs(forumId: pathParams.getInt('forumId')),
       );
-      return _i28.WrappedRoute(
+      return _i29.WrappedRoute(
         child: _i9.ForumChatScreen(key: args.key, forumId: args.forumId),
       );
     },
@@ -329,7 +331,7 @@ class ForumChatRoute extends _i28.PageRouteInfo<ForumChatRouteArgs> {
 class ForumChatRouteArgs {
   const ForumChatRouteArgs({this.key, required this.forumId});
 
-  final _i29.Key? key;
+  final _i30.Key? key;
 
   final int forumId;
 
@@ -351,27 +353,27 @@ class ForumChatRouteArgs {
 
 /// generated route for
 /// [_i10.ForumScreen]
-class ForumRoute extends _i28.PageRouteInfo<void> {
-  const ForumRoute({List<_i28.PageRouteInfo>? children})
+class ForumRoute extends _i29.PageRouteInfo<void> {
+  const ForumRoute({List<_i29.PageRouteInfo>? children})
     : super(ForumRoute.name, initialChildren: children);
 
   static const String name = 'ForumRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
-      return _i28.WrappedRoute(child: const _i10.ForumScreen());
+      return _i29.WrappedRoute(child: const _i10.ForumScreen());
     },
   );
 }
 
 /// generated route for
 /// [_i11.ForumSettingsScreen]
-class ForumSettingsRoute extends _i28.PageRouteInfo<ForumSettingsRouteArgs> {
+class ForumSettingsRoute extends _i29.PageRouteInfo<ForumSettingsRouteArgs> {
   ForumSettingsRoute({
-    _i29.Key? key,
+    _i30.Key? key,
     required int forumId,
-    List<_i28.PageRouteInfo>? children,
+    List<_i29.PageRouteInfo>? children,
   }) : super(
          ForumSettingsRoute.name,
          args: ForumSettingsRouteArgs(key: key, forumId: forumId),
@@ -381,7 +383,7 @@ class ForumSettingsRoute extends _i28.PageRouteInfo<ForumSettingsRouteArgs> {
 
   static const String name = 'ForumSettingsRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
       final pathParams = data.inheritedPathParams;
@@ -389,7 +391,7 @@ class ForumSettingsRoute extends _i28.PageRouteInfo<ForumSettingsRouteArgs> {
         orElse: () =>
             ForumSettingsRouteArgs(forumId: pathParams.getInt('forumId')),
       );
-      return _i28.WrappedRoute(
+      return _i29.WrappedRoute(
         child: _i11.ForumSettingsScreen(key: args.key, forumId: args.forumId),
       );
     },
@@ -399,7 +401,7 @@ class ForumSettingsRoute extends _i28.PageRouteInfo<ForumSettingsRouteArgs> {
 class ForumSettingsRouteArgs {
   const ForumSettingsRouteArgs({this.key, required this.forumId});
 
-  final _i29.Key? key;
+  final _i30.Key? key;
 
   final int forumId;
 
@@ -422,11 +424,11 @@ class ForumSettingsRouteArgs {
 /// generated route for
 /// [_i12.FundraisingDetailScreen]
 class FundraisingDetailRoute
-    extends _i28.PageRouteInfo<FundraisingDetailRouteArgs> {
+    extends _i29.PageRouteInfo<FundraisingDetailRouteArgs> {
   FundraisingDetailRoute({
-    _i29.Key? key,
+    _i30.Key? key,
     required int id,
-    List<_i28.PageRouteInfo>? children,
+    List<_i29.PageRouteInfo>? children,
   }) : super(
          FundraisingDetailRoute.name,
          args: FundraisingDetailRouteArgs(key: key, id: id),
@@ -436,14 +438,14 @@ class FundraisingDetailRoute
 
   static const String name = 'FundraisingDetailRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
       final pathParams = data.inheritedPathParams;
       final args = data.argsAs<FundraisingDetailRouteArgs>(
         orElse: () => FundraisingDetailRouteArgs(id: pathParams.getInt('id')),
       );
-      return _i28.WrappedRoute(
+      return _i29.WrappedRoute(
         child: _i12.FundraisingDetailScreen(key: args.key, id: args.id),
       );
     },
@@ -453,7 +455,7 @@ class FundraisingDetailRoute
 class FundraisingDetailRouteArgs {
   const FundraisingDetailRouteArgs({this.key, required this.id});
 
-  final _i29.Key? key;
+  final _i30.Key? key;
 
   final int id;
 
@@ -475,43 +477,43 @@ class FundraisingDetailRouteArgs {
 
 /// generated route for
 /// [_i13.FundraisingScreen]
-class FundraisingRoute extends _i28.PageRouteInfo<void> {
-  const FundraisingRoute({List<_i28.PageRouteInfo>? children})
+class FundraisingRoute extends _i29.PageRouteInfo<void> {
+  const FundraisingRoute({List<_i29.PageRouteInfo>? children})
     : super(FundraisingRoute.name, initialChildren: children);
 
   static const String name = 'FundraisingRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
-      return _i28.WrappedRoute(child: const _i13.FundraisingScreen());
+      return _i29.WrappedRoute(child: const _i13.FundraisingScreen());
     },
   );
 }
 
 /// generated route for
 /// [_i14.HomeScreen]
-class HomeRoute extends _i28.PageRouteInfo<void> {
-  const HomeRoute({List<_i28.PageRouteInfo>? children})
+class HomeRoute extends _i29.PageRouteInfo<void> {
+  const HomeRoute({List<_i29.PageRouteInfo>? children})
     : super(HomeRoute.name, initialChildren: children);
 
   static const String name = 'HomeRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
-      return _i28.WrappedRoute(child: const _i14.HomeScreen());
+      return _i29.WrappedRoute(child: const _i14.HomeScreen());
     },
   );
 }
 
 /// generated route for
 /// [_i15.MainScreen]
-class MainRoute extends _i28.PageRouteInfo<MainRouteArgs> {
+class MainRoute extends _i29.PageRouteInfo<MainRouteArgs> {
   MainRoute({
-    _i29.Key? key,
+    _i30.Key? key,
     int? initialIndex,
-    List<_i28.PageRouteInfo>? children,
+    List<_i29.PageRouteInfo>? children,
   }) : super(
          MainRoute.name,
          args: MainRouteArgs(key: key, initialIndex: initialIndex),
@@ -520,7 +522,7 @@ class MainRoute extends _i28.PageRouteInfo<MainRouteArgs> {
 
   static const String name = 'MainRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
       final args = data.argsAs<MainRouteArgs>(
@@ -534,7 +536,7 @@ class MainRoute extends _i28.PageRouteInfo<MainRouteArgs> {
 class MainRouteArgs {
   const MainRouteArgs({this.key, this.initialIndex});
 
-  final _i29.Key? key;
+  final _i30.Key? key;
 
   final int? initialIndex;
 
@@ -556,13 +558,13 @@ class MainRouteArgs {
 
 /// generated route for
 /// [_i16.MapScreen]
-class MapRoute extends _i28.PageRouteInfo<void> {
-  const MapRoute({List<_i28.PageRouteInfo>? children})
+class MapRoute extends _i29.PageRouteInfo<void> {
+  const MapRoute({List<_i29.PageRouteInfo>? children})
     : super(MapRoute.name, initialChildren: children);
 
   static const String name = 'MapRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
       return const _i16.MapScreen();
@@ -572,11 +574,11 @@ class MapRoute extends _i28.PageRouteInfo<void> {
 
 /// generated route for
 /// [_i17.NoInternetScreen]
-class NoInternetRoute extends _i28.PageRouteInfo<NoInternetRouteArgs> {
+class NoInternetRoute extends _i29.PageRouteInfo<NoInternetRouteArgs> {
   NoInternetRoute({
-    _i29.Key? key,
+    _i30.Key? key,
     dynamic Function(bool)? onResult,
-    List<_i28.PageRouteInfo>? children,
+    List<_i29.PageRouteInfo>? children,
   }) : super(
          NoInternetRoute.name,
          args: NoInternetRouteArgs(key: key, onResult: onResult),
@@ -585,7 +587,7 @@ class NoInternetRoute extends _i28.PageRouteInfo<NoInternetRouteArgs> {
 
   static const String name = 'NoInternetRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
       final args = data.argsAs<NoInternetRouteArgs>(
@@ -599,7 +601,7 @@ class NoInternetRoute extends _i28.PageRouteInfo<NoInternetRouteArgs> {
 class NoInternetRouteArgs {
   const NoInternetRouteArgs({this.key, this.onResult});
 
-  final _i29.Key? key;
+  final _i30.Key? key;
 
   final dynamic Function(bool)? onResult;
 
@@ -621,13 +623,13 @@ class NoInternetRouteArgs {
 
 /// generated route for
 /// [_i18.NotfoundScreen]
-class NotfoundRoute extends _i28.PageRouteInfo<void> {
-  const NotfoundRoute({List<_i28.PageRouteInfo>? children})
+class NotfoundRoute extends _i29.PageRouteInfo<void> {
+  const NotfoundRoute({List<_i29.PageRouteInfo>? children})
     : super(NotfoundRoute.name, initialChildren: children);
 
   static const String name = 'NotfoundRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
       return const _i18.NotfoundScreen();
@@ -636,28 +638,44 @@ class NotfoundRoute extends _i28.PageRouteInfo<void> {
 }
 
 /// generated route for
-/// [_i19.OnboardingScreen]
-class OnboardingRoute extends _i28.PageRouteInfo<void> {
-  const OnboardingRoute({List<_i28.PageRouteInfo>? children})
-    : super(OnboardingRoute.name, initialChildren: children);
+/// [_i19.NotificationScreen]
+class NotificationRoute extends _i29.PageRouteInfo<void> {
+  const NotificationRoute({List<_i29.PageRouteInfo>? children})
+    : super(NotificationRoute.name, initialChildren: children);
 
-  static const String name = 'OnboardingRoute';
+  static const String name = 'NotificationRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
-      return const _i19.OnboardingScreen();
+      return _i29.WrappedRoute(child: const _i19.NotificationScreen());
     },
   );
 }
 
 /// generated route for
-/// [_i20.PaymentMethodScreen]
-class PaymentMethodRoute extends _i28.PageRouteInfo<PaymentMethodRouteArgs> {
+/// [_i20.OnboardingScreen]
+class OnboardingRoute extends _i29.PageRouteInfo<void> {
+  const OnboardingRoute({List<_i29.PageRouteInfo>? children})
+    : super(OnboardingRoute.name, initialChildren: children);
+
+  static const String name = 'OnboardingRoute';
+
+  static _i29.PageInfo page = _i29.PageInfo(
+    name,
+    builder: (data) {
+      return const _i20.OnboardingScreen();
+    },
+  );
+}
+
+/// generated route for
+/// [_i21.PaymentMethodScreen]
+class PaymentMethodRoute extends _i29.PageRouteInfo<PaymentMethodRouteArgs> {
   PaymentMethodRoute({
-    _i29.Key? key,
+    _i30.Key? key,
     required String paymongoId,
-    List<_i28.PageRouteInfo>? children,
+    List<_i29.PageRouteInfo>? children,
   }) : super(
          PaymentMethodRoute.name,
          args: PaymentMethodRouteArgs(key: key, paymongoId: paymongoId),
@@ -666,11 +684,11 @@ class PaymentMethodRoute extends _i28.PageRouteInfo<PaymentMethodRouteArgs> {
 
   static const String name = 'PaymentMethodRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
       final args = data.argsAs<PaymentMethodRouteArgs>();
-      return _i20.PaymentMethodScreen(
+      return _i21.PaymentMethodScreen(
         key: args.key,
         paymongoId: args.paymongoId,
       );
@@ -681,7 +699,7 @@ class PaymentMethodRoute extends _i28.PageRouteInfo<PaymentMethodRouteArgs> {
 class PaymentMethodRouteArgs {
   const PaymentMethodRouteArgs({this.key, required this.paymongoId});
 
-  final _i29.Key? key;
+  final _i30.Key? key;
 
   final String paymongoId;
 
@@ -702,12 +720,12 @@ class PaymentMethodRouteArgs {
 }
 
 /// generated route for
-/// [_i21.PaymentScreen]
-class PaymentRoute extends _i28.PageRouteInfo<PaymentRouteArgs> {
+/// [_i22.PaymentScreen]
+class PaymentRoute extends _i29.PageRouteInfo<PaymentRouteArgs> {
   PaymentRoute({
-    _i29.Key? key,
+    _i30.Key? key,
     required int fundraisingId,
-    List<_i28.PageRouteInfo>? children,
+    List<_i29.PageRouteInfo>? children,
   }) : super(
          PaymentRoute.name,
          args: PaymentRouteArgs(key: key, fundraisingId: fundraisingId),
@@ -717,15 +735,15 @@ class PaymentRoute extends _i28.PageRouteInfo<PaymentRouteArgs> {
 
   static const String name = 'PaymentRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
       final pathParams = data.inheritedPathParams;
       final args = data.argsAs<PaymentRouteArgs>(
         orElse: () => PaymentRouteArgs(fundraisingId: pathParams.getInt('id')),
       );
-      return _i28.WrappedRoute(
-        child: _i21.PaymentScreen(
+      return _i29.WrappedRoute(
+        child: _i22.PaymentScreen(
           key: args.key,
           fundraisingId: args.fundraisingId,
         ),
@@ -737,7 +755,7 @@ class PaymentRoute extends _i28.PageRouteInfo<PaymentRouteArgs> {
 class PaymentRouteArgs {
   const PaymentRouteArgs({this.key, required this.fundraisingId});
 
-  final _i29.Key? key;
+  final _i30.Key? key;
 
   final int fundraisingId;
 
@@ -758,12 +776,12 @@ class PaymentRouteArgs {
 }
 
 /// generated route for
-/// [_i22.PaymentSuccessScreen]
-class PaymentSuccessRoute extends _i28.PageRouteInfo<PaymentSuccessRouteArgs> {
+/// [_i23.PaymentSuccessScreen]
+class PaymentSuccessRoute extends _i29.PageRouteInfo<PaymentSuccessRouteArgs> {
   PaymentSuccessRoute({
-    _i29.Key? key,
+    _i30.Key? key,
     required int id,
-    List<_i28.PageRouteInfo>? children,
+    List<_i29.PageRouteInfo>? children,
   }) : super(
          PaymentSuccessRoute.name,
          args: PaymentSuccessRouteArgs(key: key, id: id),
@@ -773,14 +791,14 @@ class PaymentSuccessRoute extends _i28.PageRouteInfo<PaymentSuccessRouteArgs> {
 
   static const String name = 'PaymentSuccessRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
       final pathParams = data.inheritedPathParams;
       final args = data.argsAs<PaymentSuccessRouteArgs>(
         orElse: () => PaymentSuccessRouteArgs(id: pathParams.getInt('id')),
       );
-      return _i22.PaymentSuccessScreen(key: args.key, id: args.id);
+      return _i23.PaymentSuccessScreen(key: args.key, id: args.id);
     },
   );
 }
@@ -788,7 +806,7 @@ class PaymentSuccessRoute extends _i28.PageRouteInfo<PaymentSuccessRouteArgs> {
 class PaymentSuccessRouteArgs {
   const PaymentSuccessRouteArgs({this.key, required this.id});
 
-  final _i29.Key? key;
+  final _i30.Key? key;
 
   final int id;
 
@@ -809,12 +827,12 @@ class PaymentSuccessRouteArgs {
 }
 
 /// generated route for
-/// [_i23.PetDetailScreen]
-class PetDetailRoute extends _i28.PageRouteInfo<PetDetailRouteArgs> {
+/// [_i24.PetDetailScreen]
+class PetDetailRoute extends _i29.PageRouteInfo<PetDetailRouteArgs> {
   PetDetailRoute({
-    _i29.Key? key,
-    required _i30.Pet pet,
-    List<_i28.PageRouteInfo>? children,
+    _i30.Key? key,
+    required _i31.Pet pet,
+    List<_i29.PageRouteInfo>? children,
   }) : super(
          PetDetailRoute.name,
          args: PetDetailRouteArgs(key: key, pet: pet),
@@ -823,11 +841,11 @@ class PetDetailRoute extends _i28.PageRouteInfo<PetDetailRouteArgs> {
 
   static const String name = 'PetDetailRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
       final args = data.argsAs<PetDetailRouteArgs>();
-      return _i23.PetDetailScreen(key: args.key, pet: args.pet);
+      return _i24.PetDetailScreen(key: args.key, pet: args.pet);
     },
   );
 }
@@ -835,9 +853,9 @@ class PetDetailRoute extends _i28.PageRouteInfo<PetDetailRouteArgs> {
 class PetDetailRouteArgs {
   const PetDetailRouteArgs({this.key, required this.pet});
 
-  final _i29.Key? key;
+  final _i30.Key? key;
 
-  final _i30.Pet pet;
+  final _i31.Pet pet;
 
   @override
   String toString() {
@@ -856,28 +874,28 @@ class PetDetailRouteArgs {
 }
 
 /// generated route for
-/// [_i24.PetScreen]
-class PetRoute extends _i28.PageRouteInfo<void> {
-  const PetRoute({List<_i28.PageRouteInfo>? children})
+/// [_i25.PetScreen]
+class PetRoute extends _i29.PageRouteInfo<void> {
+  const PetRoute({List<_i29.PageRouteInfo>? children})
     : super(PetRoute.name, initialChildren: children);
 
   static const String name = 'PetRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
-      return _i28.WrappedRoute(child: const _i24.PetScreen());
+      return _i29.WrappedRoute(child: const _i25.PetScreen());
     },
   );
 }
 
 /// generated route for
-/// [_i25.ProfileScreen]
-class ProfileRoute extends _i28.PageRouteInfo<ProfileRouteArgs> {
+/// [_i26.ProfileScreen]
+class ProfileRoute extends _i29.PageRouteInfo<ProfileRouteArgs> {
   ProfileRoute({
-    _i29.Key? key,
+    _i30.Key? key,
     required String id,
-    List<_i28.PageRouteInfo>? children,
+    List<_i29.PageRouteInfo>? children,
   }) : super(
          ProfileRoute.name,
          args: ProfileRouteArgs(key: key, id: id),
@@ -886,12 +904,12 @@ class ProfileRoute extends _i28.PageRouteInfo<ProfileRouteArgs> {
 
   static const String name = 'ProfileRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
       final args = data.argsAs<ProfileRouteArgs>();
-      return _i28.WrappedRoute(
-        child: _i25.ProfileScreen(key: args.key, id: args.id),
+      return _i29.WrappedRoute(
+        child: _i26.ProfileScreen(key: args.key, id: args.id),
       );
     },
   );
@@ -900,7 +918,7 @@ class ProfileRoute extends _i28.PageRouteInfo<ProfileRouteArgs> {
 class ProfileRouteArgs {
   const ProfileRouteArgs({this.key, required this.id});
 
-  final _i29.Key? key;
+  final _i30.Key? key;
 
   final String id;
 
@@ -921,12 +939,12 @@ class ProfileRouteArgs {
 }
 
 /// generated route for
-/// [_i26.ShopeeScreen]
-class ShopeeRoute extends _i28.PageRouteInfo<ShopeeRouteArgs> {
+/// [_i27.ShopeeScreen]
+class ShopeeRoute extends _i29.PageRouteInfo<ShopeeRouteArgs> {
   ShopeeRoute({
-    _i29.Key? key,
+    _i30.Key? key,
     String initialUrl = 'https://shopee.ph',
-    List<_i28.PageRouteInfo>? children,
+    List<_i29.PageRouteInfo>? children,
   }) : super(
          ShopeeRoute.name,
          args: ShopeeRouteArgs(key: key, initialUrl: initialUrl),
@@ -935,13 +953,13 @@ class ShopeeRoute extends _i28.PageRouteInfo<ShopeeRouteArgs> {
 
   static const String name = 'ShopeeRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
       final args = data.argsAs<ShopeeRouteArgs>(
         orElse: () => const ShopeeRouteArgs(),
       );
-      return _i26.ShopeeScreen(key: args.key, initialUrl: args.initialUrl);
+      return _i27.ShopeeScreen(key: args.key, initialUrl: args.initialUrl);
     },
   );
 }
@@ -949,7 +967,7 @@ class ShopeeRoute extends _i28.PageRouteInfo<ShopeeRouteArgs> {
 class ShopeeRouteArgs {
   const ShopeeRouteArgs({this.key, this.initialUrl = 'https://shopee.ph'});
 
-  final _i29.Key? key;
+  final _i30.Key? key;
 
   final String initialUrl;
 
@@ -970,14 +988,14 @@ class ShopeeRouteArgs {
 }
 
 /// generated route for
-/// [_i27.SignInScreen]
-class SignInRoute extends _i28.PageRouteInfo<SignInRouteArgs> {
+/// [_i28.SignInScreen]
+class SignInRoute extends _i29.PageRouteInfo<SignInRouteArgs> {
   SignInRoute({
-    _i29.Key? key,
+    _i30.Key? key,
     void Function(bool)? onResult,
     String? email,
     String? password,
-    List<_i28.PageRouteInfo>? children,
+    List<_i29.PageRouteInfo>? children,
   }) : super(
          SignInRoute.name,
          args: SignInRouteArgs(
@@ -991,14 +1009,14 @@ class SignInRoute extends _i28.PageRouteInfo<SignInRouteArgs> {
 
   static const String name = 'SignInRoute';
 
-  static _i28.PageInfo page = _i28.PageInfo(
+  static _i29.PageInfo page = _i29.PageInfo(
     name,
     builder: (data) {
       final args = data.argsAs<SignInRouteArgs>(
         orElse: () => const SignInRouteArgs(),
       );
-      return _i28.WrappedRoute(
-        child: _i27.SignInScreen(
+      return _i29.WrappedRoute(
+        child: _i28.SignInScreen(
           key: args.key,
           onResult: args.onResult,
           email: args.email,
@@ -1012,7 +1030,7 @@ class SignInRoute extends _i28.PageRouteInfo<SignInRouteArgs> {
 class SignInRouteArgs {
   const SignInRouteArgs({this.key, this.onResult, this.email, this.password});
 
-  final _i29.Key? key;
+  final _i30.Key? key;
 
   final void Function(bool)? onResult;
 

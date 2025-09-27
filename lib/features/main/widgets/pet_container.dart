@@ -2,6 +2,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:paws_connect/core/components/components.dart';
 import 'package:paws_connect/core/router/app_route.gr.dart';
 import 'package:paws_connect/features/pets/models/pet_model.dart';
 
@@ -35,7 +36,7 @@ class PetContainer extends StatelessWidget {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(6),
-                      child: Image.network(
+                      child: NetworkImageView(
                         pet.photo,
                         width: MediaQuery.sizeOf(context).width * 0.40,
                         height: 120,

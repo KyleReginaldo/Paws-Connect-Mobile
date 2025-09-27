@@ -15,10 +15,10 @@ import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
+import '../../../core/components/components.dart';
 import '../../../core/router/app_route.gr.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/theme/paws_theme.dart';
-import '../../../core/widgets/network_image_viewer.dart';
 import '../../../core/widgets/text.dart';
 import '../models/forum_model.dart';
 import '../repository/forum_repository.dart';
@@ -311,53 +311,22 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
                                   children: [
                                     if (!isCurrentUser) ...[
                                       showAvatar
-                                          ? CircleAvatar(
-                                              radius: 16,
-                                              backgroundColor: PawsColors
-                                                  .primary
-                                                  .withValues(alpha: 0.1),
-                                              child: PawsText(
-                                                chat.users.username.isNotEmpty
-                                                    ? chat.users.username[0]
-                                                          .toUpperCase()
-                                                    : '?',
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                                color: PawsColors.primary,
-                                              ),
+                                          ? UserAvatar(
+                                              imageUrl:
+                                                  null, // no image in Users model
+                                              initials: chat.users.username,
+                                              size: 32,
                                             )
                                           : const SizedBox(width: 32),
                                       const SizedBox(width: 8),
                                     ],
 
                                     Flexible(
-                                      child: Container(
-                                        constraints: BoxConstraints(
-                                          maxWidth:
-                                              MediaQuery.of(
-                                                context,
-                                              ).size.width *
-                                              0.75,
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                          vertical: 10,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: isCurrentUser
-                                              ? PawsColors.primary
-                                              : PawsColors.border,
-                                          borderRadius: BorderRadius.only(
-                                            topLeft: const Radius.circular(16),
-                                            topRight: const Radius.circular(16),
-                                            bottomLeft: Radius.circular(
-                                              isCurrentUser ? 16 : 4,
-                                            ),
-                                            bottomRight: Radius.circular(
-                                              isCurrentUser ? 4 : 16,
-                                            ),
-                                          ),
-                                        ),
+                                      child: ChatBubble(
+                                        isMe: isCurrentUser,
+                                        color: isCurrentUser
+                                            ? PawsColors.primary
+                                            : PawsColors.border,
                                         child: Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
@@ -416,68 +385,9 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
 
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 8),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Flexible(
-                                    child: Container(
-                                      constraints: BoxConstraints(
-                                        maxWidth:
-                                            MediaQuery.of(context).size.width *
-                                            0.75,
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 10,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: PawsColors.primary,
-                                        borderRadius: BorderRadius.only(
-                                          topLeft: const Radius.circular(16),
-                                          topRight: const Radius.circular(16),
-                                          bottomLeft: const Radius.circular(16),
-                                          bottomRight: const Radius.circular(4),
-                                        ),
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          PawsText(
-                                            pendingMessage,
-                                            fontSize: 14,
-                                            color: Colors.white,
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: const [
-                                              SizedBox(
-                                                width: 12,
-                                                height: 12,
-                                                child: CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                  valueColor:
-                                                      AlwaysStoppedAnimation<
-                                                        Color
-                                                      >(Colors.white70),
-                                                ),
-                                              ),
-                                              SizedBox(width: 8),
-                                              PawsText(
-                                                'Sending...',
-                                                fontSize: 10,
-                                                color: Colors.white70,
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                ],
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: PendingChatBubble(pendingMessage),
                               ),
                             );
                           },
@@ -487,140 +397,14 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
                   ),
           ),
 
-          // Message input area
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(top: BorderSide(color: Colors.grey[200]!)),
-            ),
-            child: SafeArea(
-              child: Column(
-                children: [
-                  if (_imageFile != null) ...[
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Stack(
-                          alignment: Alignment.topRight,
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.file(
-                                File(_imageFile!.path),
-                                width: 100,
-                                height: 100,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _imageFile = null;
-                                });
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.black54,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.close,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                  ],
-                  Row(
-                    children: [
-                      IconButton(
-                        onPressed: _pickImage,
-                        icon: Icon(LucideIcons.image),
-                        color: PawsColors.textPrimary,
-                      ),
-                      Expanded(
-                        child: TextField(
-                          controller: _messageController,
-                          onSubmitted: _isSendingMessage
-                              ? null
-                              : (_) => _sendMessage(),
-                          maxLines: null,
-                          enabled: !_isSendingMessage,
-                          decoration: InputDecoration(
-                            hintText: _isSendingMessage
-                                ? 'Sending message...'
-                                : 'Type a message...',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
-                            ),
-                            disabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
-                              borderSide: BorderSide(color: Colors.grey[200]!),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
-                              borderSide: const BorderSide(
-                                color: PawsColors.primary,
-                              ),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            filled: true,
-                            fillColor: _isSendingMessage
-                                ? Colors.grey[100]
-                                : Colors.grey[50],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: _isSendingMessage ? null : _sendMessage,
-                        child: Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: _isSendingMessage
-                                ? PawsColors.primary.withValues(alpha: 0.6)
-                                : PawsColors.primary,
-                            shape: BoxShape.circle,
-                          ),
-                          child: _isSendingMessage
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
-                                    ),
-                                  ),
-                                )
-                              : const Icon(
-                                  LucideIcons.send,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+          // Message input area using component
+          MessageInputBar(
+            controller: _messageController,
+            isSending: _isSendingMessage,
+            onPickImage: _pickImage,
+            onSend: _sendMessage,
+            previewImage: _imageFile != null ? File(_imageFile!.path) : null,
+            onRemovePreview: () => setState(() => _imageFile = null),
           ),
         ],
       ),

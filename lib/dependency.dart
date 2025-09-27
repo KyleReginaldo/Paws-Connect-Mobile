@@ -10,6 +10,8 @@ import 'package:paws_connect/features/forum/repository/forum_repository.dart';
 import 'package:paws_connect/features/fundraising/provider/fundraising_provider.dart';
 import 'package:paws_connect/features/fundraising/repository/fundraising_repository.dart';
 import 'package:paws_connect/features/google_map/provider/address_provider.dart';
+import 'package:paws_connect/features/notifications/provider/notification_provider.dart';
+import 'package:paws_connect/features/notifications/repository/notification_repository.dart';
 import 'package:paws_connect/features/pets/provider/pet_provider.dart';
 import 'package:paws_connect/features/profile/provider/profile_provider.dart';
 import 'package:paws_connect/features/profile/repository/image_repository.dart';
@@ -42,4 +44,6 @@ Future<void> init() async {
   sl.registerLazySingleton(() => DonationRepository(sl()));
   sl.registerLazySingleton(() => FavoriteProvider());
   sl.registerLazySingleton(() => FavoriteRepository(provider: sl()));
+  sl.registerLazySingleton(() => NotificationProvider());
+  sl.registerLazySingleton(() => NotificationRepository(sl()));
 }

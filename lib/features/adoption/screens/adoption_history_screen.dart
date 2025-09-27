@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:paws_connect/core/components/components.dart';
 import 'package:paws_connect/core/extension/int.ext.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/core/widgets/text.dart';
@@ -50,8 +51,10 @@ class _AdoptionHistoryScreenState extends State<AdoptionHistoryScreen> {
             padding: const EdgeInsets.only(bottom: 8),
             child: ListTile(
               tileColor: Colors.white,
-              leading: CircleAvatar(
-                backgroundImage: NetworkImage(adoption.pets.photo),
+              leading: UserAvatar(
+                imageUrl: adoption.pets.photo,
+                initials: adoption.pets.name,
+                size: 32,
               ),
               title: Row(
                 spacing: 10,

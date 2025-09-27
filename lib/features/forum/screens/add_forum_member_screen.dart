@@ -2,6 +2,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:paws_connect/core/components/components.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/core/theme/paws_theme.dart';
 import 'package:paws_connect/core/widgets/button.dart';
@@ -125,17 +126,11 @@ class _AddForumMemberScreenState extends State<AddForumMemberScreen> {
                               horizontal: 0,
                               vertical: -4,
                             ),
-                            leading: member.profileImageLink != null
-                                ? CircleAvatar(
-                                    backgroundImage: NetworkImage(
-                                      member.profileImageLink!,
-                                    ),
-                                  )
-                                : CircleAvatar(
-                                    backgroundImage: AssetImage(
-                                      'assets/images/user.png',
-                                    ),
-                                  ),
+                            leading: UserAvatar(
+                              imageUrl: member.profileImageLink,
+                              initials: member.username,
+                              size: 32,
+                            ),
                             title: PawsText(member.username),
                             trailing: Checkbox(
                               shape: RoundedRectangleBorder(

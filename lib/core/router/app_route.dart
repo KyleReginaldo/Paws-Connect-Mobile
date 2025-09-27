@@ -105,7 +105,7 @@ class AppRouter extends RootStackRouter {
     CustomRoute(
       page: ChangePasswordRoute.page,
       path: '/change-password',
-      transitionsBuilder: TransitionsBuilders.slideBottom,
+      transitionsBuilder: TransitionsBuilders.fadeIn,
     ),
     CustomRoute(
       page: CreateAdoptionRoute.page,
@@ -116,12 +116,17 @@ class AppRouter extends RootStackRouter {
     CustomRoute(
       page: AdoptionHistoryRoute.page,
       path: '/adoption-history',
-      transitionsBuilder: TransitionsBuilders.slideBottom,
+      transitionsBuilder: TransitionsBuilders.fadeIn,
     ),
     CustomRoute(
       page: DonationHistoryRoute.page,
       path: '/donation-history',
-      transitionsBuilder: TransitionsBuilders.slideBottom,
+      transitionsBuilder: TransitionsBuilders.fadeIn,
+    ),
+    CustomRoute(
+      page: NotificationRoute.page,
+      path: '/notification',
+      transitionsBuilder: TransitionsBuilders.fadeIn,
     ),
   ];
 }

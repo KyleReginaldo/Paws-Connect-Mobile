@@ -1,3 +1,4 @@
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/dependency.dart';
 import 'package:paws_connect/features/adoption/repository/adoption_repository.dart';
@@ -15,6 +16,15 @@ class SessionManager {
   static Future<void> signOutAndClear() async {
     if (sl.isRegistered<AuthRepository>()) {
       await sl<AuthRepository>().signOut();
+    }
+    // Ensure OneSignal identity is cleared on sign out
+    try {
+      await OneSignal.logout();
+      // ignore: avoid_print
+      print('🔕 OneSignal logout done');
+    } catch (e) {
+      // ignore: avoid_print
+      print('❌ OneSignal logout failed: $e');
     }
     await clearCachesOnly();
     // Preload public data so Home is populated right after sign out
@@ -43,6 +53,19 @@ class SessionManager {
   // Preload all user-related repositories after successful sign-in
   static Future<void> bootstrapAfterSignIn({bool eager = false}) async {
     if (USER_ID == null || (USER_ID?.isEmpty ?? true)) return;
+
+    // Ensure OneSignal is logged in with the current USER_ID
+    try {
+      final current = await OneSignal.User.getExternalId();
+      if (current != USER_ID) {
+        await OneSignal.login(USER_ID!);
+        // ignore: avoid_print
+        print('🔔 OneSignal ensured login for ${USER_ID!}');
+      }
+    } catch (e) {
+      // ignore: avoid_print
+      print('❌ OneSignal ensure login failed: $e');
+    }
 
     final futures = <Future<void>>[];
     if (sl.isRegistered<ProfileRepository>()) {
