@@ -24,4 +24,10 @@ class NotificationProvider {
       );
     }
   }
+
+  Future<void> markAllViewed(String userId) async {
+    await http.put(
+      Uri.parse('${dotenv.get('BASE_URL')}/notifications/user/$userId/view'),
+    );
+  }
 }

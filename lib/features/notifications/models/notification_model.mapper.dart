@@ -38,6 +38,13 @@ class NotificationMapper extends ClassMapperBase<Notification> {
     _$createdAt,
     key: r'created_at',
   );
+  static bool? _$isViewed(Notification v) => v.isViewed;
+  static const Field<Notification, bool> _f$isViewed = Field(
+    'isViewed',
+    _$isViewed,
+    key: r'is_viewed',
+    opt: true,
+  );
 
   @override
   final MappableFields<Notification> fields = const {
@@ -46,6 +53,7 @@ class NotificationMapper extends ClassMapperBase<Notification> {
     #content: _f$content,
     #user: _f$user,
     #createdAt: _f$createdAt,
+    #isViewed: _f$isViewed,
   };
 
   static Notification _instantiate(DecodingData data) {
@@ -55,6 +63,7 @@ class NotificationMapper extends ClassMapperBase<Notification> {
       content: data.dec(_f$content),
       user: data.dec(_f$user),
       createdAt: data.dec(_f$createdAt),
+      isViewed: data.dec(_f$isViewed),
     );
   }
 
@@ -126,6 +135,7 @@ abstract class NotificationCopyWith<$R, $In extends Notification, $Out>
     String? content,
     String? user,
     String? createdAt,
+    bool? isViewed,
   });
   NotificationCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -145,6 +155,7 @@ class _NotificationCopyWithImpl<$R, $Out>
     String? content,
     String? user,
     String? createdAt,
+    Object? isViewed = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -152,6 +163,7 @@ class _NotificationCopyWithImpl<$R, $Out>
       if (content != null) #content: content,
       if (user != null) #user: user,
       if (createdAt != null) #createdAt: createdAt,
+      if (isViewed != $none) #isViewed: isViewed,
     }),
   );
   @override
@@ -161,6 +173,7 @@ class _NotificationCopyWithImpl<$R, $Out>
     content: data.get(#content, or: $value.content),
     user: data.get(#user, or: $value.user),
     createdAt: data.get(#createdAt, or: $value.createdAt),
+    isViewed: data.get(#isViewed, or: $value.isViewed),
   );
 
   @override

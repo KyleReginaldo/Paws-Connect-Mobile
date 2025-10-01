@@ -97,9 +97,64 @@ class PetRepository extends ChangeNotifier {
     }
   }
 
+  // SEARCH
+  List<Pet>? _searchResults;
+  bool _isSearching = false;
+  List<Pet>? get searchResults => _searchResults;
+  bool get isSearching => _isSearching;
+
+  Future<void> searchPets(String query, {String? userId}) async {
+    _isSearching = true;
+    notifyListeners();
+    final res = await _petProvider.searchPets(query, userId: userId);
+    if (res.isSuccess) {
+      _searchResults = res.value;
+    } else {
+      _searchResults = [];
+      _errorMessage = res.error;
+    }
+    _isSearching = false;
+    notifyListeners();
+  }
+
+  void clearSearch() {
+    _searchResults = null;
+    notifyListeners();
+  }
+
+  // DELETE
+  Future<bool> deletePet(int id) async {
+    final res = await _petProvider.deletePet(id);
+    if (res.isSuccess) {
+      // Remove from cached lists
+      _pets?.removeWhere((p) => p.id == id);
+      _recentPets?.removeWhere((p) => p.id == id);
+      _searchResults?.removeWhere((p) => p.id == id);
+      if (_pet?.id == id) _pet = null;
+      notifyListeners();
+      return true;
+    }
+    _errorMessage = res.error;
+    notifyListeners();
+    return false;
+  }
+
   Future<void> fetchRecentPets({String? userId}) async {
     _isLoading = true;
     notifyListeners();
+    final result = await _petProvider.fetchRecentPets(userId: userId);
+    if (result.isSuccess) {
+      _recentPets = result.value;
+      _isLoading = false;
+      notifyListeners();
+    } else {
+      _recentPets = null;
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> refetchRecentPets({String? userId}) async {
     final result = await _petProvider.fetchRecentPets(userId: userId);
     if (result.isSuccess) {
       _recentPets = result.value;

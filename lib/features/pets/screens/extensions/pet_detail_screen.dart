@@ -65,17 +65,6 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
           centerTitle: true,
           backgroundColor: Colors.transparent,
           elevation: 0,
-          actions: [
-            IconButton(
-              onPressed: _toggleFavorite,
-              icon: Icon(
-                (widget.pet.isFavorite ?? false)
-                    ? Icons.favorite
-                    : Icons.favorite_border,
-                color: Colors.white,
-              ),
-            ),
-          ],
         ),
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

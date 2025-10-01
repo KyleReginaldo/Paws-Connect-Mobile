@@ -1,6 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:paws_connect/core/router/app_route.gr.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/dependency.dart';
 import 'package:provider/provider.dart';
@@ -102,38 +103,96 @@ class _NotificationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    return Card(
-      elevation: 0.5,
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: scheme.outlineVariant.withOpacity(0.3)),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        leading: CircleAvatar(
-          radius: 22,
-          backgroundColor: scheme.primary.withValues(alpha: 0.12),
-          child: Icon(Icons.notifications, color: scheme.primary),
-        ),
-        title: Text(
-          '${notification.title} ${timeago.format(DateTime.parse(notification.createdAt), locale: 'en_short')}',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
+    final unread =
+        notification.isViewed ==
+        false; // treat null as read unless explicitly false
+    final created = DateTime.tryParse(notification.createdAt);
+    final relative = created != null
+        ? timeago.format(created, locale: 'en_short')
+        : '';
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () {
+        debugPrint('Notification tapped: ${notification.id}');
+        context.router.push(
+          NotificationDetailRoute(notification: notification),
+        );
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          color: unread
+              ? scheme.primary.withValues(alpha: 0.06)
+              : scheme.surface,
+          border: Border.all(
+            color: unread
+                ? scheme.primary.withValues(alpha: 0.35)
+                : scheme.outlineVariant.withValues(alpha: 0.25),
+            width: 1,
           ),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
         ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Text(
-            notification.content,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: scheme.onSurfaceVariant,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Unread indicator dot
+            Container(
+              width: 8,
+              height: 8,
+              margin: const EdgeInsets.only(top: 6, right: 10),
+              decoration: BoxDecoration(
+                color: unread ? scheme.primary : scheme.outlineVariant,
+                shape: BoxShape.circle,
+              ),
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
+            // Content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          notification.title.trim(),
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: unread
+                                ? FontWeight.w700
+                                : FontWeight.w600,
+                            color: scheme.onSurface,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (relative.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          relative,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    notification.content.trim(),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                      height: 1.25,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

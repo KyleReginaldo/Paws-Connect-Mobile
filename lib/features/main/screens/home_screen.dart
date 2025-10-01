@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:lottie/lottie.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:paws_connect/core/enum/user.enum.dart';
 import 'package:paws_connect/core/router/app_route.gr.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/core/widgets/button.dart';
 import 'package:paws_connect/features/auth/repository/auth_repository.dart';
 import 'package:paws_connect/features/google_map/repository/address_repository.dart';
+import 'package:paws_connect/features/main/screens/search_delegate.dart';
 import 'package:paws_connect/features/pets/repository/pet_repository.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -24,10 +26,10 @@ import '../../../dependency.dart';
 import '../../favorite/repository/favorite_repository.dart';
 import '../../fundraising/repository/fundraising_repository.dart';
 import '../../internet/internet.dart';
+import '../../notifications/repository/notification_repository.dart';
 import '../../profile/repository/profile_repository.dart';
 import '../widgets/app_bar.dart';
 import '../widgets/fundraising_container.dart';
-import '../widgets/home/promotion_container.dart';
 import '../widgets/pet_container.dart';
 
 @RoutePage()
@@ -47,6 +49,7 @@ class HomeScreen extends StatefulWidget implements AutoRouteWrapper {
         ChangeNotifierProvider.value(value: sl<AddressRepository>()),
         ChangeNotifierProvider.value(value: sl<ProfileRepository>()),
         ChangeNotifierProvider.value(value: sl<FavoriteRepository>()),
+        ChangeNotifierProvider.value(value: sl<NotificationRepository>()),
       ],
       child: this,
     );
@@ -132,6 +135,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void handleListeners() {
     debugPrint('USER ID: $USER_ID');
+    // Listen to notifications for current user
+    final notificationsChannel = supabase.channel('public:notifications');
+    notificationsChannel
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'notifications',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'user',
+            value: USER_ID,
+          ),
+          callback: (payload) {
+            if (USER_ID != null) {
+              context.read<NotificationRepository>().fetchNotifications(
+                USER_ID!,
+              );
+            }
+          },
+        )
+        .subscribe();
     petChannel
         .onPostgresChanges(
           event: PostgresChangeEvent.all,
@@ -188,7 +212,7 @@ class _HomeScreenState extends State<HomeScreen> {
             if (!success) return;
             await SessionManager.bootstrapAfterSignIn(eager: false);
             if (!mounted) return;
-            context.read<PetRepository>().fetchRecentPets(userId: USER_ID);
+            context.read<PetRepository>().refetchRecentPets(userId: USER_ID);
           },
         ),
       );
@@ -196,22 +220,20 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     final petRepo = context.read<PetRepository>();
-    // Optimistic UI update
-    petRepo.updatePetFavorite(petId, !isCurrentlyFavorite);
     try {
       await sl<FavoriteRepository>().toggleFavorite(petId);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            !isCurrentlyFavorite
+            isCurrentlyFavorite
                 ? 'Added to favorites'
                 : 'Removed from favorites',
           ),
         ),
       );
     } catch (e) {
-      // Rollback on failure
+      // Manual rollback if repository optimistic failed (rare)
       petRepo.updatePetFavorite(petId, isCurrentlyFavorite);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -291,7 +313,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (context.mounted &&
                       USER_ID != null &&
                       USER_ID!.isNotEmpty) {
-                    context.router.replace(ProfileRoute(id: USER_ID!));
+                    context.router.push(ProfileRoute(id: USER_ID!));
                   }
                 },
               ),
@@ -443,8 +465,72 @@ class _HomeScreenState extends State<HomeScreen> {
             spacing: 10,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              PawsSearchBar(hintText: 'Search for pets...'),
-              PromotionContainer(),
+              if (user?.status == UserStatus.PENDING)
+                Container(
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.orange, Colors.deepOrange],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            PawsText(
+                              'Verify your account',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(height: 4),
+                            PawsText(
+                              'Tap to complete your profile verification',
+                              fontSize: 13,
+                              color: Colors.white.withValues(alpha: 0.9),
+                            ),
+                            SizedBox(height: 10),
+                            PawsElevatedButton(
+                              label: 'Verify Now',
+                              isFullWidth: false,
+                              borderRadius: 6,
+                              icon: LucideIcons.userCheck,
+                              backgroundColor: Colors.white,
+                              foregroundColor: PawsColors.primary,
+                              size: 14,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 5,
+                              ),
+                              onPressed: () {
+                                context.router.push(SetUpVerificationRoute());
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      Image.asset(
+                        'assets/images/verification.png',
+                        height: 128,
+                      ),
+                    ],
+                  ),
+                ),
+              PawsSearchBar(
+                hintText: 'Search for pets...',
+                onTap: () {
+                  showSearch(
+                    context: context,
+                    delegate: PetSearchDelegate(repo: sl<PetRepository>()),
+                  );
+                },
+              ),
+              // PromotionContainer(),
               // PawsText('Category', fontSize: 16, fontWeight: FontWeight.w500),
               // CategoriesList(),
               // Show address error if there is one
@@ -473,7 +559,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
-
               // Container(
               //   width: double.infinity,
               //   padding: const EdgeInsets.all(12),
@@ -591,7 +676,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               onFavoriteToggle: (petId) {
                                 _toggleFavorite(
                                   petId,
-                                  recentPets[index].isFavorite ?? false,
+                                  !(recentPets[index].isFavorite ?? false),
                                 );
                               },
                             ),

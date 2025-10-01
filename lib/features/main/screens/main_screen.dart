@@ -5,7 +5,12 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
+import 'package:paws_connect/core/repository/common_repository.dart';
+import 'package:paws_connect/core/services/supabase_service.dart';
 import 'package:paws_connect/core/supabase/client.dart';
+import 'package:paws_connect/dependency.dart';
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/router/app_route.gr.dart';
 import '../../../core/theme/paws_theme.dart';
@@ -18,26 +23,101 @@ DateTime? _lastNavigationTime;
 String? _lastNavigatedRoute;
 
 @RoutePage()
-class MainScreen extends StatefulWidget {
+class MainScreen extends StatefulWidget implements AutoRouteWrapper {
   final int? initialIndex;
   const MainScreen({super.key, this.initialIndex});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
+
+  @override
+  Widget wrappedRoute(BuildContext context) {
+    return ChangeNotifierProvider.value(
+      value: sl<CommonRepository>(),
+      child: this,
+    );
+  }
 }
 
 class _MainScreenState extends State<MainScreen> {
   bool _hasSetInitialIndex = false;
+  RealtimeChannel? _forumChatsChannel;
+  RealtimeChannel? _notificationsChannel;
+
+  DateTime _lastRealtimeRefresh = DateTime.fromMillisecondsSinceEpoch(0);
 
   @override
   void initState() {
     handleOneSignalLogin();
-    // Only initialize OneSignal listener once globally
     if (!_oneSignalListenerInitialized) {
       initPlatformState();
       _oneSignalListenerInitialized = true;
     }
+    _initForumChatsRealtime();
+    _initNotificationsRealtime();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userId = USER_ID;
+      if (userId != null && userId.isNotEmpty) {
+        sl<CommonRepository>().getMessageCount(userId);
+        sl<CommonRepository>().getNotificationCount(userId);
+      }
+    });
     super.initState();
+  }
+
+  void _initForumChatsRealtime() {
+    // Subscribe to all changes in forum_chats to keep unread count updated.
+    _forumChatsChannel = supabase.channel('public:forum_chats_all');
+    _forumChatsChannel!
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'forum_chats',
+          callback: (_) {
+            if (!mounted) return;
+            final userId = USER_ID;
+            if (userId == null || userId.isEmpty) return;
+            final now = DateTime.now();
+            // Throttle to avoid excessive HTTP calls when many messages arrive.
+            if (now.difference(_lastRealtimeRefresh).inMilliseconds < 300) {
+              return;
+            }
+            _lastRealtimeRefresh = now;
+            sl<CommonRepository>().getMessageCount(userId);
+          },
+        )
+        .subscribe();
+  }
+
+  void _initNotificationsRealtime() {
+    // Subscribe to all changes in forum_chats to keep unread count updated.
+    _notificationsChannel = supabase.channel(
+      'public:notifications:user=eq.$USER_ID',
+    );
+    _notificationsChannel!
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'notifications',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'user',
+            value: USER_ID ?? "",
+          ),
+          callback: (_) {
+            if (!mounted) return;
+            final userId = USER_ID;
+            if (userId == null || userId.isEmpty) return;
+            final now = DateTime.now();
+            // Throttle to avoid excessive HTTP calls when many messages arrive.
+            if (now.difference(_lastRealtimeRefresh).inMilliseconds < 300) {
+              return;
+            }
+            _lastRealtimeRefresh = now;
+            sl<CommonRepository>().getNotificationCount(userId);
+          },
+        )
+        .subscribe();
   }
 
   void handleOneSignalLogin() async {
@@ -151,7 +231,8 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // final user = context.watch<AuthRepository>().user;
+    final mesCount = context.watch<CommonRepository>().messageCount;
+
     return AutoTabsScaffold(
       homeIndex: 4,
 
@@ -174,6 +255,9 @@ class _MainScreenState extends State<MainScreen> {
           _hasSetInitialIndex = true;
         }
 
+        final badgeCount = mesCount ?? 0;
+        String displayCount = badgeCount > 99 ? '99+' : badgeCount.toString();
+
         return BottomNavigationBar(
           currentIndex: tabsRouter.activeIndex,
           selectedItemColor: PawsColors.primary,
@@ -182,22 +266,74 @@ class _MainScreenState extends State<MainScreen> {
           showUnselectedLabels: false,
           showSelectedLabels: false,
           onTap: tabsRouter.setActiveIndex,
-
-          items: const [
-            BottomNavigationBarItem(label: '', icon: Icon(LucideIcons.house)),
-            BottomNavigationBarItem(
+          items: [
+            const BottomNavigationBarItem(
+              label: '',
+              icon: Icon(LucideIcons.house),
+            ),
+            const BottomNavigationBarItem(
               label: '',
               icon: Icon(LucideIcons.heartHandshake),
             ),
-            BottomNavigationBarItem(label: '', icon: Icon(LucideIcons.dog)),
-            BottomNavigationBarItem(label: '', icon: Icon(LucideIcons.heart)),
+            const BottomNavigationBarItem(
+              label: '',
+              icon: Icon(LucideIcons.dog),
+            ),
+            const BottomNavigationBarItem(
+              label: '',
+              icon: Icon(LucideIcons.heart),
+            ),
             BottomNavigationBarItem(
               label: '',
-              icon: Icon(LucideIcons.messageCircle),
+              icon: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const Icon(LucideIcons.messageCircle),
+                  if (badgeCount > 0)
+                    Positioned(
+                      right: -6,
+                      top: -6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.redAccent,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white, width: 1.5),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 18,
+                          minHeight: 16,
+                        ),
+                        child: Center(
+                          child: Text(
+                            displayCount,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              height: 1,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ],
         );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    try {
+      _forumChatsChannel?.unsubscribe();
+    } catch (_) {}
+    super.dispose();
   }
 }

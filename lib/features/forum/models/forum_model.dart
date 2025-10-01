@@ -13,6 +13,7 @@ class Forum with ForumMappable {
   final List<Member>? members;
   final int memberCount;
   final bool private;
+  final LastChat? lastChat;
 
   Forum({
     required this.id,
@@ -23,6 +24,7 @@ class Forum with ForumMappable {
     this.members,
     required this.memberCount,
     required this.private,
+    this.lastChat,
   });
 }
 
@@ -84,5 +86,24 @@ class AvailableUser with AvailableUserMappable {
     required this.id,
     required this.username,
     this.profileImageLink,
+  });
+}
+
+@MappableClass(caseStyle: CaseStyle.snakeCase)
+class LastChat with LastChatMappable {
+  final int id;
+  final DateTime sentAt;
+  final Users sender;
+  final String message;
+  final String? imageUrl;
+  final bool? isViewed;
+
+  LastChat({
+    required this.id,
+    required this.sentAt,
+    required this.sender,
+    required this.message,
+    this.imageUrl,
+    this.isViewed,
   });
 }

@@ -36,7 +36,7 @@ class FavoriteRepository extends ChangeNotifier {
     // Determine current state
     final isCurrentlyFav = _favorites?.any((f) => f.pet.id == petId) ?? false;
 
-    // Optimistic UI update for pet lists
+    // Optimistic UI update for pet lists only once here
     sl<PetRepository>().updatePetFavorite(petId, !isCurrentlyFav);
 
     if (isCurrentlyFav) {
@@ -60,5 +60,8 @@ class FavoriteRepository extends ChangeNotifier {
 
     // Refresh favorites list quietly
     await getFavorites(userId);
+    // After refresh, ensure pet repository list still reflects favorite status
+    final stillFav = _favorites?.any((f) => f.pet.id == petId) ?? false;
+    sl<PetRepository>().updatePetFavorite(petId, stillFav);
   }
 }

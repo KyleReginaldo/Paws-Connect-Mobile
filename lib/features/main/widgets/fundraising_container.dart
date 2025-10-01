@@ -26,6 +26,7 @@ class FundraisingContainer extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: PawsColors.border),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

@@ -10,6 +10,7 @@ class Notification with NotificationMappable {
   final String content;
   final String user;
   final String createdAt;
+  final bool? isViewed;
 
   Notification({
     required this.id,
@@ -17,5 +18,6 @@ class Notification with NotificationMappable {
     required this.content,
     required this.user,
     required this.createdAt,
+    this.isViewed,
   });
 }

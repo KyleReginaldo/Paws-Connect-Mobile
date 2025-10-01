@@ -1,9 +1,10 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:paws_connect/core/services/supabase_service.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/router/app_route.gr.dart';
 import '../../../core/theme/paws_theme.dart';
@@ -29,6 +30,9 @@ class ForumScreen extends StatefulWidget implements AutoRouteWrapper {
 }
 
 class _ForumScreenState extends State<ForumScreen> {
+  late RealtimeChannel _forumChatsChannel;
+  DateTime _lastRealtimeRefresh = DateTime.fromMillisecondsSinceEpoch(0);
+
   @override
   void initState() {
     super.initState();
@@ -37,6 +41,34 @@ class _ForumScreenState extends State<ForumScreen> {
       final repo = context.read<ForumRepository>();
       repo.setForums(USER_ID ?? '');
     });
+
+    // Screen-level listener: keep forum list (e.g., last message preview) fresh
+    _forumChatsChannel = supabase.channel('public:forum_chats_forum_screen');
+    _forumChatsChannel
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'forum_chats',
+          callback: (_) {
+            if (!mounted) return;
+            final now = DateTime.now();
+            // Throttle to avoid redundant rapid refreshes when multiple messages arrive
+            if (now.difference(_lastRealtimeRefresh).inMilliseconds < 300) {
+              return;
+            }
+            _lastRealtimeRefresh = now;
+            context.read<ForumRepository>().setForums(USER_ID ?? '');
+          },
+        )
+        .subscribe();
+  }
+
+  @override
+  void dispose() {
+    try {
+      _forumChatsChannel.unsubscribe();
+    } catch (_) {}
+    super.dispose();
   }
 
   @override
@@ -71,29 +103,13 @@ class _ForumScreenState extends State<ForumScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.forum_outlined,
-                      size: 64,
-                      color: PawsColors.textSecondary,
-                    ),
-                    SizedBox(height: 16),
+                    Image.asset('assets/images/empty_chat.png', width: 120),
                     PawsText(
-                      errorMessage.isNotEmpty
-                          ? 'Error loading forums'
-                          : 'No forums available',
-                      fontSize: 18,
+                      "No forum available",
+                      fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: PawsColors.textPrimary,
                     ),
-                    SizedBox(height: 8),
-                    PawsText(
-                      errorMessage.isNotEmpty
-                          ? errorMessage
-                          : 'Start a new discussion!',
-                      fontSize: 14,
-                      color: PawsColors.textSecondary,
-                      textAlign: TextAlign.center,
-                    ),
+                    PawsText("All forums you join will appear here."),
                   ],
                 ),
               )
@@ -101,9 +117,16 @@ class _ForumScreenState extends State<ForumScreen> {
                 itemCount: forums.length,
                 itemBuilder: (context, index) {
                   final forum = forums[index];
-                  Member? myProfile = forum.members?.singleWhere(
-                    (e) => e.id == USER_ID,
-                  );
+                  // Safely find current user's membership (singleWhere would throw if none)
+                  Member? myProfile;
+                  if (USER_ID != null && (forum.members?.isNotEmpty ?? false)) {
+                    for (final m in forum.members!) {
+                      if (m.id == USER_ID) {
+                        myProfile = m;
+                        break;
+                      }
+                    }
+                  }
                   return ListTile(
                     title: myProfile != null && myProfile.mute
                         ? Row(
@@ -128,11 +151,20 @@ class _ForumScreenState extends State<ForumScreen> {
                             fontWeight: FontWeight.w500,
                             color: PawsColors.textPrimary,
                           ),
-                    subtitle: PawsText(
-                      'Created ${DateFormat('MMM dd, yyyy').format(forum.createdAt)}',
-                      fontSize: 12,
-                      color: PawsColors.textSecondary,
-                    ),
+                    subtitle: forum.lastChat != null
+                        ? PawsText(
+                            '${forum.lastChat!.sender.username}: ${forum.lastChat!.imageUrl != null ? 'Sent an image' : forum.lastChat!.message}',
+                            fontSize: 14,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            color: forum.lastChat!.isViewed == false
+                                ? PawsColors.textPrimary
+                                : PawsColors.textSecondary,
+                            fontWeight: forum.lastChat!.isViewed == false
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                          )
+                        : null,
                     trailing:
                         (forum.members ?? []).any(
                           (member) => member.id == USER_ID,

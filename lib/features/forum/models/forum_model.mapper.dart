@@ -15,6 +15,7 @@ class ForumMapper extends ClassMapperBase<Forum> {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = ForumMapper._());
       MemberMapper.ensureInitialized();
+      LastChatMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -63,6 +64,13 @@ class ForumMapper extends ClassMapperBase<Forum> {
   );
   static bool _$private(Forum v) => v.private;
   static const Field<Forum, bool> _f$private = Field('private', _$private);
+  static LastChat? _$lastChat(Forum v) => v.lastChat;
+  static const Field<Forum, LastChat> _f$lastChat = Field(
+    'lastChat',
+    _$lastChat,
+    key: r'last_chat',
+    opt: true,
+  );
 
   @override
   final MappableFields<Forum> fields = const {
@@ -74,6 +82,7 @@ class ForumMapper extends ClassMapperBase<Forum> {
     #members: _f$members,
     #memberCount: _f$memberCount,
     #private: _f$private,
+    #lastChat: _f$lastChat,
   };
 
   static Forum _instantiate(DecodingData data) {
@@ -86,6 +95,7 @@ class ForumMapper extends ClassMapperBase<Forum> {
       members: data.dec(_f$members),
       memberCount: data.dec(_f$memberCount),
       private: data.dec(_f$private),
+      lastChat: data.dec(_f$lastChat),
     );
   }
 
@@ -136,6 +146,7 @@ extension ForumValueCopy<$R, $Out> on ObjectCopyWith<$R, Forum, $Out> {
 abstract class ForumCopyWith<$R, $In extends Forum, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   ListCopyWith<$R, Member, MemberCopyWith<$R, Member, Member>>? get members;
+  LastChatCopyWith<$R, LastChat, LastChat>? get lastChat;
   $R call({
     int? id,
     DateTime? createdAt,
@@ -145,6 +156,7 @@ abstract class ForumCopyWith<$R, $In extends Forum, $Out>
     List<Member>? members,
     int? memberCount,
     bool? private,
+    LastChat? lastChat,
   });
   ForumCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -165,6 +177,9 @@ class _ForumCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Forum, $Out>
         )
       : null;
   @override
+  LastChatCopyWith<$R, LastChat, LastChat>? get lastChat =>
+      $value.lastChat?.copyWith.$chain((v) => call(lastChat: v));
+  @override
   $R call({
     int? id,
     DateTime? createdAt,
@@ -174,6 +189,7 @@ class _ForumCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Forum, $Out>
     Object? members = $none,
     int? memberCount,
     bool? private,
+    Object? lastChat = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -184,6 +200,7 @@ class _ForumCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Forum, $Out>
       if (members != $none) #members: members,
       if (memberCount != null) #memberCount: memberCount,
       if (private != null) #private: private,
+      if (lastChat != $none) #lastChat: lastChat,
     }),
   );
   @override
@@ -196,6 +213,7 @@ class _ForumCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Forum, $Out>
     members: data.get(#members, or: $value.members),
     memberCount: data.get(#memberCount, or: $value.memberCount),
     private: data.get(#private, or: $value.private),
+    lastChat: data.get(#lastChat, or: $value.lastChat),
   );
 
   @override
@@ -375,6 +393,286 @@ class _MemberCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Member, $Out>
       _MemberCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
+class LastChatMapper extends ClassMapperBase<LastChat> {
+  LastChatMapper._();
+
+  static LastChatMapper? _instance;
+  static LastChatMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = LastChatMapper._());
+      UsersMapper.ensureInitialized();
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'LastChat';
+
+  static int _$id(LastChat v) => v.id;
+  static const Field<LastChat, int> _f$id = Field('id', _$id);
+  static DateTime _$sentAt(LastChat v) => v.sentAt;
+  static const Field<LastChat, DateTime> _f$sentAt = Field(
+    'sentAt',
+    _$sentAt,
+    key: r'sent_at',
+  );
+  static Users _$sender(LastChat v) => v.sender;
+  static const Field<LastChat, Users> _f$sender = Field('sender', _$sender);
+  static String _$message(LastChat v) => v.message;
+  static const Field<LastChat, String> _f$message = Field('message', _$message);
+  static String? _$imageUrl(LastChat v) => v.imageUrl;
+  static const Field<LastChat, String> _f$imageUrl = Field(
+    'imageUrl',
+    _$imageUrl,
+    key: r'image_url',
+    opt: true,
+  );
+  static bool? _$isViewed(LastChat v) => v.isViewed;
+  static const Field<LastChat, bool> _f$isViewed = Field(
+    'isViewed',
+    _$isViewed,
+    key: r'is_viewed',
+    opt: true,
+  );
+
+  @override
+  final MappableFields<LastChat> fields = const {
+    #id: _f$id,
+    #sentAt: _f$sentAt,
+    #sender: _f$sender,
+    #message: _f$message,
+    #imageUrl: _f$imageUrl,
+    #isViewed: _f$isViewed,
+  };
+
+  static LastChat _instantiate(DecodingData data) {
+    return LastChat(
+      id: data.dec(_f$id),
+      sentAt: data.dec(_f$sentAt),
+      sender: data.dec(_f$sender),
+      message: data.dec(_f$message),
+      imageUrl: data.dec(_f$imageUrl),
+      isViewed: data.dec(_f$isViewed),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static LastChat fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<LastChat>(map);
+  }
+
+  static LastChat fromJson(String json) {
+    return ensureInitialized().decodeJson<LastChat>(json);
+  }
+}
+
+mixin LastChatMappable {
+  String toJson() {
+    return LastChatMapper.ensureInitialized().encodeJson<LastChat>(
+      this as LastChat,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return LastChatMapper.ensureInitialized().encodeMap<LastChat>(
+      this as LastChat,
+    );
+  }
+
+  LastChatCopyWith<LastChat, LastChat, LastChat> get copyWith =>
+      _LastChatCopyWithImpl<LastChat, LastChat>(
+        this as LastChat,
+        $identity,
+        $identity,
+      );
+  @override
+  String toString() {
+    return LastChatMapper.ensureInitialized().stringifyValue(this as LastChat);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return LastChatMapper.ensureInitialized().equalsValue(
+      this as LastChat,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return LastChatMapper.ensureInitialized().hashValue(this as LastChat);
+  }
+}
+
+extension LastChatValueCopy<$R, $Out> on ObjectCopyWith<$R, LastChat, $Out> {
+  LastChatCopyWith<$R, LastChat, $Out> get $asLastChat =>
+      $base.as((v, t, t2) => _LastChatCopyWithImpl<$R, $Out>(v, t, t2));
+}
+
+abstract class LastChatCopyWith<$R, $In extends LastChat, $Out>
+    implements ClassCopyWith<$R, $In, $Out> {
+  UsersCopyWith<$R, Users, Users> get sender;
+  $R call({
+    int? id,
+    DateTime? sentAt,
+    Users? sender,
+    String? message,
+    String? imageUrl,
+    bool? isViewed,
+  });
+  LastChatCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
+}
+
+class _LastChatCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, LastChat, $Out>
+    implements LastChatCopyWith<$R, LastChat, $Out> {
+  _LastChatCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<LastChat> $mapper =
+      LastChatMapper.ensureInitialized();
+  @override
+  UsersCopyWith<$R, Users, Users> get sender =>
+      $value.sender.copyWith.$chain((v) => call(sender: v));
+  @override
+  $R call({
+    int? id,
+    DateTime? sentAt,
+    Users? sender,
+    String? message,
+    Object? imageUrl = $none,
+    Object? isViewed = $none,
+  }) => $apply(
+    FieldCopyWithData({
+      if (id != null) #id: id,
+      if (sentAt != null) #sentAt: sentAt,
+      if (sender != null) #sender: sender,
+      if (message != null) #message: message,
+      if (imageUrl != $none) #imageUrl: imageUrl,
+      if (isViewed != $none) #isViewed: isViewed,
+    }),
+  );
+  @override
+  LastChat $make(CopyWithData data) => LastChat(
+    id: data.get(#id, or: $value.id),
+    sentAt: data.get(#sentAt, or: $value.sentAt),
+    sender: data.get(#sender, or: $value.sender),
+    message: data.get(#message, or: $value.message),
+    imageUrl: data.get(#imageUrl, or: $value.imageUrl),
+    isViewed: data.get(#isViewed, or: $value.isViewed),
+  );
+
+  @override
+  LastChatCopyWith<$R2, LastChat, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  ) => _LastChatCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class UsersMapper extends ClassMapperBase<Users> {
+  UsersMapper._();
+
+  static UsersMapper? _instance;
+  static UsersMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = UsersMapper._());
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'Users';
+
+  static String _$id(Users v) => v.id;
+  static const Field<Users, String> _f$id = Field('id', _$id);
+  static String _$username(Users v) => v.username;
+  static const Field<Users, String> _f$username = Field('username', _$username);
+
+  @override
+  final MappableFields<Users> fields = const {
+    #id: _f$id,
+    #username: _f$username,
+  };
+
+  static Users _instantiate(DecodingData data) {
+    return Users(id: data.dec(_f$id), username: data.dec(_f$username));
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static Users fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<Users>(map);
+  }
+
+  static Users fromJson(String json) {
+    return ensureInitialized().decodeJson<Users>(json);
+  }
+}
+
+mixin UsersMappable {
+  String toJson() {
+    return UsersMapper.ensureInitialized().encodeJson<Users>(this as Users);
+  }
+
+  Map<String, dynamic> toMap() {
+    return UsersMapper.ensureInitialized().encodeMap<Users>(this as Users);
+  }
+
+  UsersCopyWith<Users, Users, Users> get copyWith =>
+      _UsersCopyWithImpl<Users, Users>(this as Users, $identity, $identity);
+  @override
+  String toString() {
+    return UsersMapper.ensureInitialized().stringifyValue(this as Users);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return UsersMapper.ensureInitialized().equalsValue(this as Users, other);
+  }
+
+  @override
+  int get hashCode {
+    return UsersMapper.ensureInitialized().hashValue(this as Users);
+  }
+}
+
+extension UsersValueCopy<$R, $Out> on ObjectCopyWith<$R, Users, $Out> {
+  UsersCopyWith<$R, Users, $Out> get $asUsers =>
+      $base.as((v, t, t2) => _UsersCopyWithImpl<$R, $Out>(v, t, t2));
+}
+
+abstract class UsersCopyWith<$R, $In extends Users, $Out>
+    implements ClassCopyWith<$R, $In, $Out> {
+  $R call({String? id, String? username});
+  UsersCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
+}
+
+class _UsersCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Users, $Out>
+    implements UsersCopyWith<$R, Users, $Out> {
+  _UsersCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<Users> $mapper = UsersMapper.ensureInitialized();
+  @override
+  $R call({String? id, String? username}) => $apply(
+    FieldCopyWithData({
+      if (id != null) #id: id,
+      if (username != null) #username: username,
+    }),
+  );
+  @override
+  Users $make(CopyWithData data) => Users(
+    id: data.get(#id, or: $value.id),
+    username: data.get(#username, or: $value.username),
+  );
+
+  @override
+  UsersCopyWith<$R2, Users, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
+      _UsersCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
 class ForumChatMapper extends ClassMapperBase<ForumChat> {
   ForumChatMapper._();
 
@@ -550,109 +848,6 @@ class _ForumChatCopyWithImpl<$R, $Out>
   ForumChatCopyWith<$R2, ForumChat, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   ) => _ForumChatCopyWithImpl<$R2, $Out2>($value, $cast, t);
-}
-
-class UsersMapper extends ClassMapperBase<Users> {
-  UsersMapper._();
-
-  static UsersMapper? _instance;
-  static UsersMapper ensureInitialized() {
-    if (_instance == null) {
-      MapperContainer.globals.use(_instance = UsersMapper._());
-    }
-    return _instance!;
-  }
-
-  @override
-  final String id = 'Users';
-
-  static String _$id(Users v) => v.id;
-  static const Field<Users, String> _f$id = Field('id', _$id);
-  static String _$username(Users v) => v.username;
-  static const Field<Users, String> _f$username = Field('username', _$username);
-
-  @override
-  final MappableFields<Users> fields = const {
-    #id: _f$id,
-    #username: _f$username,
-  };
-
-  static Users _instantiate(DecodingData data) {
-    return Users(id: data.dec(_f$id), username: data.dec(_f$username));
-  }
-
-  @override
-  final Function instantiate = _instantiate;
-
-  static Users fromMap(Map<String, dynamic> map) {
-    return ensureInitialized().decodeMap<Users>(map);
-  }
-
-  static Users fromJson(String json) {
-    return ensureInitialized().decodeJson<Users>(json);
-  }
-}
-
-mixin UsersMappable {
-  String toJson() {
-    return UsersMapper.ensureInitialized().encodeJson<Users>(this as Users);
-  }
-
-  Map<String, dynamic> toMap() {
-    return UsersMapper.ensureInitialized().encodeMap<Users>(this as Users);
-  }
-
-  UsersCopyWith<Users, Users, Users> get copyWith =>
-      _UsersCopyWithImpl<Users, Users>(this as Users, $identity, $identity);
-  @override
-  String toString() {
-    return UsersMapper.ensureInitialized().stringifyValue(this as Users);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return UsersMapper.ensureInitialized().equalsValue(this as Users, other);
-  }
-
-  @override
-  int get hashCode {
-    return UsersMapper.ensureInitialized().hashValue(this as Users);
-  }
-}
-
-extension UsersValueCopy<$R, $Out> on ObjectCopyWith<$R, Users, $Out> {
-  UsersCopyWith<$R, Users, $Out> get $asUsers =>
-      $base.as((v, t, t2) => _UsersCopyWithImpl<$R, $Out>(v, t, t2));
-}
-
-abstract class UsersCopyWith<$R, $In extends Users, $Out>
-    implements ClassCopyWith<$R, $In, $Out> {
-  $R call({String? id, String? username});
-  UsersCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
-}
-
-class _UsersCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Users, $Out>
-    implements UsersCopyWith<$R, Users, $Out> {
-  _UsersCopyWithImpl(super.value, super.then, super.then2);
-
-  @override
-  late final ClassMapperBase<Users> $mapper = UsersMapper.ensureInitialized();
-  @override
-  $R call({String? id, String? username}) => $apply(
-    FieldCopyWithData({
-      if (id != null) #id: id,
-      if (username != null) #username: username,
-    }),
-  );
-  @override
-  Users $make(CopyWithData data) => Users(
-    id: data.get(#id, or: $value.id),
-    username: data.get(#username, or: $value.username),
-  );
-
-  @override
-  UsersCopyWith<$R2, Users, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-      _UsersCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class AvailableUserMapper extends ClassMapperBase<AvailableUser> {

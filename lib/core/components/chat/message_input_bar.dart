@@ -1,6 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+import '../../theme/paws_theme.dart';
 
 class MessageInputBar extends StatelessWidget {
   final TextEditingController controller;
@@ -42,6 +45,7 @@ class MessageInputBar extends StatelessWidget {
                 const SizedBox(width: 8),
                 IconButton(
                   onPressed: onRemovePreview,
+                  color: PawsColors.textPrimary,
                   icon: const Icon(Icons.close),
                 ),
               ],
@@ -56,16 +60,24 @@ class MessageInputBar extends StatelessWidget {
                 child: TextField(
                   controller: controller,
                   onSubmitted: (_) => onSend(),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'Type a message',
-                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    isDense: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(25),
+                    ),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
-              ElevatedButton(
+              IconButton(
                 onPressed: isSending ? null : onSend,
-                child: isSending
+
+                icon: isSending
                     ? const SizedBox(
                         width: 16,
                         height: 16,
@@ -74,7 +86,7 @@ class MessageInputBar extends StatelessWidget {
                           color: Colors.white,
                         ),
                       )
-                    : const Icon(Icons.send),
+                    : Icon(LucideIcons.send, color: PawsColors.textPrimary),
               ),
             ],
           ),

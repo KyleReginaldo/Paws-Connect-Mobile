@@ -1,4 +1,5 @@
 import 'package:onesignal_flutter/onesignal_flutter.dart';
+import 'package:paws_connect/core/repository/common_repository.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/dependency.dart';
 import 'package:paws_connect/features/adoption/repository/adoption_repository.dart';
@@ -46,6 +47,14 @@ class SessionManager {
     if (sl.isRegistered<AdoptionRepository>()) sl<AdoptionRepository>().reset();
     if (sl.isRegistered<DonationRepository>()) sl<DonationRepository>().reset();
     if (sl.isRegistered<FavoriteRepository>()) sl<FavoriteRepository>().reset();
+    if (sl.isRegistered<CommonRepository>()) sl<CommonRepository>().clear();
+    // Reset common counts if repository exists
+    if (sl.isRegistered<CommonRepository>()) {
+      // Directly set to null via repository internal fields not exposed; simplest is to reinstantiate if needed.
+      // For now we can just fetch counts with no user which will land as null.
+      // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
+      sl<CommonRepository>().notifyListeners();
+    }
 
     // Add more clears here if you introduce local storage (e.g., SharedPreferences/Hive)
   }
@@ -92,6 +101,13 @@ class SessionManager {
     }
     if (sl.isRegistered<ForumRepository>()) {
       futures.add(sl<ForumRepository>().setForums(USER_ID!));
+    }
+
+    // Fetch unread message & notification counts early so UI badges update immediately
+    if (sl.isRegistered<CommonRepository>()) {
+      // Fire-and-forget; repository notifies listeners
+      sl<CommonRepository>().getMessageCount(USER_ID!);
+      sl<CommonRepository>().getNotificationCount(USER_ID!);
     }
 
     if (eager) {

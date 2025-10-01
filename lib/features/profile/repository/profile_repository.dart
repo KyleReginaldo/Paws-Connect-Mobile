@@ -26,8 +26,8 @@ class ProfileRepository extends ChangeNotifier {
     if (result.isSuccess) {
       // debugPrint('Fetched user profile: ${result.value}'); // Commented to reduce console spam
       _userProfile = result.value;
+      debugPrint('user [profile]: $_userProfile');
       _profileLoading = false;
-
       notifyListeners();
     } else {
       debugPrint('Error fetching user profile: ${result.error}');

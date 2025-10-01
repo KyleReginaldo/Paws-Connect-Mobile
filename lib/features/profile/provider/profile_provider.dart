@@ -25,6 +25,7 @@ class ProfileProvider {
         Uri.parse('${dotenv.get('BASE_URL')}/users/$userId'),
       );
       final data = jsonDecode(response.body);
+      debugPrint('user [data]: ${data['data']}');
       // debugPrint('User Profile Data: ${data['data']}'); // Commented to reduce console spam
       if (response.statusCode == 200) {
         final userProfile = UserProfileMapper.fromMap(data['data']);

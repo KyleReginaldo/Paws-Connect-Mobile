@@ -16,7 +16,7 @@ class PetContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isFav = pet.isFavorite ?? false;
+    bool isFav = pet.isFavorite ?? false;
     return Stack(
       children: [
         InkWell(
@@ -28,6 +28,9 @@ class PetContainer extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
               color: Colors.white,
+              border: Border(
+                top: BorderSide(color: PawsColors.primary, width: 4),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

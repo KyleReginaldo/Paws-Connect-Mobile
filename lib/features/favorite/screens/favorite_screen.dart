@@ -94,7 +94,20 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
         centerTitle: true,
       ),
       body: favorites == null || favorites.isEmpty
-          ? Center(child: Text("No favorites found"))
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset('assets/images/empty_fav_pet.png', width: 120),
+                  PawsText(
+                    "No favorites found",
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  PawsText("All of your favorite pets will appear here."),
+                ],
+              ),
+            )
           : RefreshIndicator(
               onRefresh: () async {
                 context.read<FavoriteRepository>().getFavorites(USER_ID ?? "");
@@ -154,6 +167,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                                             pet.photo,
                                             fit: BoxFit.cover,
                                             width: double.infinity,
+                                            enableTapToView: false,
                                           ),
                                         ),
                                         // Text content

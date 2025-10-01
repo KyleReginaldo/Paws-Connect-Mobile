@@ -3,10 +3,12 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/components/components.dart';
+import 'package:paws_connect/core/repository/common_repository.dart';
 import 'package:paws_connect/core/router/app_route.gr.dart';
 import 'package:paws_connect/core/theme/paws_theme.dart';
 import 'package:paws_connect/features/google_map/models/address_model.dart';
 import 'package:paws_connect/features/profile/models/user_profile_model.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/widgets/text.dart';
 
@@ -50,11 +52,52 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
       actions: [
-        IconButton(
-          onPressed: () {
-            context.router.push(NotificationRoute());
+        Consumer<CommonRepository>(
+          builder: (context, notifRepo, _) {
+            final unread = notifRepo.notificationCount;
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                IconButton(
+                  onPressed: () {
+                    context.router.push(NotificationRoute()).then((_) {
+                      // Optionally mark all as viewed when returning
+                      // notifRepo.markAllViewed(USER_ID ?? ''); // if USER_ID accessible
+                    });
+                  },
+                  icon: Icon(LucideIcons.bell, size: 20),
+                ),
+                if ((unread ?? 0) > 0)
+                  Positioned(
+                    right: 6,
+                    top: 6,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white, width: 1.2),
+                      ),
+                      constraints: const BoxConstraints(minWidth: 16),
+                      child: Center(
+                        child: Text(
+                          (unread ?? 0) > 99 ? '99+' : unread.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            height: 1,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            );
           },
-          icon: Icon(LucideIcons.bell, size: 20),
         ),
         profile != null
             ? IconButton(

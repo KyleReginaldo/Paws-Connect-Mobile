@@ -1,5 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:paws_connect/core/enum/user.enum.dart';
 
 part 'user_profile_model.mapper.dart';
 
@@ -9,7 +10,7 @@ class UserProfile with UserProfileMappable {
   final String createdAt;
   final String username;
   final String email;
-  final String status;
+  final UserStatus status;
   final int role;
   final String phoneNumber;
   final List<String>? houseImages;

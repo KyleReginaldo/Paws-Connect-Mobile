@@ -14,6 +14,7 @@ class UserProfileMapper extends ClassMapperBase<UserProfile> {
   static UserProfileMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = UserProfileMapper._());
+      UserStatusMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -36,8 +37,11 @@ class UserProfileMapper extends ClassMapperBase<UserProfile> {
   );
   static String _$email(UserProfile v) => v.email;
   static const Field<UserProfile, String> _f$email = Field('email', _$email);
-  static String _$status(UserProfile v) => v.status;
-  static const Field<UserProfile, String> _f$status = Field('status', _$status);
+  static UserStatus _$status(UserProfile v) => v.status;
+  static const Field<UserProfile, UserStatus> _f$status = Field(
+    'status',
+    _$status,
+  );
   static int _$role(UserProfile v) => v.role;
   static const Field<UserProfile, int> _f$role = Field('role', _$role);
   static String _$phoneNumber(UserProfile v) => v.phoneNumber;
@@ -190,7 +194,7 @@ abstract class UserProfileCopyWith<$R, $In extends UserProfile, $Out>
     String? createdAt,
     String? username,
     String? email,
-    String? status,
+    UserStatus? status,
     int? role,
     String? phoneNumber,
     List<String>? houseImages,
@@ -226,7 +230,7 @@ class _UserProfileCopyWithImpl<$R, $Out>
     String? createdAt,
     String? username,
     String? email,
-    String? status,
+    UserStatus? status,
     int? role,
     String? phoneNumber,
     Object? houseImages = $none,

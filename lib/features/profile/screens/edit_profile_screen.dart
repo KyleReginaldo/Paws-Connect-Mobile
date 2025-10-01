@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:paws_connect/core/enum/user.enum.dart';
+import 'package:paws_connect/core/extension/int.ext.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/features/profile/repository/image_repository.dart';
 import 'package:paws_connect/features/profile/repository/profile_repository.dart';
@@ -156,6 +158,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           // Refresh the profile data
           final repo = context.read<ProfileRepository>();
           repo.fetchUserProfile(USER_ID ?? "");
+          repo.fetchVisitedProfile(USER_ID ?? '');
 
           // Pop back to previous screen
           context.router.maybePop(true);
@@ -435,7 +438,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                           // Email
                           const PawsText(
-                            'Email Address',
+                            'Email Address(cannot change)',
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                             color: PawsColors.textPrimary,
@@ -460,7 +463,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                           // Phone Number
                           const PawsText(
-                            'Phone Number',
+                            'Phone Number(cannot change)',
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                             color: PawsColors.textPrimary,
@@ -513,7 +516,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 PawsText(
-                                  'Account Status: ${user.status.toUpperCase()}',
+                                  'Account Status: ${user.status.name.capitalize()}',
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: _getStatusColor(user.status),
@@ -536,41 +539,40 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'active':
+  Color _getStatusColor(UserStatus status) {
+    switch (status) {
+      case UserStatus.FULLY_VERIFIED:
         return Colors.green;
-      case 'pending':
+      case UserStatus.SEMI_VERIFIED:
+        return Colors.lightBlue;
+      case UserStatus.PENDING:
         return Colors.orange;
-      case 'inactive':
+      case UserStatus.INDEFINITE:
         return Colors.red;
-      default:
-        return PawsColors.primary;
     }
   }
 
-  IconData _getStatusIcon(String status) {
-    switch (status.toLowerCase()) {
-      case 'active':
+  IconData _getStatusIcon(UserStatus status) {
+    switch (status) {
+      case UserStatus.FULLY_VERIFIED:
+      case UserStatus.SEMI_VERIFIED:
         return Icons.check_circle_outline;
-      case 'pending':
+      case UserStatus.PENDING:
         return Icons.schedule;
-      case 'inactive':
+      case UserStatus.INDEFINITE:
         return Icons.error_outline;
-      default:
-        return Icons.info_outline;
     }
   }
 
-  String _getStatusMessage(String status) {
-    switch (status.toLowerCase()) {
-      case 'active':
-        return 'Your account is fully active and verified';
-      case 'pending':
-        return 'Your account is pending verification';
-      case 'inactive':
-        return 'Your account is currently inactive';
-      default:
+  String _getStatusMessage(UserStatus status) {
+    switch (status) {
+      case UserStatus.SEMI_VERIFIED:
+        return 'Your account is partially verified';
+      case UserStatus.FULLY_VERIFIED:
+        return 'Your account is fully verified';
+      case UserStatus.PENDING:
+        return 'Your account is currently pending for verification';
+      case UserStatus.INDEFINITE:
         return 'Contact support for account status details';
     }
   }

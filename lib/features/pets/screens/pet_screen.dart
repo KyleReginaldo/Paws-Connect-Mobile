@@ -70,8 +70,7 @@ class _PetScreenState extends State<PetScreen> {
     }
 
     final repo = context.read<PetRepository>();
-    // Optimistic update
-    repo.updatePetFavorite(petId, !isCurrentlyFavorite);
+    // Avoid duplicate optimistic flip; FavoriteRepository manages it
     try {
       await sl<FavoriteRepository>().toggleFavorite(petId);
       if (!mounted) return;
@@ -85,7 +84,7 @@ class _PetScreenState extends State<PetScreen> {
         ),
       );
     } catch (e) {
-      // Rollback on failure
+      // Rollback in case repository optimistic failed
       repo.updatePetFavorite(petId, isCurrentlyFavorite);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -141,115 +140,138 @@ class _PetScreenState extends State<PetScreen> {
           ? const Center(child: CircularProgressIndicator())
           : pets == null || pets.isEmpty
           ? _buildEmptyState()
-          : SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final double maxWidth = constraints.maxWidth;
-                  // minimal desired item width (adjustable)
-                  const double minItemWidth = 160;
-                  const double spacing = 12;
-                  final int columns = (maxWidth / (minItemWidth + spacing))
-                      .floor()
-                      .clamp(1, 4);
-                  final double itemWidth =
-                      (maxWidth - (columns - 1) * spacing) / columns;
+          : RefreshIndicator(
+              onRefresh: () async {
+                final repo = context.read<PetRepository>();
+                repo.fetchPets(userId: USER_ID);
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final double maxWidth = constraints.maxWidth;
+                    // minimal desired item width (adjustable)
+                    const double minItemWidth = 160;
+                    const double spacing = 12;
+                    final int columns = (maxWidth / (minItemWidth + spacing))
+                        .floor()
+                        .clamp(1, 4);
+                    final double itemWidth =
+                        (maxWidth - (columns - 1) * spacing) / columns;
 
-                  return Wrap(
-                    spacing: spacing,
-                    runSpacing: spacing,
-                    children: List.generate(pets.length, (index) {
-                      final pet = pets[index];
-                      return SizedBox(
-                        width: itemWidth,
-                        child: Stack(
-                          children: [
-                            Card(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              clipBehavior: Clip.antiAlias,
-                              elevation: 2,
-                              child: InkWell(
-                                onTap: () {
-                                  context.router.push(PetDetailRoute(pet: pet));
-                                },
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // Image area with fixed aspect ratio
-                                    AspectRatio(
-                                      aspectRatio: 4 / 3,
-                                      child: NetworkImageView(
-                                        pet.photo,
-                                        fit: BoxFit.cover,
-                                        width: double.infinity,
+                    return Wrap(
+                      spacing: spacing,
+                      runSpacing: spacing,
+                      children: List.generate(pets.length, (index) {
+                        final pet = pets[index];
+                        return SizedBox(
+                          width: itemWidth,
+                          child: Stack(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  color: Colors.white,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.05,
                                       ),
-                                    ),
-                                    // Text content
-                                    Padding(
-                                      padding: const EdgeInsets.fromLTRB(
-                                        12,
-                                        8,
-                                        12,
-                                        12,
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          PawsText(
-                                            pet.name,
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          const SizedBox(height: 4),
-                                          PawsText(
-                                            pet.breed,
-                                            fontSize: 12,
-                                            color: PawsColors.textSecondary,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ],
-                                      ),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 3),
                                     ),
                                   ],
                                 ),
-                              ),
-                            ),
-                            Positioned(
-                              top: 10,
-                              right: 10,
-                              child: IconButton.filled(
-                                style: ButtonStyle().copyWith(
-                                  backgroundColor: WidgetStatePropertyAll(
-                                    PawsColors.primary.withValues(alpha: 0.2),
+                                clipBehavior: Clip.antiAlias,
+                                child: InkWell(
+                                  onTap: () {
+                                    context.router.push(
+                                      PetDetailRoute(pet: pet),
+                                    );
+                                  },
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      // Image area with fixed aspect ratio
+                                      AspectRatio(
+                                        aspectRatio: 4 / 3,
+                                        child: NetworkImageView(
+                                          pet.photo,
+                                          fit: BoxFit.cover,
+                                          width: double.infinity,
+                                          enableTapToView: false,
+                                        ),
+                                      ),
+                                      // Text content
+                                      Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                          12,
+                                          8,
+                                          12,
+                                          12,
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            PawsText(
+                                              pet.name,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            PawsText(
+                                              pet.breed,
+                                              fontSize: 12,
+                                              color: PawsColors.textSecondary,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                onPressed: () {
-                                  _toggleFavorite(
-                                    pet.id,
-                                    pet.isFavorite ?? false,
-                                  );
-                                },
-                                icon: Icon(
-                                  pet.isFavorite ?? false
-                                      ? Icons.favorite
-                                      : Icons.favorite_border,
-                                  color: PawsColors.primary,
+                              ),
+                              Positioned(
+                                top: 10,
+                                right: 10,
+                                child: IconButton.filled(
+                                  style: ButtonStyle().copyWith(
+                                    backgroundColor: WidgetStatePropertyAll(
+                                      PawsColors.primary.withValues(alpha: 0.2),
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    _toggleFavorite(
+                                      pet.id,
+                                      pet.isFavorite ?? false,
+                                    );
+                                  },
+                                  icon: Icon(
+                                    pet.isFavorite ?? false
+                                        ? Icons.favorite
+                                        : Icons.favorite_border,
+                                    color: PawsColors.primary,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
-                  );
-                },
+                            ],
+                          ),
+                        );
+                      }),
+                    );
+                  },
+                ),
               ),
             ),
     );
@@ -373,7 +395,6 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
   @override
   void initState() {
     super.initState();
-    // Initialize with current filter values
     selectedType = widget.repository.selectedType;
     selectedGender = widget.repository.selectedGender;
     selectedSize = widget.repository.selectedSize;
@@ -384,13 +405,13 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        color: Colors.grey[50],
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: Offset(0, -5),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, -4),
           ),
         ],
       ),
@@ -398,86 +419,79 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle
-            Container(
-              width: 40,
-              height: 4,
-              margin: EdgeInsets.only(top: 12, bottom: 8),
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
+            // Drag handle
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Container(
+                width: 40,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(3),
+                ),
               ),
             ),
 
             // Header
             Padding(
-              padding: EdgeInsets.fromLTRB(24, 8, 24, 16),
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   PawsText(
                     'Filter Pets',
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
                     color: PawsColors.textPrimary,
                   ),
                   TextButton(
                     onPressed: _clearAllFilters,
                     style: TextButton.styleFrom(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
+                      foregroundColor: PawsColors.primary,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                     ),
-                    child: PawsText(
+                    child: const Text(
                       'Clear All',
-                      color: PawsColors.primary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                      style: TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],
               ),
             ),
 
-            // Filter Options
+            // Filter Content
             Flexible(
               child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Pet Type
                     _buildFilterSection(
                       'Pet Type',
                       Icons.pets,
                       _buildOptionGrid(['Dog', 'Cat'], selectedType, (value) {
-                        setState(() {
-                          selectedType = selectedType == value ? null : value;
-                        });
+                        setState(
+                          () => selectedType = selectedType == value
+                              ? null
+                              : value,
+                        );
                       }),
                     ),
-
-                    SizedBox(height: 24),
-
-                    // Gender
+                    const SizedBox(height: 20),
                     _buildFilterSection(
                       'Gender',
                       Icons.wc,
                       _buildOptionGrid(['Male', 'Female'], selectedGender, (
                         value,
                       ) {
-                        setState(() {
-                          selectedGender = selectedGender == value
+                        setState(
+                          () => selectedGender = selectedGender == value
                               ? null
-                              : value;
-                        });
+                              : value,
+                        );
                       }),
                     ),
-
-                    SizedBox(height: 24),
-
-                    // Size
+                    const SizedBox(height: 20),
                     _buildFilterSection(
                       'Size',
                       Icons.straighten,
@@ -485,46 +499,46 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
                         ['Small', 'Medium', 'Large'],
                         selectedSize,
                         (value) {
-                          setState(() {
-                            selectedSize = selectedSize == value ? null : value;
-                          });
+                          setState(
+                            () => selectedSize = selectedSize == value
+                                ? null
+                                : value,
+                          );
                         },
                       ),
                     ),
-
-                    SizedBox(height: 24),
-
-                    // Vaccination Status
+                    const SizedBox(height: 20),
                     _buildFilterSection(
                       'Vaccination Status',
-                      Icons.medical_services,
+                      Icons.medical_services_outlined,
                       _buildToggleOption('Vaccinated', isVaccinated, (value) {
-                        setState(() {
-                          isVaccinated = isVaccinated == value ? null : value;
-                        });
+                        setState(
+                          () => isVaccinated = isVaccinated == value
+                              ? null
+                              : value,
+                        );
                       }),
                     ),
-
-                    SizedBox(height: 32),
+                    const SizedBox(height: 28),
                   ],
                 ),
               ),
             ),
 
-            // Bottom Actions
+            // Bottom actions
             Padding(
-              padding: EdgeInsets.fromLTRB(24, 16, 24, 24),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
               child: Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(context),
                       style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        side: BorderSide(color: PawsColors.primary),
+                        side: BorderSide(color: PawsColors.primary, width: 1.2),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(14),
                         ),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       child: PawsText(
                         'Cancel',
@@ -534,24 +548,26 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
                       ),
                     ),
                   ),
-                  SizedBox(width: 16),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton(
                       onPressed: _applyFilters,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: PawsColors.primary,
                         foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(vertical: 16),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(14),
                         ),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      child: PawsText(
+                      child: const Text(
                         'Apply Filters',
-                        fontSize: 16,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),

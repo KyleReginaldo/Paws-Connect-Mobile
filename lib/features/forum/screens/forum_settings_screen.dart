@@ -171,7 +171,17 @@ class _ForumSettingsScreenState extends State<ForumSettingsScreen> {
   Widget build(BuildContext context) {
     final forum = context.watch<ForumRepository>().forum;
     final isLoading = context.watch<ForumRepository>().isLoadingForums;
-    Member? myProfile = forum?.members?.singleWhere((e) => e.id == USER_ID);
+    // Safe lookup: avoid singleWhere which throws if no match
+    Member? myProfile;
+    final members = forum?.members;
+    if (USER_ID != null && members != null && members.isNotEmpty) {
+      for (final m in members) {
+        if (m.id == USER_ID) {
+          myProfile = m;
+          break;
+        }
+      }
+    }
     debugPrint('user id: $USER_ID');
     debugPrint('forum: ${forum?.createdBy}');
     debugPrint('private: ${forum?.private}');

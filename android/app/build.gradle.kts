@@ -9,6 +9,7 @@ plugins {
 }
 
 import java.util.Properties
+import java.io.File
 
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
@@ -31,34 +32,59 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.paws_connect"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
+
     signingConfigs {
         create("release") {
             keyAlias = keystoreProperties["keyAlias"] as String?
             keyPassword = keystoreProperties["keyPassword"] as String?
-            storeFile = if (keystoreProperties["storeFile"] != null) file(keystoreProperties["storeFile"] as String) else null
+            storeFile = if (keystoreProperties["storeFile"] != null)
+                file(keystoreProperties["storeFile"] as String) else null
             storePassword = keystoreProperties["storePassword"] as String?
         }
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("release")
-            // signingConfig = signingConfigs.getByName("debug")
         }
     }
 }
 
 flutter {
     source = "../.."
+}
+
+/* ------------------------------------------------------------------
+   🔑 Rename the APK after assembleRelease so Flutter's wrapper
+   (which always outputs app-release.apk) is copied to a custom name
+------------------------------------------------------------------- */
+tasks.register("renameReleaseApk") {
+    doLast {
+        val outputsDir = File(project.layout.buildDirectory.asFile.get(), "outputs/apk/release")
+        val src = File(outputsDir, "app-release.apk")
+        if (!src.exists()) {
+            logger.warn("Source APK not found: ${src.absolutePath}")
+            return@doLast
+        }
+
+        val appName = "pawsconnect"
+        val versionName = android.defaultConfig.versionName ?: "unknown"
+        val versionCode = android.defaultConfig.versionCode ?: 0
+        val destName = "${appName}-${versionName}(${versionCode})-release.apk"
+        val dest = File(outputsDir, destName)
+
+        src.copyTo(dest, overwrite = true)
+        println("✅ Renamed APK -> ${dest.absolutePath}")
+    }
+}
+
+// run automatically after assembleRelease
+afterEvaluate {
+    tasks.findByName("assembleRelease")?.finalizedBy("renameReleaseApk")
 }

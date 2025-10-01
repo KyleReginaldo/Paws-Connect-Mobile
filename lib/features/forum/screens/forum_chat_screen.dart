@@ -3,19 +3,17 @@ import 'dart:io';
 
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
-import 'package:iconify_flutter/iconify_flutter.dart';
-import 'package:iconify_flutter/icons/ion.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/dependency.dart';
 import 'package:paws_connect/features/forum/provider/forum_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 import '../../../core/components/components.dart';
+import '../../../core/repository/common_repository.dart';
 import '../../../core/router/app_route.gr.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/theme/paws_theme.dart';
@@ -60,6 +58,21 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     // Load chats immediately without waiting
     _loadChats();
     listenToChanges();
+
+    // Mark messages as viewed after frame so providers are ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userId = USER_ID;
+      if (mounted && userId != null && userId.isNotEmpty) {
+        try {
+          sl<CommonRepository>().markMessagesViewed(
+            userId: userId,
+            forumId: widget.forumId,
+          );
+        } catch (e) {
+          debugPrint('Failed to mark messages viewed: $e');
+        }
+      }
+    });
   }
 
   Future<void> _loadChats() async {
@@ -195,218 +208,226 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
       }
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const PawsText(
-          'Forum Chat',
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          color: PawsColors.textPrimary,
+    return SafeArea(
+      top: false,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const PawsText(
+            'Forum Chat',
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: PawsColors.textPrimary,
+          ),
+          centerTitle: true,
+          backgroundColor: Colors.white,
+          elevation: 1,
+          shadowColor: Colors.black12,
+          actions: [
+            // IconButton(
+            //   onPressed: () async {
+            //     await SharePlus.instance.share(
+            //       ShareParams(
+            //         text:
+            //             'Join the discussion in this forum: https://paws-connect-sable.vercel.app/forum-chat/${widget.forumId}',
+            //       ),
+            //     );
+            //   },
+            //   icon: Iconify(Ion.md_share_alt, color: PawsColors.textSecondary),
+            //   color: PawsColors.textSecondary,
+            // ),
+            IconButton(
+              onPressed: () {
+                context.router.push(
+                  ForumSettingsRoute(forumId: widget.forumId),
+                );
+              },
+              icon: Icon(Icons.info),
+              color: PawsColors.textSecondary,
+            ),
+          ],
         ),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        elevation: 1,
-        shadowColor: Colors.black12,
-        actions: [
-          IconButton(
-            onPressed: () async {
-              await SharePlus.instance.share(
-                ShareParams(
-                  text:
-                      'Join the discussion in this forum: https://paws-connect-sable.vercel.app/forum-chat/${widget.forumId}',
-                ),
-              );
-            },
-            icon: Iconify(Ion.md_share_alt, color: PawsColors.textSecondary),
-            color: PawsColors.textSecondary,
-          ),
-          IconButton(
-            onPressed: () {
-              context.router.push(ForumSettingsRoute(forumId: widget.forumId));
-            },
-            icon: Icon(Icons.info),
-            color: PawsColors.textSecondary,
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: isLoadingChats && forumChats.isEmpty
-                ? ListView.builder(
-                    reverse: true,
-                    padding: const EdgeInsets.all(16),
-                    itemCount: 8, // Show 8 skeleton messages
-                    itemBuilder: (context, index) =>
-                        _buildSkeletonMessage(index),
-                  )
-                : forumChats.isEmpty
-                ? const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          LucideIcons.messageCircle,
-                          size: 64,
-                          color: PawsColors.textSecondary,
-                        ),
-                        SizedBox(height: 16),
-                        PawsText(
-                          'No messages yet',
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                          color: PawsColors.textPrimary,
-                        ),
-                        SizedBox(height: 8),
-                        PawsText(
-                          'Start the conversation!',
-                          color: PawsColors.textSecondary,
-                        ),
-                      ],
-                    ),
-                  )
-                : RefreshIndicator(
-                    onRefresh: _loadChats,
-                    child: Builder(
-                      builder: (context) {
-                        // Build a combined list: server chats followed by pending chats
-                        final combined = <dynamic>[];
-                        combined.addAll(forumChats);
-                        combined.addAll(pendingChats);
+        body: Column(
+          children: [
+            Expanded(
+              child: isLoadingChats && forumChats.isEmpty
+                  ? ListView.builder(
+                      reverse: true,
+                      padding: const EdgeInsets.all(16),
+                      itemCount: 8, // Show 8 skeleton messages
+                      itemBuilder: (context, index) =>
+                          _buildSkeletonMessage(index),
+                    )
+                  : forumChats.isEmpty
+                  ? const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            LucideIcons.messageCircle,
+                            size: 64,
+                            color: PawsColors.textSecondary,
+                          ),
+                          SizedBox(height: 16),
+                          PawsText(
+                            'No messages yet',
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                            color: PawsColors.textPrimary,
+                          ),
+                          SizedBox(height: 8),
+                          PawsText(
+                            'Start the conversation!',
+                            color: PawsColors.textSecondary,
+                          ),
+                        ],
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _loadChats,
+                      child: Builder(
+                        builder: (context) {
+                          // Build a combined list: server chats followed by pending chats
+                          final combined = <dynamic>[];
+                          combined.addAll(forumChats);
+                          combined.addAll(pendingChats);
 
-                        if (combined.isEmpty) {
-                          return const SizedBox.shrink();
-                        }
+                          if (combined.isEmpty) {
+                            return const SizedBox.shrink();
+                          }
 
-                        return ListView.builder(
-                          controller: _scrollController,
-                          reverse: true,
-                          padding: const EdgeInsets.all(16),
-                          itemCount: combined.length,
-                          itemBuilder: (context, index) {
-                            // Reverse the index to show latest messages at bottom
-                            final reversedIndex = combined.length - 1 - index;
-                            final item = combined[reversedIndex];
+                          return ListView.builder(
+                            controller: _scrollController,
+                            reverse: true,
+                            padding: const EdgeInsets.all(16),
+                            itemCount: combined.length,
+                            itemBuilder: (context, index) {
+                              // Reverse the index to show latest messages at bottom
+                              final reversedIndex = combined.length - 1 - index;
+                              final item = combined[reversedIndex];
 
-                            // If item is a ForumChat from the server
-                            if (item is ForumChat) {
-                              final chat = item;
-                              final isCurrentUser = chat.users.id == USER_ID;
-                              final showAvatar =
-                                  reversedIndex == forumChats.length - 1 ||
-                                  (reversedIndex + 1 < forumChats.length
-                                      ? forumChats[reversedIndex + 1]
-                                                .users
-                                                .id !=
-                                            chat.users.id
-                                      : true);
+                              // If item is a ForumChat from the server
+                              if (item is ForumChat) {
+                                final chat = item;
+                                final isCurrentUser = chat.users.id == USER_ID;
+                                final showAvatar =
+                                    reversedIndex == forumChats.length - 1 ||
+                                    (reversedIndex + 1 < forumChats.length
+                                        ? forumChats[reversedIndex + 1]
+                                                  .users
+                                                  .id !=
+                                              chat.users.id
+                                        : true);
+
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: Row(
+                                    mainAxisAlignment: isCurrentUser
+                                        ? MainAxisAlignment.end
+                                        : MainAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      if (!isCurrentUser) ...[
+                                        showAvatar
+                                            ? UserAvatar(
+                                                imageUrl:
+                                                    null, // no image in Users model
+                                                initials: chat.users.username,
+                                                size: 32,
+                                              )
+                                            : const SizedBox(width: 32),
+                                        const SizedBox(width: 8),
+                                      ],
+
+                                      Flexible(
+                                        child: ChatBubble(
+                                          isMe: isCurrentUser,
+                                          color: isCurrentUser
+                                              ? PawsColors.primary
+                                              : PawsColors.border,
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              if (!isCurrentUser && showAvatar)
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                        bottom: 4,
+                                                      ),
+                                                  child: PawsText(
+                                                    chat.users.username,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: PawsColors.primary,
+                                                  ),
+                                                ),
+                                              if (chat.imageUrl != null)
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                        bottom: 8,
+                                                      ),
+                                                  child: NetworkImageView(
+                                                    chat.imageUrl!,
+                                                    height: 220,
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                                ),
+                                              PawsText(
+                                                chat.message,
+                                                fontSize: 14,
+                                                color: isCurrentUser
+                                                    ? Colors.white
+                                                    : PawsColors.textPrimary,
+                                              ),
+                                              const SizedBox(height: 4),
+                                              PawsText(
+                                                timeago.format(chat.sentAt),
+                                                fontSize: 10,
+                                                color: isCurrentUser
+                                                    ? Colors.white70
+                                                    : PawsColors.textSecondary,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+
+                                      if (isCurrentUser)
+                                        const SizedBox(width: 8),
+                                    ],
+                                  ),
+                                );
+                              }
+
+                              // Otherwise it's a pending chat (String)
+                              final pendingMessage = item as String;
 
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
-                                child: Row(
-                                  mainAxisAlignment: isCurrentUser
-                                      ? MainAxisAlignment.end
-                                      : MainAxisAlignment.start,
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    if (!isCurrentUser) ...[
-                                      showAvatar
-                                          ? UserAvatar(
-                                              imageUrl:
-                                                  null, // no image in Users model
-                                              initials: chat.users.username,
-                                              size: 32,
-                                            )
-                                          : const SizedBox(width: 32),
-                                      const SizedBox(width: 8),
-                                    ],
-
-                                    Flexible(
-                                      child: ChatBubble(
-                                        isMe: isCurrentUser,
-                                        color: isCurrentUser
-                                            ? PawsColors.primary
-                                            : PawsColors.border,
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            if (!isCurrentUser && showAvatar)
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                  bottom: 4,
-                                                ),
-                                                child: PawsText(
-                                                  chat.users.username,
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: PawsColors.primary,
-                                                ),
-                                              ),
-                                            if (chat.imageUrl != null)
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                  bottom: 8,
-                                                ),
-                                                child: NetworkImageView(
-                                                  chat.imageUrl!,
-                                                  height: 220,
-                                                  fit: BoxFit.cover,
-                                                ),
-                                              ),
-                                            PawsText(
-                                              chat.message,
-                                              fontSize: 14,
-                                              color: isCurrentUser
-                                                  ? Colors.white
-                                                  : PawsColors.textPrimary,
-                                            ),
-                                            const SizedBox(height: 4),
-                                            PawsText(
-                                              timeago.format(chat.sentAt),
-                                              fontSize: 10,
-                                              color: isCurrentUser
-                                                  ? Colors.white70
-                                                  : PawsColors.textSecondary,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-
-                                    if (isCurrentUser) const SizedBox(width: 8),
-                                  ],
+                                child: Align(
+                                  alignment: Alignment.centerRight,
+                                  child: PendingChatBubble(pendingMessage),
                                 ),
                               );
-                            }
-
-                            // Otherwise it's a pending chat (String)
-                            final pendingMessage = item as String;
-
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Align(
-                                alignment: Alignment.centerRight,
-                                child: PendingChatBubble(pendingMessage),
-                              ),
-                            );
-                          },
-                        );
-                      },
+                            },
+                          );
+                        },
+                      ),
                     ),
-                  ),
-          ),
+            ),
 
-          // Message input area using component
-          MessageInputBar(
-            controller: _messageController,
-            isSending: _isSendingMessage,
-            onPickImage: _pickImage,
-            onSend: _sendMessage,
-            previewImage: _imageFile != null ? File(_imageFile!.path) : null,
-            onRemovePreview: () => setState(() => _imageFile = null),
-          ),
-        ],
+            // Message input area using component
+            MessageInputBar(
+              controller: _messageController,
+              isSending: _isSendingMessage,
+              onPickImage: _pickImage,
+              onSend: _sendMessage,
+              previewImage: _imageFile != null ? File(_imageFile!.path) : null,
+              onRemovePreview: () => setState(() => _imageFile = null),
+            ),
+          ],
+        ),
       ),
     );
   }

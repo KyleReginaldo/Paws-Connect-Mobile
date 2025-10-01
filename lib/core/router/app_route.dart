@@ -128,5 +128,13 @@ class AppRouter extends RootStackRouter {
       path: '/notification',
       transitionsBuilder: TransitionsBuilders.fadeIn,
     ),
+    CustomRoute(
+      page: NotificationDetailRoute.page,
+      transitionsBuilder: TransitionsBuilders.fadeIn,
+    ),
+    CustomRoute(
+      page: SetUpVerificationRoute.page,
+      transitionsBuilder: TransitionsBuilders.fadeIn,
+    ),
   ];
 }

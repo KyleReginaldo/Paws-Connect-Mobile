@@ -153,4 +153,65 @@ class PetProvider {
       return Result.error('Failed to fetch pet: ${e.toString()}');
     }
   }
+
+  Future<Result<List<Pet>>> searchPets(String query, {String? userId}) async {
+    final hasInternet = await InternetConnection().hasInternetAccess;
+    if (!hasInternet) {
+      return Result.error(
+        'No internet connection. Please check your network and try again.',
+      );
+    }
+    try {
+      if (query.trim().isEmpty) {
+        return Result.success([]); // empty query returns empty list quickly
+      }
+      final params = <String, String>{'search': query.trim()};
+      if (userId != null && userId.isNotEmpty) params['user'] = userId;
+
+      final uri = Uri.parse(
+        '${dotenv.get('BASE_URL')}/pets',
+      ).replace(queryParameters: params);
+      final response = await http.get(uri);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final list = <Pet>[];
+        if (data['data'] is List) {
+          for (final petData in data['data']) {
+            list.add(PetMapper.fromMap(petData));
+          }
+        }
+        return Result.success(list);
+      } else {
+        return Result.error(
+          'Search failed. Server returned ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      return Result.error('Search failed: $e');
+    }
+  }
+
+  Future<Result<bool>> deletePet(int petId) async {
+    final hasInternet = await InternetConnection().hasInternetAccess;
+    if (!hasInternet) {
+      return Result.error(
+        'No internet connection. Please check your network and try again.',
+      );
+    }
+    try {
+      final uri = Uri.parse('${dotenv.get('BASE_URL')}/pets/$petId');
+      final response = await http.delete(uri);
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return Result.success(true);
+      }
+      final data = jsonDecode(response.body);
+      return Result.error(
+        data is Map && data['message'] != null
+            ? data['message']
+            : 'Failed to delete pet (status ${response.statusCode})',
+      );
+    } catch (e) {
+      return Result.error('Failed to delete pet: $e');
+    }
+  }
 }
