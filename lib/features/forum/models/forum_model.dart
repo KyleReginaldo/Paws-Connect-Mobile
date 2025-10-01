@@ -34,8 +34,10 @@ class ForumChat with ForumChatMappable {
   final DateTime sentAt;
   final String sender;
   final String message;
-  final Users users;
+  final Users? users;
   final String? imageUrl;
+  final ForumChat? repliedTo;
+  final List<Reaction>? reactions;
 
   ForumChat({
     required this.id,
@@ -44,6 +46,8 @@ class ForumChat with ForumChatMappable {
     required this.message,
     required this.users,
     this.imageUrl,
+    this.repliedTo,
+    this.reactions,
   });
 }
 
@@ -106,4 +110,12 @@ class LastChat with LastChatMappable {
     this.imageUrl,
     this.isViewed,
   });
+}
+
+@MappableClass(caseStyle: CaseStyle.snakeCase)
+class Reaction with ReactionMappable {
+  final String emoji;
+  final List<String> users;
+
+  Reaction({required this.emoji, required this.users});
 }

@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_reactions/flutter_chat_reactions.dart'
+    as chat_reactions;
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/supabase/client.dart';
@@ -44,6 +46,8 @@ class ForumChatScreen extends StatefulWidget implements AutoRouteWrapper {
 class _ForumChatScreenState extends State<ForumChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  late final chat_reactions.ReactionsController _controller;
+
   XFile? _imageFile;
   int _previousMessageCount = 0;
   late RealtimeChannel chatChannel;
@@ -51,6 +55,15 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
   @override
   void initState() {
     super.initState();
+
+    // Initialize reactions controller with current user ID
+    _controller = chat_reactions.ReactionsController(
+      currentUserId: USER_ID ?? '',
+    );
+
+    // Add listener for reaction changes
+    _controller.addListener(_onReactionChanged);
+
     chatChannel = supabase.channel(
       'public:forum_chats:forum=eq.${widget.forumId}',
     );
@@ -106,12 +119,27 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
           },
         )
         .subscribe();
+
+    // Also listen to reaction changes if you have a separate reactions table
+    // chatChannel
+    //     .onPostgresChanges(
+    //       event: PostgresChangeEvent.all,
+    //       schema: 'public',
+    //       table: 'forum_chat_reactions', // Adjust table name as needed
+    //       callback: (payload) {
+    //         if (mounted) {
+    //           context.read<ForumRepository>().setForumChats(widget.forumId);
+    //         }
+    //       },
+    //     )
+    //     .subscribe();
   }
 
   @override
   void dispose() {
     // Unsubscribe from realtime channel to prevent memory leaks
     chatChannel.unsubscribe();
+    _controller.removeListener(_onReactionChanged);
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -124,6 +152,113 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
         duration: const Duration(milliseconds: 100), // Ultra fast scroll
         curve: Curves.fastOutSlowIn, // Snappier curve
       );
+    }
+  }
+
+  // Handle reaction changes from the controller
+  void _onReactionChanged() {
+    debugPrint('Reactions updated');
+    // Note: The actual backend sync happens through the config callbacks
+    // when users interact with reactions
+  }
+
+  // Helper method to manually send reaction to backend
+  // You can call this method when implementing reaction tapping
+  Future<void> sendReactionToBackend({
+    required int chatId,
+    required String reaction,
+    required bool isAdding,
+  }) async {
+    final userId = USER_ID;
+    if (userId == null || userId.isEmpty) return;
+
+    try {
+      // Create provider instance
+      final provider = ForumProvider();
+
+      if (isAdding) {
+        final result = await provider.addReaction(
+          forumId: widget.forumId,
+          chatId: chatId,
+          reaction: reaction,
+          userId: userId,
+        );
+
+        if (result.isError) {
+          debugPrint('Failed to add reaction: ${result.error}');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Failed to add reaction'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+        } else {
+          debugPrint('Successfully added reaction: $reaction');
+          // Refresh chat data to get updated reactions from server
+          if (mounted) {
+            context.read<ForumRepository>().setForumChats(widget.forumId);
+          }
+        }
+      } else {
+        final result = await provider.removeReaction(
+          forumId: widget.forumId,
+          chatId: chatId,
+          reaction: reaction,
+          userId: userId,
+        );
+
+        if (result.isError) {
+          debugPrint('Failed to remove reaction: ${result.error}');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Failed to remove reaction'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+        } else {
+          debugPrint('Successfully removed reaction: $reaction');
+          // Refresh chat data to get updated reactions from server
+          if (mounted) {
+            context.read<ForumRepository>().setForumChats(widget.forumId);
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error sending reaction to backend: $e');
+    }
+  } // Convert ForumChat reactions to display format
+
+  Map<String, List<String>> _convertReactions(List<Reaction>? reactions) {
+    if (reactions == null || reactions.isEmpty) return {};
+
+    final Map<String, List<String>> result = {};
+    for (final reaction in reactions) {
+      result[reaction.emoji] = reaction.users;
+    }
+    return result;
+  }
+
+  // Initialize reactions for all messages
+  void _initializeReactions(List<ForumChat> chats) {
+    for (final chat in chats) {
+      if (chat.reactions != null && chat.reactions!.isNotEmpty) {
+        final reactions = _convertReactions(chat.reactions);
+        // Set initial reactions for this message
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            for (final entry in reactions.entries) {
+              // Add each reaction type to the message
+              _controller.addReaction(chat.id.toString(), entry.key);
+            }
+          }
+        });
+      }
     }
   }
 
@@ -200,6 +335,23 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     final forumChats = repo.forumChats;
     final isLoadingChats = repo.isLoadingChats;
     final pendingChats = repo.pendingChats;
+    // Initialize reactions when chat data changes
+    if (forumChats.isNotEmpty) {
+      _initializeReactions(forumChats);
+    }
+    for (ForumChat chat in forumChats) {
+      if (chat.reactions != null && chat.reactions!.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            for (final reaction in chat.reactions!) {
+              // Add each reaction type to the message
+              _controller.addReaction(chat.id.toString(), reaction.emoji);
+            }
+          }
+        });
+      }
+    }
+
     // Auto-scroll to bottom when new messages arrive - instant
     if (forumChats.length != _previousMessageCount) {
       _previousMessageCount = forumChats.length;
@@ -223,18 +375,6 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
           elevation: 1,
           shadowColor: Colors.black12,
           actions: [
-            // IconButton(
-            //   onPressed: () async {
-            //     await SharePlus.instance.share(
-            //       ShareParams(
-            //         text:
-            //             'Join the discussion in this forum: https://paws-connect-sable.vercel.app/forum-chat/${widget.forumId}',
-            //       ),
-            //     );
-            //   },
-            //   icon: Iconify(Ion.md_share_alt, color: PawsColors.textSecondary),
-            //   color: PawsColors.textSecondary,
-            // ),
             IconButton(
               onPressed: () {
                 context.router.push(
@@ -301,6 +441,11 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
                             padding: const EdgeInsets.all(16),
                             itemCount: combined.length,
                             itemBuilder: (context, index) {
+                              final config = chat_reactions.ChatReactionsConfig(
+                                enableHapticFeedback: true,
+                                maxReactionsToShow: 3,
+                                enableDoubleTap: true,
+                              );
                               // Reverse the index to show latest messages at bottom
                               final reversedIndex = combined.length - 1 - index;
                               final item = combined[reversedIndex];
@@ -308,14 +453,14 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
                               // If item is a ForumChat from the server
                               if (item is ForumChat) {
                                 final chat = item;
-                                final isCurrentUser = chat.users.id == USER_ID;
+                                final isCurrentUser = chat.users?.id == USER_ID;
                                 final showAvatar =
                                     reversedIndex == forumChats.length - 1 ||
                                     (reversedIndex + 1 < forumChats.length
                                         ? forumChats[reversedIndex + 1]
                                                   .users
-                                                  .id !=
-                                              chat.users.id
+                                                  ?.id !=
+                                              chat.users?.id
                                         : true);
 
                                 return Padding(
@@ -331,63 +476,244 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
                                             ? UserAvatar(
                                                 imageUrl:
                                                     null, // no image in Users model
-                                                initials: chat.users.username,
+                                                initials: chat.users?.username,
                                                 size: 32,
                                               )
                                             : const SizedBox(width: 32),
                                         const SizedBox(width: 8),
                                       ],
 
-                                      Flexible(
-                                        child: ChatBubble(
-                                          isMe: isCurrentUser,
-                                          color: isCurrentUser
-                                              ? PawsColors.primary
-                                              : PawsColors.border,
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
+                                      // Add gesture detector for manual reaction testing
+                                      GestureDetector(
+                                        onLongPress: () {
+                                          // Example: Add a reaction when long pressing
+                                          sendReactionToBackend(
+                                            chatId: chat.id,
+                                            reaction: "👍", // Default reaction
+                                            isAdding: true,
+                                          );
+                                        },
+                                        onDoubleTap: () {
+                                          // Example: Add heart reaction on double tap
+                                          sendReactionToBackend(
+                                            chatId: chat.id,
+                                            reaction: "❤️",
+                                            isAdding: true,
+                                          );
+                                        },
+                                        child: chat_reactions.ChatMessageWrapper(
+                                          messageId: chat.id.toString(),
+                                          controller: _controller,
+                                          config: config,
+                                          onReactionAdded: (reaction) {
+                                            sendReactionToBackend(
+                                              chatId: chat.id,
+                                              reaction: reaction,
+                                              isAdding: true,
+                                            );
+                                          },
+                                          child: Stack(
+                                            clipBehavior: Clip.none,
                                             children: [
-                                              if (!isCurrentUser && showAvatar)
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                        bottom: 4,
+                                              ChatBubble(
+                                                isMe: isCurrentUser,
+                                                color: isCurrentUser
+                                                    ? PawsColors.primary
+                                                    : PawsColors.border,
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    if (!isCurrentUser &&
+                                                        showAvatar)
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets.only(
+                                                              bottom: 4,
+                                                            ),
+                                                        child: PawsText(
+                                                          chat
+                                                                  .users
+                                                                  ?.username ??
+                                                              'Unknown',
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color: PawsColors
+                                                              .primary,
+                                                        ),
                                                       ),
-                                                  child: PawsText(
-                                                    chat.users.username,
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: PawsColors.primary,
+                                                    if (chat.imageUrl != null)
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets.only(
+                                                              bottom: 8,
+                                                            ),
+                                                        child: NetworkImageView(
+                                                          chat.imageUrl!,
+                                                          height: 220,
+                                                          fit: BoxFit.cover,
+                                                        ),
+                                                      ),
+                                                    PawsText(
+                                                      chat.message,
+                                                      fontSize: 14,
+                                                      color: isCurrentUser
+                                                          ? Colors.white
+                                                          : PawsColors
+                                                                .textPrimary,
+                                                    ),
+                                                    const SizedBox(height: 4),
+
+                                                    // Display existing reactions from backend
+                                                    // if (chat.reactions != null &&
+                                                    //     chat.reactions!.isNotEmpty)
+                                                    //   _buildReactionsDisplay(
+                                                    //     chat.reactions!,
+                                                    //     isCurrentUser,
+                                                    //     chat.id,
+                                                    //   ),
+                                                    PawsText(
+                                                      timeago.format(
+                                                        chat.sentAt,
+                                                      ),
+                                                      fontSize: 10,
+                                                      color: isCurrentUser
+                                                          ? Colors.white70
+                                                          : PawsColors
+                                                                .textSecondary,
+                                                    ),
+
+                                                    // Add reaction test buttons
+                                                  ],
+                                                ),
+                                              ),
+                                              if (chat.reactions != null &&
+                                                  chat.reactions!.isNotEmpty)
+                                                Positioned(
+                                                  bottom: -16,
+                                                  right: -4,
+                                                  child: Container(
+                                                    padding:
+                                                        const EdgeInsets.all(2),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.white,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            16,
+                                                          ),
+                                                      border: Border.all(
+                                                        color: Colors
+                                                            .grey
+                                                            .shade300,
+                                                        width: 1,
+                                                      ),
+                                                      boxShadow: [
+                                                        BoxShadow(
+                                                          color: Colors.black
+                                                              .withOpacity(0.1),
+                                                          blurRadius: 4,
+                                                          offset: const Offset(
+                                                            0,
+                                                            2,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: chat.reactions!.map((
+                                                        reaction,
+                                                      ) {
+                                                        final userCount =
+                                                            reaction
+                                                                .users
+                                                                .length;
+                                                        final hasCurrentUser =
+                                                            reaction.users
+                                                                .contains(
+                                                                  USER_ID,
+                                                                );
+
+                                                        return GestureDetector(
+                                                          onTap: () {
+                                                            sendReactionToBackend(
+                                                              chatId: chat.id,
+                                                              reaction: reaction
+                                                                  .emoji,
+                                                              isAdding:
+                                                                  !hasCurrentUser,
+                                                            );
+                                                          },
+                                                          child: Container(
+                                                            margin:
+                                                                const EdgeInsets.symmetric(
+                                                                  horizontal: 1,
+                                                                ),
+                                                            padding:
+                                                                const EdgeInsets.symmetric(
+                                                                  horizontal: 6,
+                                                                  vertical: 2,
+                                                                ),
+                                                            decoration: BoxDecoration(
+                                                              color:
+                                                                  hasCurrentUser
+                                                                  ? PawsColors
+                                                                        .primary
+                                                                        .withOpacity(
+                                                                          0.15,
+                                                                        )
+                                                                  : Colors
+                                                                        .transparent,
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    12,
+                                                                  ),
+                                                            ),
+                                                            child: Row(
+                                                              mainAxisSize:
+                                                                  MainAxisSize
+                                                                      .min,
+                                                              children: [
+                                                                Text(
+                                                                  reaction
+                                                                      .emoji,
+                                                                  style:
+                                                                      const TextStyle(
+                                                                        fontSize:
+                                                                            16,
+                                                                      ),
+                                                                ),
+                                                                if (userCount >
+                                                                    1) ...[
+                                                                  const SizedBox(
+                                                                    width: 2,
+                                                                  ),
+                                                                  Text(
+                                                                    userCount
+                                                                        .toString(),
+                                                                    style: TextStyle(
+                                                                      fontSize:
+                                                                          11,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w600,
+                                                                      color:
+                                                                          hasCurrentUser
+                                                                          ? PawsColors.primary
+                                                                          : Colors.grey.shade600,
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        );
+                                                      }).toList(),
+                                                    ),
                                                   ),
                                                 ),
-                                              if (chat.imageUrl != null)
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                        bottom: 8,
-                                                      ),
-                                                  child: NetworkImageView(
-                                                    chat.imageUrl!,
-                                                    height: 220,
-                                                    fit: BoxFit.cover,
-                                                  ),
-                                                ),
-                                              PawsText(
-                                                chat.message,
-                                                fontSize: 14,
-                                                color: isCurrentUser
-                                                    ? Colors.white
-                                                    : PawsColors.textPrimary,
-                                              ),
-                                              const SizedBox(height: 4),
-                                              PawsText(
-                                                timeago.format(chat.sentAt),
-                                                fontSize: 10,
-                                                color: isCurrentUser
-                                                    ? Colors.white70
-                                                    : PawsColors.textSecondary,
-                                              ),
                                             ],
                                           ),
                                         ),

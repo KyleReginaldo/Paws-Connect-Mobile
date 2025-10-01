@@ -681,6 +681,8 @@ class ForumChatMapper extends ClassMapperBase<ForumChat> {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = ForumChatMapper._());
       UsersMapper.ensureInitialized();
+      ForumChatMapper.ensureInitialized();
+      ReactionMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -703,13 +705,26 @@ class ForumChatMapper extends ClassMapperBase<ForumChat> {
     'message',
     _$message,
   );
-  static Users _$users(ForumChat v) => v.users;
+  static Users? _$users(ForumChat v) => v.users;
   static const Field<ForumChat, Users> _f$users = Field('users', _$users);
   static String? _$imageUrl(ForumChat v) => v.imageUrl;
   static const Field<ForumChat, String> _f$imageUrl = Field(
     'imageUrl',
     _$imageUrl,
     key: r'image_url',
+    opt: true,
+  );
+  static ForumChat? _$repliedTo(ForumChat v) => v.repliedTo;
+  static const Field<ForumChat, ForumChat> _f$repliedTo = Field(
+    'repliedTo',
+    _$repliedTo,
+    key: r'replied_to',
+    opt: true,
+  );
+  static List<Reaction>? _$reactions(ForumChat v) => v.reactions;
+  static const Field<ForumChat, List<Reaction>> _f$reactions = Field(
+    'reactions',
+    _$reactions,
     opt: true,
   );
 
@@ -721,6 +736,8 @@ class ForumChatMapper extends ClassMapperBase<ForumChat> {
     #message: _f$message,
     #users: _f$users,
     #imageUrl: _f$imageUrl,
+    #repliedTo: _f$repliedTo,
+    #reactions: _f$reactions,
   };
 
   static ForumChat _instantiate(DecodingData data) {
@@ -731,6 +748,8 @@ class ForumChatMapper extends ClassMapperBase<ForumChat> {
       message: data.dec(_f$message),
       users: data.dec(_f$users),
       imageUrl: data.dec(_f$imageUrl),
+      repliedTo: data.dec(_f$repliedTo),
+      reactions: data.dec(_f$reactions),
     );
   }
 
@@ -793,7 +812,10 @@ extension ForumChatValueCopy<$R, $Out> on ObjectCopyWith<$R, ForumChat, $Out> {
 
 abstract class ForumChatCopyWith<$R, $In extends ForumChat, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  UsersCopyWith<$R, Users, Users> get users;
+  UsersCopyWith<$R, Users, Users>? get users;
+  ForumChatCopyWith<$R, ForumChat, ForumChat>? get repliedTo;
+  ListCopyWith<$R, Reaction, ReactionCopyWith<$R, Reaction, Reaction>>?
+  get reactions;
   $R call({
     int? id,
     DateTime? sentAt,
@@ -801,6 +823,8 @@ abstract class ForumChatCopyWith<$R, $In extends ForumChat, $Out>
     String? message,
     Users? users,
     String? imageUrl,
+    ForumChat? repliedTo,
+    List<Reaction>? reactions,
   });
   ForumChatCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -814,24 +838,40 @@ class _ForumChatCopyWithImpl<$R, $Out>
   late final ClassMapperBase<ForumChat> $mapper =
       ForumChatMapper.ensureInitialized();
   @override
-  UsersCopyWith<$R, Users, Users> get users =>
-      $value.users.copyWith.$chain((v) => call(users: v));
+  UsersCopyWith<$R, Users, Users>? get users =>
+      $value.users?.copyWith.$chain((v) => call(users: v));
+  @override
+  ForumChatCopyWith<$R, ForumChat, ForumChat>? get repliedTo =>
+      $value.repliedTo?.copyWith.$chain((v) => call(repliedTo: v));
+  @override
+  ListCopyWith<$R, Reaction, ReactionCopyWith<$R, Reaction, Reaction>>?
+  get reactions => $value.reactions != null
+      ? ListCopyWith(
+          $value.reactions!,
+          (v, t) => v.copyWith.$chain(t),
+          (v) => call(reactions: v),
+        )
+      : null;
   @override
   $R call({
     int? id,
     DateTime? sentAt,
     String? sender,
     String? message,
-    Users? users,
+    Object? users = $none,
     Object? imageUrl = $none,
+    Object? repliedTo = $none,
+    Object? reactions = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
       if (sentAt != null) #sentAt: sentAt,
       if (sender != null) #sender: sender,
       if (message != null) #message: message,
-      if (users != null) #users: users,
+      if (users != $none) #users: users,
       if (imageUrl != $none) #imageUrl: imageUrl,
+      if (repliedTo != $none) #repliedTo: repliedTo,
+      if (reactions != $none) #reactions: reactions,
     }),
   );
   @override
@@ -842,12 +882,139 @@ class _ForumChatCopyWithImpl<$R, $Out>
     message: data.get(#message, or: $value.message),
     users: data.get(#users, or: $value.users),
     imageUrl: data.get(#imageUrl, or: $value.imageUrl),
+    repliedTo: data.get(#repliedTo, or: $value.repliedTo),
+    reactions: data.get(#reactions, or: $value.reactions),
   );
 
   @override
   ForumChatCopyWith<$R2, ForumChat, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   ) => _ForumChatCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class ReactionMapper extends ClassMapperBase<Reaction> {
+  ReactionMapper._();
+
+  static ReactionMapper? _instance;
+  static ReactionMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = ReactionMapper._());
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'Reaction';
+
+  static String _$emoji(Reaction v) => v.emoji;
+  static const Field<Reaction, String> _f$emoji = Field('emoji', _$emoji);
+  static List<String> _$users(Reaction v) => v.users;
+  static const Field<Reaction, List<String>> _f$users = Field('users', _$users);
+
+  @override
+  final MappableFields<Reaction> fields = const {
+    #emoji: _f$emoji,
+    #users: _f$users,
+  };
+
+  static Reaction _instantiate(DecodingData data) {
+    return Reaction(emoji: data.dec(_f$emoji), users: data.dec(_f$users));
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static Reaction fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<Reaction>(map);
+  }
+
+  static Reaction fromJson(String json) {
+    return ensureInitialized().decodeJson<Reaction>(json);
+  }
+}
+
+mixin ReactionMappable {
+  String toJson() {
+    return ReactionMapper.ensureInitialized().encodeJson<Reaction>(
+      this as Reaction,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return ReactionMapper.ensureInitialized().encodeMap<Reaction>(
+      this as Reaction,
+    );
+  }
+
+  ReactionCopyWith<Reaction, Reaction, Reaction> get copyWith =>
+      _ReactionCopyWithImpl<Reaction, Reaction>(
+        this as Reaction,
+        $identity,
+        $identity,
+      );
+  @override
+  String toString() {
+    return ReactionMapper.ensureInitialized().stringifyValue(this as Reaction);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return ReactionMapper.ensureInitialized().equalsValue(
+      this as Reaction,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return ReactionMapper.ensureInitialized().hashValue(this as Reaction);
+  }
+}
+
+extension ReactionValueCopy<$R, $Out> on ObjectCopyWith<$R, Reaction, $Out> {
+  ReactionCopyWith<$R, Reaction, $Out> get $asReaction =>
+      $base.as((v, t, t2) => _ReactionCopyWithImpl<$R, $Out>(v, t, t2));
+}
+
+abstract class ReactionCopyWith<$R, $In extends Reaction, $Out>
+    implements ClassCopyWith<$R, $In, $Out> {
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>> get users;
+  $R call({String? emoji, List<String>? users});
+  ReactionCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
+}
+
+class _ReactionCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, Reaction, $Out>
+    implements ReactionCopyWith<$R, Reaction, $Out> {
+  _ReactionCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<Reaction> $mapper =
+      ReactionMapper.ensureInitialized();
+  @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>> get users =>
+      ListCopyWith(
+        $value.users,
+        (v, t) => ObjectCopyWith(v, $identity, t),
+        (v) => call(users: v),
+      );
+  @override
+  $R call({String? emoji, List<String>? users}) => $apply(
+    FieldCopyWithData({
+      if (emoji != null) #emoji: emoji,
+      if (users != null) #users: users,
+    }),
+  );
+  @override
+  Reaction $make(CopyWithData data) => Reaction(
+    emoji: data.get(#emoji, or: $value.emoji),
+    users: data.get(#users, or: $value.users),
+  );
+
+  @override
+  ReactionCopyWith<$R2, Reaction, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  ) => _ReactionCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class AvailableUserMapper extends ClassMapperBase<AvailableUser> {

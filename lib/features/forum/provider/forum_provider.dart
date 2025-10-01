@@ -210,4 +210,53 @@ class ForumProvider {
       return Result.error('Something went wrong: $e');
     }
   }
+
+  Future<Result<String>> addReaction({
+    required int forumId,
+    required int chatId,
+    required String reaction,
+    required String userId,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse(
+          '${dotenv.get('BASE_URL')}/forum/$forumId/chats/$chatId/reactions',
+        ),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'reaction': reaction, 'user_id': userId}),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return Result.success(data['message'] ?? 'Reaction added');
+      } else {
+        return Result.error(data['message'] ?? 'Failed to add reaction');
+      }
+    } catch (e) {
+      return Result.error('Something went wrong: $e');
+    }
+  }
+
+  Future<Result<String>> removeReaction({
+    required int forumId,
+    required int chatId,
+    required String reaction,
+    required String userId,
+  }) async {
+    try {
+      final response = await http.delete(
+        Uri.parse(
+          '${dotenv.get('BASE_URL')}/forum/$forumId/chats/$chatId/reactions?reaction=$reaction&user_id=$userId',
+        ),
+        headers: {'Content-Type': 'application/json'},
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        return Result.success(data['message'] ?? 'Reaction removed');
+      } else {
+        return Result.error(data['message'] ?? 'Failed to remove reaction');
+      }
+    } catch (e) {
+      return Result.error('Something went wrong: $e');
+    }
+  }
 }
