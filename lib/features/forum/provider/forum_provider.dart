@@ -39,10 +39,17 @@ class ForumProvider {
     }
   }
 
-  Future<Result<List<ForumChat>>> fetchForumChats(int forumId) async {
-    final response = await http.get(
-      Uri.parse('${dotenv.get('BASE_URL')}/forum/$forumId/chats'),
-    );
+  Future<Result<List<ForumChat>>> fetchForumChats(
+    int forumId, {
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final uri = Uri.parse('${dotenv.get('BASE_URL')}/forum/$forumId/chats')
+        .replace(
+          queryParameters: {'page': page.toString(), 'limit': limit.toString()},
+        );
+
+    final response = await http.get(uri);
     final data = jsonDecode(response.body);
     if (response.statusCode == 200) {
       List<ForumChat> chats = [];

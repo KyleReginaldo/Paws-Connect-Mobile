@@ -58,12 +58,14 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
   int _previousMessageCount = 0;
   late RealtimeChannel chatChannel;
   bool _isSendingMessage = false;
+  bool _isInitialLoad = true;
   @override
   void initState() {
     super.initState();
     _initializeControllers();
     _setupRealtimeChannel();
     _loadInitialData();
+    _setupScrollListener();
   }
 
   void _initializeControllers() {
@@ -107,10 +109,6 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
       final repo = context.read<ForumRepository>();
       repo.getRealChats(widget.forumId);
     });
-
-    if (mounted && _scrollController.hasClients) {
-      _scrollToBottom();
-    }
   }
 
   void listenToChanges() {
@@ -152,27 +150,62 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     }
   }
 
-  void _scrollToMessageById(int messageId) async {
+  Future<bool> _ensureMessageLoaded(int messageId) async {
+    final repo = context.read<ForumRepository>();
+    const maxAttempts = 10;
+    var attempts = 0;
+
+    while (!repo.forumChats.any((chat) => chat.id == messageId)) {
+      if (!repo.hasMoreChats) {
+        return false;
+      }
+
+      if (!repo.isLoadingMoreChats) {
+        await repo.loadMoreChats(widget.forumId);
+      } else {
+        await Future.delayed(const Duration(milliseconds: 120));
+      }
+
+      attempts++;
+      if (attempts >= maxAttempts) {
+        break;
+      }
+
+      await Future.delayed(const Duration(milliseconds: 60));
+    }
+
+    if (!repo.forumChats.any((chat) => chat.id == messageId)) {
+      return false;
+    }
+
+    if (mounted) {
+      await WidgetsBinding.instance.endOfFrame;
+    }
+
+    return true;
+  }
+
+  Future<bool> _scrollToMessageById(int messageId) async {
+    if (!_scrollController.hasClients) return false;
+
     final repo = context.read<ForumRepository>();
     final forumChats = repo.forumChats;
 
     final messageIndex = forumChats.indexWhere((chat) => chat.id == messageId);
 
     if (messageIndex == -1) {
-      debugPrint('Message with ID $messageId not found');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Message not found'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-      return;
+      return false;
     }
 
     final totalMessages = forumChats.length;
     final reversedIndex = totalMessages - 1 - messageIndex;
     final approximateItemHeight = 80.0;
-    final targetPosition = reversedIndex * approximateItemHeight;
+    var targetPosition = reversedIndex * approximateItemHeight;
+
+    if (_scrollController.position.hasPixels) {
+      final maxExtent = _scrollController.position.maxScrollExtent;
+      targetPosition = targetPosition.clamp(0.0, maxExtent);
+    }
 
     debugPrint(
       'Scrolling to approximate position: $targetPosition for message at index $messageIndex',
@@ -180,47 +213,59 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
 
     await _scrollController.animateTo(
       targetPosition,
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 400),
       curve: Curves.easeInOut,
     );
 
-    Future.delayed(const Duration(milliseconds: 100), () {
+    for (var attempt = 0; attempt < 6; attempt++) {
+      await WidgetsBinding.instance.endOfFrame;
+
       final key = _chatKeys[messageId.toString()];
-      if (key?.currentContext != null) {
-        Scrollable.ensureVisible(
-          key!.currentContext!,
+      final context = key?.currentContext;
+      if (context != null) {
+        await Scrollable.ensureVisible(
+          context,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
           alignment: 0.3,
         );
-      } else {
-        debugPrint('Widget still not visible after scrolling');
+        return true;
       }
-    });
+
+      await Future.delayed(const Duration(milliseconds: 80));
+    }
+
+    debugPrint('Widget still not visible after scrolling attempts');
+    return false;
   }
 
-  void _handleReplyToTapped(int messageId) {
-    debugPrint('keys: ${_chatKeys.keys}');
+  Future<void> _handleReplyToTapped(int messageId) async {
+    debugPrint('Attempting to scroll to replied message: $messageId');
 
-    final key = _chatKeys[messageId.toString()];
-    debugPrint('Replied to: $messageId');
-    debugPrint('Key: $key');
-    debugPrint('Available keys: ${_chatKeys.keys.toList()}');
+    final isLoaded = await _ensureMessageLoaded(messageId);
 
-    if (key != null) {
-      if (key.currentContext != null) {
-        Scrollable.ensureVisible(
-          key.currentContext!,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-          alignment: 0.3,
-        );
-      } else {
-        debugPrint('Widget not visible, scrolling to approximate position');
-        _scrollToMessageById(messageId);
-      }
-    } else {
-      debugPrint('Key not found for message ID: $messageId');
+    if (!mounted) return;
+
+    if (!isLoaded) {
+      debugPrint(
+        'Message with ID $messageId not loaded or no longer available',
+      );
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Message not found or not loaded yet'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    final scrolled = await _scrollToMessageById(messageId);
+
+    if (!mounted) return;
+
+    if (!scrolled) {
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Message not found or not loaded yet'),
@@ -232,6 +277,25 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
 
   void _onReactionChanged() {
     debugPrint('Reactions updated');
+  }
+
+  void _setupScrollListener() {
+    _scrollController.addListener(() {
+      // Check if user scrolled to the top (which means they want to load older messages)
+      // Since the list is reversed, top means maximum scroll extent
+      if (_scrollController.offset >=
+          _scrollController.position.maxScrollExtent * 0.9) {
+        _loadMoreChatsIfNeeded();
+      }
+    });
+  }
+
+  void _loadMoreChatsIfNeeded() {
+    if (!mounted) return;
+    final repo = context.read<ForumRepository>();
+    if (repo.hasMoreChats && !repo.isLoadingMoreChats) {
+      repo.loadMoreChats(widget.forumId);
+    }
   }
 
   Future<void> sendReactionToBackend({
@@ -338,11 +402,22 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
   }
 
   void _updateMessageCount(List<ForumChat> forumChats) {
-    if (forumChats.length != _previousMessageCount) {
-      _previousMessageCount = forumChats.length;
-      if (forumChats.isNotEmpty && _scrollController.hasClients) {
-        _scrollToBottom();
-      }
+    if (forumChats.length == _previousMessageCount) return;
+
+    final shouldScrollToBottom = _isInitialLoad && forumChats.isNotEmpty;
+    _previousMessageCount = forumChats.length;
+
+    if (shouldScrollToBottom) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (_scrollController.hasClients) {
+          _scrollToBottom();
+        }
+      });
+    }
+
+    if (forumChats.isNotEmpty) {
+      _isInitialLoad = false;
     }
   }
 
@@ -433,6 +508,7 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     final repo = context.watch<ForumRepository>();
     final forumChats = repo.forumChats;
     final isLoadingChats = repo.isLoadingChats;
+    final isLoadingMoreChats = repo.isLoadingMoreChats;
     final pendingChats = repo.pendingChats;
 
     if (forumChats.isNotEmpty) {
@@ -443,7 +519,12 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
       top: false,
       child: Scaffold(
         appBar: _buildAppBar(),
-        body: _buildBody(forumChats, pendingChats, isLoadingChats),
+        body: _buildBody(
+          forumChats,
+          pendingChats,
+          isLoadingChats,
+          isLoadingMoreChats,
+        ),
       ),
     );
   }
@@ -475,11 +556,17 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     List<ForumChat> forumChats,
     List<String> pendingChats,
     bool isLoadingChats,
+    bool isLoadingMoreChats,
   ) {
     return Column(
       children: [
         Expanded(
-          child: _buildMessageList(forumChats, pendingChats, isLoadingChats),
+          child: _buildMessageList(
+            forumChats,
+            pendingChats,
+            isLoadingChats,
+            isLoadingMoreChats,
+          ),
         ),
         if (replyTo != null) _buildReplyIndicator(),
         _buildMessageInput(),
@@ -491,11 +578,13 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     List<ForumChat> forumChats,
     List<String> pendingChats,
     bool isLoadingChats,
+    bool isLoadingMoreChats,
   ) {
     return ChatMessageList(
       forumChats: forumChats,
       pendingChats: pendingChats,
       isLoadingChats: isLoadingChats,
+      isLoadingMoreChats: isLoadingMoreChats,
       scrollController: _scrollController,
       chatKeys: _chatKeys,
       reactionsController: _controller,

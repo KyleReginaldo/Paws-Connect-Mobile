@@ -75,7 +75,6 @@ class _ForumScreenState extends State<ForumScreen> {
   Widget build(BuildContext context) {
     final repo = context.watch<ForumRepository>();
     final forums = repo.forums;
-    final errorMessage = repo.errorMessage;
     final isLoadingForums = repo.isLoadingForums;
 
     return Scaffold(

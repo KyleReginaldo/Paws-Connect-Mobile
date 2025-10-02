@@ -13,6 +13,13 @@ class ForumRepository extends ChangeNotifier {
   bool _isLoadingChats = false;
   bool _usersLoading = false;
   String? _userErrorMessage;
+
+  // Pagination state
+  bool _isLoadingMoreChats = false;
+  bool _hasMoreChats = true;
+  int _currentPage = 1;
+  final int _pageLimit = 20;
+
   List<Forum> get forums => _forums;
   List<AvailableUser> _availableUsers = [];
   List<AvailableUser> get availableUsers => _availableUsers;
@@ -24,6 +31,8 @@ class ForumRepository extends ChangeNotifier {
   bool get usersLoading => _usersLoading;
   bool get isLoadingForum => _isLoadingForum;
   String? get userErrorMessage => _userErrorMessage;
+  bool get isLoadingMoreChats => _isLoadingMoreChats;
+  bool get hasMoreChats => _hasMoreChats;
   final List<String> _pendingChats = [];
 
   List<String> get pendingChats => _pendingChats;
@@ -95,8 +104,14 @@ class ForumRepository extends ChangeNotifier {
 
   void getRealChats(int forumId) async {
     _isLoadingChats = true;
+    _currentPage = 1;
+    _hasMoreChats = true;
     notifyListeners();
-    final result = await _provider.fetchForumChats(forumId);
+    final result = await _provider.fetchForumChats(
+      forumId,
+      page: _currentPage,
+      limit: _pageLimit,
+    );
     _isLoadingChats = false;
     if (result.isError) {
       _forumChats.clear();
@@ -106,11 +121,16 @@ class ForumRepository extends ChangeNotifier {
       notifyListeners();
       _pendingChats.clear();
       _forumChats = result.value;
+      _hasMoreChats = result.value.length == _pageLimit;
     }
   }
 
   void setForumChats(int forumId) async {
-    final result = await _provider.fetchForumChats(forumId);
+    final result = await _provider.fetchForumChats(
+      forumId,
+      page: 1,
+      limit: _pageLimit,
+    );
     _isLoadingChats = false;
     if (result.isError) {
       _forumChats.clear();
@@ -118,7 +138,37 @@ class ForumRepository extends ChangeNotifier {
     } else {
       _forumChats = result.value;
       _pendingChats.clear();
+      _currentPage = 1;
+      _hasMoreChats = result.value.length == _pageLimit;
     }
+    notifyListeners();
+  }
+
+  Future<void> loadMoreChats(int forumId) async {
+    if (_isLoadingMoreChats || !_hasMoreChats) return;
+
+    _isLoadingMoreChats = true;
+    notifyListeners();
+
+    final nextPage = _currentPage + 1;
+    final result = await _provider.fetchForumChats(
+      forumId,
+      page: nextPage,
+      limit: _pageLimit,
+    );
+
+    _isLoadingMoreChats = false;
+
+    if (!result.isError && result.value.isNotEmpty) {
+      // Insert older messages at the beginning of the list
+      // Since the list is ordered with newest first, older messages go at the start
+      _forumChats.insertAll(0, result.value);
+      _currentPage = nextPage;
+      _hasMoreChats = result.value.length == _pageLimit;
+    } else {
+      _hasMoreChats = false;
+    }
+
     notifyListeners();
   }
 
@@ -134,6 +184,9 @@ class ForumRepository extends ChangeNotifier {
     _isLoadingForum = false;
     _isLoadingChats = false;
     _usersLoading = false;
+    _isLoadingMoreChats = false;
+    _hasMoreChats = true;
+    _currentPage = 1;
     notifyListeners();
   }
 }

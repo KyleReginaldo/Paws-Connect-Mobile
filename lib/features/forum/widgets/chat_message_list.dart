@@ -12,6 +12,7 @@ class ChatMessageList extends StatelessWidget {
   final List<ForumChat> forumChats;
   final List<String> pendingChats;
   final bool isLoadingChats;
+  final bool isLoadingMoreChats;
   final ScrollController scrollController;
   final Map<String, GlobalKey> chatKeys;
   final chat_reactions.ReactionsController reactionsController;
@@ -30,6 +31,7 @@ class ChatMessageList extends StatelessWidget {
     required this.forumChats,
     required this.pendingChats,
     required this.isLoadingChats,
+    required this.isLoadingMoreChats,
     required this.scrollController,
     required this.chatKeys,
     required this.reactionsController,
@@ -98,8 +100,16 @@ class ChatMessageList extends StatelessWidget {
             controller: scrollController,
             reverse: true,
             padding: const EdgeInsets.all(16),
-            itemCount: combined.length,
+            itemCount: combined.length + (isLoadingMoreChats ? 1 : 0),
             itemBuilder: (context, index) {
+              // Show loading indicator at the top (which is at the end when reversed)
+              if (isLoadingMoreChats && index == combined.length) {
+                return const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+
               final reversedIndex = combined.length - 1 - index;
               final item = combined[reversedIndex];
 
