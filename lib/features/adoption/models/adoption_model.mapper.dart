@@ -14,6 +14,7 @@ class AdoptionMapper extends ClassMapperBase<Adoption> {
   static AdoptionMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = AdoptionMapper._());
+      UserProfileMapper.ensureInitialized();
       PetMapper.ensureInitialized();
     }
     return _instance!;
@@ -30,8 +31,8 @@ class AdoptionMapper extends ClassMapperBase<Adoption> {
     _$createdAt,
     key: r'created_at',
   );
-  static String _$user(Adoption v) => v.user;
-  static const Field<Adoption, String> _f$user = Field('user', _$user);
+  static UserProfile _$users(Adoption v) => v.users;
+  static const Field<Adoption, UserProfile> _f$users = Field('users', _$users);
   static String _$typeOfResidence(Adoption v) => v.typeOfResidence;
   static const Field<Adoption, String> _f$typeOfResidence = Field(
     'typeOfResidence',
@@ -78,14 +79,14 @@ class AdoptionMapper extends ClassMapperBase<Adoption> {
   );
   static String _$status(Adoption v) => v.status;
   static const Field<Adoption, String> _f$status = Field('status', _$status);
-  static Pet _$pet(Adoption v) => v.pet;
-  static const Field<Adoption, Pet> _f$pet = Field('pet', _$pet);
+  static Pet _$pets(Adoption v) => v.pets;
+  static const Field<Adoption, Pet> _f$pets = Field('pets', _$pets);
 
   @override
   final MappableFields<Adoption> fields = const {
     #id: _f$id,
     #createdAt: _f$createdAt,
-    #user: _f$user,
+    #users: _f$users,
     #typeOfResidence: _f$typeOfResidence,
     #isRenting: _f$isRenting,
     #havePermissionFromLandlord: _f$havePermissionFromLandlord,
@@ -94,14 +95,14 @@ class AdoptionMapper extends ClassMapperBase<Adoption> {
     #hasChildrenInHome: _f$hasChildrenInHome,
     #hasOtherPetsInHome: _f$hasOtherPetsInHome,
     #status: _f$status,
-    #pet: _f$pet,
+    #pets: _f$pets,
   };
 
   static Adoption _instantiate(DecodingData data) {
     return Adoption(
       id: data.dec(_f$id),
       createdAt: data.dec(_f$createdAt),
-      user: data.dec(_f$user),
+      users: data.dec(_f$users),
       typeOfResidence: data.dec(_f$typeOfResidence),
       isRenting: data.dec(_f$isRenting),
       havePermissionFromLandlord: data.dec(_f$havePermissionFromLandlord),
@@ -110,7 +111,7 @@ class AdoptionMapper extends ClassMapperBase<Adoption> {
       hasChildrenInHome: data.dec(_f$hasChildrenInHome),
       hasOtherPetsInHome: data.dec(_f$hasOtherPetsInHome),
       status: data.dec(_f$status),
-      pet: data.dec(_f$pet),
+      pets: data.dec(_f$pets),
     );
   }
 
@@ -171,11 +172,12 @@ extension AdoptionValueCopy<$R, $Out> on ObjectCopyWith<$R, Adoption, $Out> {
 
 abstract class AdoptionCopyWith<$R, $In extends Adoption, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  PetCopyWith<$R, Pet, Pet> get pet;
+  UserProfileCopyWith<$R, UserProfile, UserProfile> get users;
+  PetCopyWith<$R, Pet, Pet> get pets;
   $R call({
     int? id,
     DateTime? createdAt,
-    String? user,
+    UserProfile? users,
     String? typeOfResidence,
     bool? isRenting,
     bool? havePermissionFromLandlord,
@@ -184,7 +186,7 @@ abstract class AdoptionCopyWith<$R, $In extends Adoption, $Out>
     bool? hasChildrenInHome,
     bool? hasOtherPetsInHome,
     String? status,
-    Pet? pet,
+    Pet? pets,
   });
   AdoptionCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -198,13 +200,16 @@ class _AdoptionCopyWithImpl<$R, $Out>
   late final ClassMapperBase<Adoption> $mapper =
       AdoptionMapper.ensureInitialized();
   @override
-  PetCopyWith<$R, Pet, Pet> get pet =>
-      $value.pet.copyWith.$chain((v) => call(pet: v));
+  UserProfileCopyWith<$R, UserProfile, UserProfile> get users =>
+      $value.users.copyWith.$chain((v) => call(users: v));
+  @override
+  PetCopyWith<$R, Pet, Pet> get pets =>
+      $value.pets.copyWith.$chain((v) => call(pets: v));
   @override
   $R call({
     int? id,
     DateTime? createdAt,
-    String? user,
+    UserProfile? users,
     String? typeOfResidence,
     bool? isRenting,
     bool? havePermissionFromLandlord,
@@ -213,12 +218,12 @@ class _AdoptionCopyWithImpl<$R, $Out>
     bool? hasChildrenInHome,
     bool? hasOtherPetsInHome,
     String? status,
-    Pet? pet,
+    Pet? pets,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
       if (createdAt != null) #createdAt: createdAt,
-      if (user != null) #user: user,
+      if (users != null) #users: users,
       if (typeOfResidence != null) #typeOfResidence: typeOfResidence,
       if (isRenting != null) #isRenting: isRenting,
       if (havePermissionFromLandlord != null)
@@ -229,14 +234,14 @@ class _AdoptionCopyWithImpl<$R, $Out>
       if (hasChildrenInHome != null) #hasChildrenInHome: hasChildrenInHome,
       if (hasOtherPetsInHome != null) #hasOtherPetsInHome: hasOtherPetsInHome,
       if (status != null) #status: status,
-      if (pet != null) #pet: pet,
+      if (pets != null) #pets: pets,
     }),
   );
   @override
   Adoption $make(CopyWithData data) => Adoption(
     id: data.get(#id, or: $value.id),
     createdAt: data.get(#createdAt, or: $value.createdAt),
-    user: data.get(#user, or: $value.user),
+    users: data.get(#users, or: $value.users),
     typeOfResidence: data.get(#typeOfResidence, or: $value.typeOfResidence),
     isRenting: data.get(#isRenting, or: $value.isRenting),
     havePermissionFromLandlord: data.get(
@@ -257,7 +262,7 @@ class _AdoptionCopyWithImpl<$R, $Out>
       or: $value.hasOtherPetsInHome,
     ),
     status: data.get(#status, or: $value.status),
-    pet: data.get(#pet, or: $value.pet),
+    pets: data.get(#pets, or: $value.pets),
   );
 
   @override

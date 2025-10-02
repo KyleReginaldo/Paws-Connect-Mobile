@@ -100,7 +100,7 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
                 const SizedBox(height: 16),
                 _buildHouseholdDetailsCard(adoption),
                 const SizedBox(height: 16),
-                _buildPetDetailsCard(adoption.pet),
+                _buildPetDetailsCard(adoption.pets),
                 const SizedBox(height: 20),
               ],
             ),
@@ -130,7 +130,7 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
             children: [
               NetworkImageView(
                 width: MediaQuery.sizeOf(context).width,
-                adoption.pet.photo,
+                adoption.pets.photo,
                 fit: BoxFit.cover,
                 enableTapToView: false,
               ),
@@ -166,7 +166,7 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
                   children: [
                     Expanded(
                       child: PawsText(
-                        adoption.pet.name,
+                        adoption.pets.name,
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -177,7 +177,7 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
                 ),
                 const SizedBox(height: 4),
                 PawsText(
-                  '${adoption.pet.breed} • ${adoption.pet.age} year${adoption.pet.age > 1 ? 's' : ''} old',
+                  '${adoption.pets.breed} • ${adoption.pets.age} year${adoption.pets.age > 1 ? 's' : ''} old',
                   fontSize: 16,
                   color: Colors.white.withValues(alpha: 0.9),
                 ),
@@ -281,7 +281,7 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
       icon: LucideIcons.user,
       child: Column(
         children: [
-          _buildInfoRow('User ID', adoption.user),
+          _buildInfoRow('Username', adoption.users.username),
           const SizedBox(height: 12),
           _buildInfoRow(
             'Application Status',

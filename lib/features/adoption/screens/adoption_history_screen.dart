@@ -56,15 +56,15 @@ class _AdoptionHistoryScreenState extends State<AdoptionHistoryScreen> {
               },
               tileColor: Colors.white,
               leading: UserAvatar(
-                imageUrl: adoption.pet.photo,
-                initials: adoption.pet.name,
+                imageUrl: adoption.pets.photo,
+                initials: adoption.pets.name,
                 size: 32,
               ),
               title: Row(
                 spacing: 10,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  PawsText(adoption.pet.name),
+                  PawsText(adoption.pets.name),
                   PawsText(
                     timeago.format(adoption.createdAt),
                     fontSize: 12,

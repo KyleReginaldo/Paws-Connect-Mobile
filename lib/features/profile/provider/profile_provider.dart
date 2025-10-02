@@ -207,4 +207,68 @@ class ProfileProvider {
       return Result.error('Failed to submit ID verification: ${e.toString()}');
     }
   }
+
+  Future<Result<String>> uploadHouseImages(
+    String userId,
+    List<XFile> images,
+  ) async {
+    // Check internet connectivity first
+    final hasInternet = await InternetConnection().hasInternetAccess;
+    if (!hasInternet) {
+      return Result.error(
+        'No internet connection. Please check your network and try again.',
+      );
+    }
+    List<String> imageUrls = [];
+    try {
+      for (var image in images) {
+        debugPrint('Uploading house image: ${image.path}');
+        final fileName =
+            'house_${DateTime.now().microsecondsSinceEpoch.toString()}_${image.name}';
+
+        try {
+          final uploadResult = await supabase.storage
+              .from('files')
+              .upload(fileName, File(image.path));
+          debugPrint('Upload result: $uploadResult');
+
+          // Get the public URL using the correct bucket and file path
+          final imageUrl = supabase.storage
+              .from('files')
+              .getPublicUrl(fileName);
+          imageUrls.add(imageUrl);
+          debugPrint('Uploaded house image URL: $imageUrl');
+        } catch (uploadError) {
+          debugPrint('Upload error: $uploadError');
+          return Result.error(
+            'Failed to upload house image: ${uploadError.toString()}',
+          );
+        }
+      }
+
+      final response = await http.put(
+        Uri.parse('${dotenv.get('BASE_URL')}/users/$userId'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'house_images': imageUrls}),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        debugPrint('House images uploaded successfully');
+        return Result.success('House images uploaded successfully');
+      } else {
+        debugPrint(
+          'Failed to upload house images. Server returned ${response.statusCode}',
+        );
+        debugPrint('Response body: ${response.body}');
+        return Result.error(
+          data['error'] ??
+              'Failed to upload house images. Server returned ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      return Result.error('Failed to upload house images: ${e.toString()}');
+    }
+  }
 }

@@ -299,6 +299,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       }
                                     : null,
                               ),
+                              const SizedBox(height: 12),
+                              _buildInfoRow(
+                                icon: LucideIcons.house,
+                                label: 'House images',
+                                value: 'Overview of your house images',
+                                onTap: widget.id == USER_ID
+                                    ? () {
+                                        context.router.push(UserHouseRoute());
+                                      }
+                                    : null,
+                              ),
                             ],
                           ),
                           if (widget.id == USER_ID) ...{

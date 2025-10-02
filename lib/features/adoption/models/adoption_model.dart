@@ -1,4 +1,5 @@
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:paws_connect/features/profile/models/user_profile_model.dart';
 
 import '../../pets/models/pet_model.dart';
 
@@ -8,7 +9,7 @@ part 'adoption_model.mapper.dart';
 class Adoption with AdoptionMappable {
   final int id;
   final DateTime createdAt;
-  final String user;
+  final UserProfile users;
   final String typeOfResidence;
   final bool isRenting;
   final bool havePermissionFromLandlord;
@@ -17,12 +18,12 @@ class Adoption with AdoptionMappable {
   final bool hasChildrenInHome;
   final bool hasOtherPetsInHome;
   final String status;
-  final Pet pet;
+  final Pet pets;
 
   const Adoption({
     required this.id,
     required this.createdAt,
-    required this.user,
+    required this.users,
     required this.typeOfResidence,
     required this.isRenting,
     required this.havePermissionFromLandlord,
@@ -31,6 +32,6 @@ class Adoption with AdoptionMappable {
     required this.hasChildrenInHome,
     required this.hasOtherPetsInHome,
     required this.status,
-    required this.pet,
+    required this.pets,
   });
 }

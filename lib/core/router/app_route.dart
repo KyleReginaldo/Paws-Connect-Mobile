@@ -144,5 +144,9 @@ class AppRouter extends RootStackRouter {
       page: AdoptionSuccessRoute.page,
       transitionsBuilder: TransitionsBuilders.fadeIn,
     ),
+    CustomRoute(
+      page: UserHouseRoute.page,
+      transitionsBuilder: TransitionsBuilders.fadeIn,
+    ),
   ];
 }
