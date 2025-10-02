@@ -41,6 +41,7 @@ extension StringExt on String {
       case 'PENDING':
         return Colors.orange;
       case 'ONGOING':
+      case 'APPROVED':
         return Colors.green;
       case 'REJECTED':
         return Colors.red;

@@ -19,6 +19,7 @@ class UserProfile with UserProfileMappable {
   final String? profileImageLink;
   final String? createdBy;
   final bool? passwordChanged;
+  final UserIdentification? userIdentification;
 
   UserProfile({
     required this.id,
@@ -34,5 +35,29 @@ class UserProfile with UserProfileMappable {
     this.profileImageLink,
     this.createdBy,
     this.passwordChanged,
+    this.userIdentification,
   });
+}
+
+@MappableClass(caseStyle: CaseStyle.snakeCase)
+class UserIdentification with UserIdentificationMappable {
+  final int id;
+  final DateTime createdAt;
+  final String idNumber;
+  final String idAttachmentUrl;
+  final String idName;
+  final DateTime idExpiration;
+  final String idType;
+  final String status;
+
+  UserIdentification(
+    this.id,
+    this.createdAt,
+    this.idNumber,
+    this.idAttachmentUrl,
+    this.idName,
+    this.idExpiration,
+    this.idType,
+    this.status,
+  );
 }

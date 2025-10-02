@@ -14,6 +14,7 @@ class PetMapper extends ClassMapperBase<Pet> {
   static PetMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = PetMapper._());
+      PetAdoptionMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -119,6 +120,14 @@ class PetMapper extends ClassMapperBase<Pet> {
     key: r'is_favorite',
     opt: true,
   );
+  static List<PetAdoption>? _$adoption(Pet v) => v.adoption;
+  static const Field<Pet, List<PetAdoption>> _f$adoption = Field(
+    'adoption',
+    _$adoption,
+    opt: true,
+  );
+  static PetAdoption? _$adopted(Pet v) => v.adopted;
+  static const Field<Pet, PetAdoption> _f$adopted = Field('adopted', _$adopted);
 
   @override
   final MappableFields<Pet> fields = const {
@@ -145,6 +154,8 @@ class PetMapper extends ClassMapperBase<Pet> {
     #photo: _f$photo,
     #color: _f$color,
     #isFavorite: _f$isFavorite,
+    #adoption: _f$adoption,
+    #adopted: _f$adopted,
   };
 
   static Pet _instantiate(DecodingData data) {
@@ -172,6 +183,8 @@ class PetMapper extends ClassMapperBase<Pet> {
       photo: data.dec(_f$photo),
       color: data.dec(_f$color),
       isFavorite: data.dec(_f$isFavorite),
+      adoption: data.dec(_f$adoption),
+      adopted: data.dec(_f$adopted),
     );
   }
 
@@ -222,6 +235,13 @@ extension PetValueCopy<$R, $Out> on ObjectCopyWith<$R, Pet, $Out> {
 abstract class PetCopyWith<$R, $In extends Pet, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>> get goodWith;
+  ListCopyWith<
+    $R,
+    PetAdoption,
+    PetAdoptionCopyWith<$R, PetAdoption, PetAdoption>
+  >?
+  get adoption;
+  PetAdoptionCopyWith<$R, PetAdoption, PetAdoption>? get adopted;
   $R call({
     int? id,
     DateTime? createdAt,
@@ -246,6 +266,8 @@ abstract class PetCopyWith<$R, $In extends Pet, $Out>
     String? photo,
     String? color,
     bool? isFavorite,
+    List<PetAdoption>? adoption,
+    PetAdoption? adopted,
   });
   PetCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -263,6 +285,22 @@ class _PetCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Pet, $Out>
         (v, t) => ObjectCopyWith(v, $identity, t),
         (v) => call(goodWith: v),
       );
+  @override
+  ListCopyWith<
+    $R,
+    PetAdoption,
+    PetAdoptionCopyWith<$R, PetAdoption, PetAdoption>
+  >?
+  get adoption => $value.adoption != null
+      ? ListCopyWith(
+          $value.adoption!,
+          (v, t) => v.copyWith.$chain(t),
+          (v) => call(adoption: v),
+        )
+      : null;
+  @override
+  PetAdoptionCopyWith<$R, PetAdoption, PetAdoption>? get adopted =>
+      $value.adopted?.copyWith.$chain((v) => call(adopted: v));
   @override
   $R call({
     int? id,
@@ -288,6 +326,8 @@ class _PetCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Pet, $Out>
     String? photo,
     Object? color = $none,
     Object? isFavorite = $none,
+    Object? adoption = $none,
+    Object? adopted = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -313,6 +353,8 @@ class _PetCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Pet, $Out>
       if (photo != null) #photo: photo,
       if (color != $none) #color: color,
       if (isFavorite != $none) #isFavorite: isFavorite,
+      if (adoption != $none) #adoption: adoption,
+      if (adopted != $none) #adopted: adopted,
     }),
   );
   @override
@@ -343,10 +385,157 @@ class _PetCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Pet, $Out>
     photo: data.get(#photo, or: $value.photo),
     color: data.get(#color, or: $value.color),
     isFavorite: data.get(#isFavorite, or: $value.isFavorite),
+    adoption: data.get(#adoption, or: $value.adoption),
+    adopted: data.get(#adopted, or: $value.adopted),
   );
 
   @override
   PetCopyWith<$R2, Pet, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
       _PetCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class PetAdoptionMapper extends ClassMapperBase<PetAdoption> {
+  PetAdoptionMapper._();
+
+  static PetAdoptionMapper? _instance;
+  static PetAdoptionMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = PetAdoptionMapper._());
+      UserProfileMapper.ensureInitialized();
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'PetAdoption';
+
+  static int _$id(PetAdoption v) => v.id;
+  static const Field<PetAdoption, int> _f$id = Field('id', _$id);
+  static DateTime _$createdAt(PetAdoption v) => v.createdAt;
+  static const Field<PetAdoption, DateTime> _f$createdAt = Field(
+    'createdAt',
+    _$createdAt,
+    key: r'created_at',
+  );
+  static UserProfile _$user(PetAdoption v) => v.user;
+  static const Field<PetAdoption, UserProfile> _f$user = Field('user', _$user);
+  static String _$status(PetAdoption v) => v.status;
+  static const Field<PetAdoption, String> _f$status = Field('status', _$status);
+
+  @override
+  final MappableFields<PetAdoption> fields = const {
+    #id: _f$id,
+    #createdAt: _f$createdAt,
+    #user: _f$user,
+    #status: _f$status,
+  };
+
+  static PetAdoption _instantiate(DecodingData data) {
+    return PetAdoption(
+      id: data.dec(_f$id),
+      createdAt: data.dec(_f$createdAt),
+      user: data.dec(_f$user),
+      status: data.dec(_f$status),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static PetAdoption fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<PetAdoption>(map);
+  }
+
+  static PetAdoption fromJson(String json) {
+    return ensureInitialized().decodeJson<PetAdoption>(json);
+  }
+}
+
+mixin PetAdoptionMappable {
+  String toJson() {
+    return PetAdoptionMapper.ensureInitialized().encodeJson<PetAdoption>(
+      this as PetAdoption,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return PetAdoptionMapper.ensureInitialized().encodeMap<PetAdoption>(
+      this as PetAdoption,
+    );
+  }
+
+  PetAdoptionCopyWith<PetAdoption, PetAdoption, PetAdoption> get copyWith =>
+      _PetAdoptionCopyWithImpl<PetAdoption, PetAdoption>(
+        this as PetAdoption,
+        $identity,
+        $identity,
+      );
+  @override
+  String toString() {
+    return PetAdoptionMapper.ensureInitialized().stringifyValue(
+      this as PetAdoption,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return PetAdoptionMapper.ensureInitialized().equalsValue(
+      this as PetAdoption,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return PetAdoptionMapper.ensureInitialized().hashValue(this as PetAdoption);
+  }
+}
+
+extension PetAdoptionValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, PetAdoption, $Out> {
+  PetAdoptionCopyWith<$R, PetAdoption, $Out> get $asPetAdoption =>
+      $base.as((v, t, t2) => _PetAdoptionCopyWithImpl<$R, $Out>(v, t, t2));
+}
+
+abstract class PetAdoptionCopyWith<$R, $In extends PetAdoption, $Out>
+    implements ClassCopyWith<$R, $In, $Out> {
+  UserProfileCopyWith<$R, UserProfile, UserProfile> get user;
+  $R call({int? id, DateTime? createdAt, UserProfile? user, String? status});
+  PetAdoptionCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
+}
+
+class _PetAdoptionCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, PetAdoption, $Out>
+    implements PetAdoptionCopyWith<$R, PetAdoption, $Out> {
+  _PetAdoptionCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<PetAdoption> $mapper =
+      PetAdoptionMapper.ensureInitialized();
+  @override
+  UserProfileCopyWith<$R, UserProfile, UserProfile> get user =>
+      $value.user.copyWith.$chain((v) => call(user: v));
+  @override
+  $R call({int? id, DateTime? createdAt, UserProfile? user, String? status}) =>
+      $apply(
+        FieldCopyWithData({
+          if (id != null) #id: id,
+          if (createdAt != null) #createdAt: createdAt,
+          if (user != null) #user: user,
+          if (status != null) #status: status,
+        }),
+      );
+  @override
+  PetAdoption $make(CopyWithData data) => PetAdoption(
+    id: data.get(#id, or: $value.id),
+    createdAt: data.get(#createdAt, or: $value.createdAt),
+    user: data.get(#user, or: $value.user),
+    status: data.get(#status, or: $value.status),
+  );
+
+  @override
+  PetAdoptionCopyWith<$R2, PetAdoption, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  ) => _PetAdoptionCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 

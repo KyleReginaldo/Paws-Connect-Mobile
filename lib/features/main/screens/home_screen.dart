@@ -7,6 +7,7 @@ import 'package:paws_connect/core/enum/user.enum.dart';
 import 'package:paws_connect/core/router/app_route.gr.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/core/widgets/button.dart';
+import 'package:paws_connect/features/adoption/repository/adoption_repository.dart';
 import 'package:paws_connect/features/auth/repository/auth_repository.dart';
 import 'package:paws_connect/features/google_map/repository/address_repository.dart';
 import 'package:paws_connect/features/main/screens/search_delegate.dart';
@@ -50,6 +51,7 @@ class HomeScreen extends StatefulWidget implements AutoRouteWrapper {
         ChangeNotifierProvider.value(value: sl<ProfileRepository>()),
         ChangeNotifierProvider.value(value: sl<FavoriteRepository>()),
         ChangeNotifierProvider.value(value: sl<NotificationRepository>()),
+        ChangeNotifierProvider.value(value: sl<AdoptionRepository>()),
       ],
       child: this,
     );
@@ -59,6 +61,10 @@ class HomeScreen extends StatefulWidget implements AutoRouteWrapper {
 class _HomeScreenState extends State<HomeScreen> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
   final petChannel = supabase.channel('public:pets');
+  final userIdentificationChannel = supabase.channel(
+    'public:user_identification:user=eq.$USER_ID',
+  );
+
   final fundraisingChannel = supabase.channel('public:fundraising');
   late final WebViewController webviewController;
   late RealtimeChannel addressChannel;
@@ -152,6 +158,23 @@ class _HomeScreenState extends State<HomeScreen> {
               context.read<NotificationRepository>().fetchNotifications(
                 USER_ID!,
               );
+            }
+          },
+        )
+        .subscribe();
+    userIdentificationChannel
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'user_identification',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'user',
+            value: USER_ID,
+          ),
+          callback: (payload) {
+            if (USER_ID != null) {
+              context.read<ProfileRepository>().fetchUserProfile(USER_ID!);
             }
           },
         )
@@ -257,6 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
         context.read<AddressRepository>().fetchDefaultAddress(USER_ID ?? '');
         context.read<AddressRepository>().fetchAllAddresses(USER_ID ?? '');
         context.read<ProfileRepository>().fetchUserProfile(USER_ID ?? '');
+        context.read<AdoptionRepository>().fetchUserAdoptions(USER_ID ?? '');
       }
     });
 
@@ -277,6 +301,9 @@ class _HomeScreenState extends State<HomeScreen> {
     // Use watch here so UI updates when items inside the list change in place
     final recentPets = context.watch<PetRepository>().recentPets;
     final petError = context.select((PetRepository bloc) => bloc.errorMessage);
+    final adoptions = context.select(
+      (AdoptionRepository bloc) => bloc.adoptions,
+    );
     final fundraisings = context.select(
       (FundraisingRepository bloc) => bloc.fundraisings,
     );
@@ -299,6 +326,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final user = context.watch<ProfileRepository>().userProfile;
     final isConnected = context.watch<InternetProvider>().isConnected;
     // Removed debug print to prevent console spam
+    debugPrint('User profile: ${user?.userIdentification == null}');
     return Scaffold(
       key: scaffoldKey,
 
@@ -457,6 +485,7 @@ class _HomeScreenState extends State<HomeScreen> {
           context.read<AddressRepository>().fetchDefaultAddress(USER_ID ?? '');
           context.read<AddressRepository>().fetchAllAddresses(USER_ID ?? '');
           context.read<ProfileRepository>().fetchUserProfile(USER_ID ?? '');
+          context.read<AdoptionRepository>().fetchUserAdoptions(USER_ID ?? "");
         },
         child: SingleChildScrollView(
           physics: AlwaysScrollableScrollPhysics(),
@@ -465,7 +494,35 @@ class _HomeScreenState extends State<HomeScreen> {
             spacing: 10,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (user?.status == UserStatus.PENDING)
+              if (user?.userIdentification != null &&
+                  user!.userIdentification?.status == 'PENDING') ...{
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Colors.orange.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, color: Colors.orange, size: 20),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: PawsText(
+                          'Your verification is currently pending. We will notify you once it is approved.',
+                          color: Colors.orange.shade700,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              },
+              if (user?.status == UserStatus.PENDING &&
+                  user?.userIdentification == null)
                 Container(
                   padding: EdgeInsets.all(10),
                   decoration: BoxDecoration(
@@ -559,6 +616,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
+
               // Container(
               //   width: double.infinity,
               //   padding: const EdgeInsets.all(12),
@@ -614,6 +672,69 @@ class _HomeScreenState extends State<HomeScreen> {
               //     ],
               //   ),
               // ),
+              if (user?.status != UserStatus.INDEFINITE &&
+                  user?.status != UserStatus.PENDING &&
+                  adoptions != null &&
+                  adoptions.isNotEmpty)
+                Container(
+                  width: MediaQuery.sizeOf(context).width,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [PawsColors.primary, PawsColors.primaryDark],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/grid.png'),
+                      fit: BoxFit.cover,
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: EdgeInsets.all(16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          spacing: 4,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            PawsText(
+                              'Your adoptions',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                            ),
+                            PawsText(
+                              'You currently have ${adoptions.length} adoption${adoptions.length > 1 ? 's' : ''}',
+                              fontSize: 13,
+                              color: Colors.white,
+                            ),
+                            PawsElevatedButton(
+                              label: 'View adoptions',
+                              isFullWidth: false,
+                              onPressed: () {
+                                context.router.push(
+                                  const AdoptionHistoryRoute(),
+                                );
+                              },
+                              backgroundColor: Colors.white,
+                              borderRadius: 8,
+                              foregroundColor: PawsColors.primary,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              icon: LucideIcons.arrowRight,
+                              size: 13,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Image.asset('assets/images/adopt.png', height: 100),
+                    ],
+                  ),
+                ),
               if (recentPets != null)
                 PawsText(
                   'Recently added',

@@ -1,4 +1,3 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:io';
 
 import 'package:auto_route/auto_route.dart';
@@ -6,13 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chat_reactions/flutter_chat_reactions.dart'
     as chat_reactions;
 import 'package:image_picker/image_picker.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/dependency.dart';
 import 'package:paws_connect/features/forum/provider/forum_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:timeago/timeago.dart' as timeago;
 
 import '../../../core/components/components.dart';
 import '../../../core/repository/common_repository.dart';
@@ -22,7 +19,16 @@ import '../../../core/theme/paws_theme.dart';
 import '../../../core/widgets/text.dart';
 import '../models/forum_model.dart';
 import '../repository/forum_repository.dart';
+import '../widgets/chat_message_list.dart';
 
+/// Forum chat screen that displays real-time messages and reactions.
+///
+/// Features:
+/// - Real-time message synchronization
+/// - Reaction system with haptic feedback
+/// - Message navigation and replies
+/// - Image sharing capabilities
+/// - GlobalKey-based message navigation
 @RoutePage()
 class ForumChatScreen extends StatefulWidget implements AutoRouteWrapper {
   final int forumId;
@@ -47,7 +53,7 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late final chat_reactions.ReactionsController _controller;
-
+  ForumChat? replyTo;
   XFile? _imageFile;
   int _previousMessageCount = 0;
   late RealtimeChannel chatChannel;
@@ -55,24 +61,31 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
   @override
   void initState() {
     super.initState();
+    _initializeControllers();
+    _setupRealtimeChannel();
+    _loadInitialData();
+  }
 
-    // Initialize reactions controller with current user ID
+  void _initializeControllers() {
     _controller = chat_reactions.ReactionsController(
       currentUserId: USER_ID ?? '',
     );
-
-    // Add listener for reaction changes
     _controller.addListener(_onReactionChanged);
+  }
 
+  void _setupRealtimeChannel() {
     chatChannel = supabase.channel(
       'public:forum_chats:forum=eq.${widget.forumId}',
     );
-
-    // Load chats immediately without waiting
-    _loadChats();
     listenToChanges();
+  }
 
-    // Mark messages as viewed after frame so providers are ready
+  void _loadInitialData() {
+    _loadChats();
+    _markMessagesAsViewed();
+  }
+
+  void _markMessagesAsViewed() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final userId = USER_ID;
       if (mounted && userId != null && userId.isNotEmpty) {
@@ -94,7 +107,7 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
       final repo = context.read<ForumRepository>();
       repo.getRealChats(widget.forumId);
     });
-    // Immediate scroll to bottom - no delay
+
     if (mounted && _scrollController.hasClients) {
       _scrollToBottom();
     }
@@ -112,32 +125,16 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
             value: widget.forumId,
           ),
           callback: (payload) {
-            // Check if widget is still mounted before accessing context
             if (mounted) {
               context.read<ForumRepository>().setForumChats(widget.forumId);
             }
           },
         )
         .subscribe();
-
-    // Also listen to reaction changes if you have a separate reactions table
-    // chatChannel
-    //     .onPostgresChanges(
-    //       event: PostgresChangeEvent.all,
-    //       schema: 'public',
-    //       table: 'forum_chat_reactions', // Adjust table name as needed
-    //       callback: (payload) {
-    //         if (mounted) {
-    //           context.read<ForumRepository>().setForumChats(widget.forumId);
-    //         }
-    //       },
-    //     )
-    //     .subscribe();
   }
 
   @override
   void dispose() {
-    // Unsubscribe from realtime channel to prevent memory leaks
     chatChannel.unsubscribe();
     _controller.removeListener(_onReactionChanged);
     _messageController.dispose();
@@ -148,22 +145,95 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
-        0.0, // Since reverse: true, position 0 is at the bottom
-        duration: const Duration(milliseconds: 100), // Ultra fast scroll
-        curve: Curves.fastOutSlowIn, // Snappier curve
+        0.0,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.fastOutSlowIn,
       );
     }
   }
 
-  // Handle reaction changes from the controller
-  void _onReactionChanged() {
-    debugPrint('Reactions updated');
-    // Note: The actual backend sync happens through the config callbacks
-    // when users interact with reactions
+  void _scrollToMessageById(int messageId) async {
+    final repo = context.read<ForumRepository>();
+    final forumChats = repo.forumChats;
+
+    final messageIndex = forumChats.indexWhere((chat) => chat.id == messageId);
+
+    if (messageIndex == -1) {
+      debugPrint('Message with ID $messageId not found');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Message not found'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    final totalMessages = forumChats.length;
+    final reversedIndex = totalMessages - 1 - messageIndex;
+    final approximateItemHeight = 80.0;
+    final targetPosition = reversedIndex * approximateItemHeight;
+
+    debugPrint(
+      'Scrolling to approximate position: $targetPosition for message at index $messageIndex',
+    );
+
+    await _scrollController.animateTo(
+      targetPosition,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+    );
+
+    Future.delayed(const Duration(milliseconds: 100), () {
+      final key = _chatKeys[messageId.toString()];
+      if (key?.currentContext != null) {
+        Scrollable.ensureVisible(
+          key!.currentContext!,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          alignment: 0.3,
+        );
+      } else {
+        debugPrint('Widget still not visible after scrolling');
+      }
+    });
   }
 
-  // Helper method to manually send reaction to backend
-  // You can call this method when implementing reaction tapping
+  void _handleReplyToTapped(int messageId) {
+    debugPrint('keys: ${_chatKeys.keys}');
+
+    final key = _chatKeys[messageId.toString()];
+    debugPrint('Replied to: $messageId');
+    debugPrint('Key: $key');
+    debugPrint('Available keys: ${_chatKeys.keys.toList()}');
+
+    if (key != null) {
+      if (key.currentContext != null) {
+        Scrollable.ensureVisible(
+          key.currentContext!,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          alignment: 0.3,
+        );
+      } else {
+        debugPrint('Widget not visible, scrolling to approximate position');
+        _scrollToMessageById(messageId);
+      }
+    } else {
+      debugPrint('Key not found for message ID: $messageId');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Message not found or not loaded yet'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  void _onReactionChanged() {
+    debugPrint('Reactions updated');
+  }
+
   Future<void> sendReactionToBackend({
     required int chatId,
     required String reaction,
@@ -173,66 +243,52 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     if (userId == null || userId.isEmpty) return;
 
     try {
-      // Create provider instance
       final provider = ForumProvider();
-
-      if (isAdding) {
-        final result = await provider.addReaction(
-          forumId: widget.forumId,
-          chatId: chatId,
-          reaction: reaction,
-          userId: userId,
-        );
-
-        if (result.isError) {
-          debugPrint('Failed to add reaction: ${result.error}');
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Failed to add reaction'),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 2),
-              ),
+      final result = isAdding
+          ? await provider.addReaction(
+              forumId: widget.forumId,
+              chatId: chatId,
+              reaction: reaction,
+              userId: userId,
+            )
+          : await provider.removeReaction(
+              forumId: widget.forumId,
+              chatId: chatId,
+              reaction: reaction,
+              userId: userId,
             );
-          }
-        } else {
-          debugPrint('Successfully added reaction: $reaction');
-          // Refresh chat data to get updated reactions from server
-          if (mounted) {
-            context.read<ForumRepository>().setForumChats(widget.forumId);
-          }
-        }
+
+      if (result.isError) {
+        _handleReactionError(isAdding, result.error);
       } else {
-        final result = await provider.removeReaction(
-          forumId: widget.forumId,
-          chatId: chatId,
-          reaction: reaction,
-          userId: userId,
-        );
-
-        if (result.isError) {
-          debugPrint('Failed to remove reaction: ${result.error}');
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Failed to remove reaction'),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 2),
-              ),
-            );
-          }
-        } else {
-          debugPrint('Successfully removed reaction: $reaction');
-          // Refresh chat data to get updated reactions from server
-          if (mounted) {
-            context.read<ForumRepository>().setForumChats(widget.forumId);
-          }
-        }
+        _handleReactionSuccess(isAdding, reaction);
       }
     } catch (e) {
       debugPrint('Error sending reaction to backend: $e');
     }
-  } // Convert ForumChat reactions to display format
+  }
+
+  void _handleReactionError(bool isAdding, dynamic error) {
+    debugPrint('Failed to ${isAdding ? 'add' : 'remove'} reaction: $error');
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to ${isAdding ? 'add' : 'remove'} reaction'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  void _handleReactionSuccess(bool isAdding, String reaction) {
+    debugPrint(
+      'Successfully ${isAdding ? 'added' : 'removed'} reaction: $reaction',
+    );
+    if (mounted) {
+      context.read<ForumRepository>().setForumChats(widget.forumId);
+    }
+  }
 
   Map<String, List<String>> _convertReactions(List<Reaction>? reactions) {
     if (reactions == null || reactions.isEmpty) return {};
@@ -244,20 +300,48 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     return result;
   }
 
-  // Initialize reactions for all messages
   void _initializeReactions(List<ForumChat> chats) {
     for (final chat in chats) {
       if (chat.reactions != null && chat.reactions!.isNotEmpty) {
         final reactions = _convertReactions(chat.reactions);
-        // Set initial reactions for this message
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            for (final entry in reactions.entries) {
-              // Add each reaction type to the message
-              _controller.addReaction(chat.id.toString(), entry.key);
-            }
-          }
-        });
+        _addReactionsToController(chat.id.toString(), reactions);
+      }
+    }
+  }
+
+  void _addReactionsToController(
+    String chatId,
+    Map<String, List<String>> reactions,
+  ) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        for (final entry in reactions.entries) {
+          _controller.addReaction(chatId, entry.key);
+        }
+      }
+    });
+  }
+
+  void _processMessages(List<ForumChat> forumChats) {
+    _initializeMessageKeys(forumChats);
+    _initializeReactions(forumChats);
+    _updateMessageCount(forumChats);
+  }
+
+  void _initializeMessageKeys(List<ForumChat> forumChats) {
+    for (ForumChat chat in forumChats) {
+      _chatKeys.putIfAbsent(chat.id.toString(), () {
+        debugPrint('Creating GlobalKey for message ID: ${chat.id}');
+        return GlobalKey();
+      });
+    }
+  }
+
+  void _updateMessageCount(List<ForumChat> forumChats) {
+    if (forumChats.length != _previousMessageCount) {
+      _previousMessageCount = forumChats.length;
+      if (forumChats.isNotEmpty && _scrollController.hasClients) {
+        _scrollToBottom();
       }
     }
   }
@@ -279,55 +363,70 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
   }
 
   void _sendMessage() {
-    context.read<ForumRepository>().addPendingChat(
-      _messageController.text.trim(),
-    );
     if (_messageController.text.trim().isEmpty || _isSendingMessage) return;
 
     final message = _messageController.text.trim();
-    _messageController.clear(); // Clear immediately for instant feedback
+    _messageController.clear();
 
-    // Immediate scroll to bottom
+    // Add to pending messages immediately for better UX
+    context.read<ForumRepository>().addPendingChat(message);
     _scrollToBottom();
 
-    // Set sending state
     setState(() {
       _isSendingMessage = true;
     });
 
-    // Fire-and-forget send - maximum speed
-    ForumProvider()
-        .sendChat(
-          sender: USER_ID ?? '',
-          message: message,
-          forumId: widget.forumId,
-          imageFile: _imageFile,
-        )
-        .catchError((e) {
-          // Only handle errors, don't wait for success
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Failed to send message'),
-                backgroundColor: Colors.red,
-                duration: Duration(seconds: 2),
-              ),
-            );
-            // Restore message if sending failed
-            _messageController.text = message;
-          }
-        })
-        .whenComplete(() {
-          // Reset sending state when done
-          if (mounted) {
-            setState(() {
-              _imageFile = null;
-              _isSendingMessage = false;
-            });
-            context.read<ForumRepository>().setForumChats(widget.forumId);
-          }
-        });
+    _performSendMessage(message);
   }
+
+  Future<void> _performSendMessage(String message) async {
+    try {
+      await ForumProvider().sendChat(
+        sender: USER_ID ?? '',
+        message: message,
+        forumId: widget.forumId,
+        imageFile: _imageFile,
+        repliedTo: replyTo?.id,
+      );
+
+      _handleSendSuccess();
+    } catch (e) {
+      _handleSendError(e, message);
+    }
+  }
+
+  void _handleSendSuccess() {
+    if (mounted) {
+      setState(() {
+        _imageFile = null;
+        _isSendingMessage = false;
+        replyTo = null;
+      });
+      context.read<ForumRepository>().setForumChats(widget.forumId);
+    }
+  }
+
+  void _handleSendError(dynamic error, String message) {
+    debugPrint('Failed to send message: $error');
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to send message'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // Restore the message in the text field
+      _messageController.text = message;
+
+      setState(() {
+        _isSendingMessage = false;
+      });
+    }
+  }
+
+  final Map<String, GlobalKey> _chatKeys = {};
 
   @override
   Widget build(BuildContext context) {
@@ -335,489 +434,138 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     final forumChats = repo.forumChats;
     final isLoadingChats = repo.isLoadingChats;
     final pendingChats = repo.pendingChats;
-    // Initialize reactions when chat data changes
-    if (forumChats.isNotEmpty) {
-      _initializeReactions(forumChats);
-    }
-    for (ForumChat chat in forumChats) {
-      if (chat.reactions != null && chat.reactions!.isNotEmpty) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            for (final reaction in chat.reactions!) {
-              // Add each reaction type to the message
-              _controller.addReaction(chat.id.toString(), reaction.emoji);
-            }
-          }
-        });
-      }
-    }
 
-    // Auto-scroll to bottom when new messages arrive - instant
-    if (forumChats.length != _previousMessageCount) {
-      _previousMessageCount = forumChats.length;
-      if (forumChats.isNotEmpty && _scrollController.hasClients) {
-        _scrollToBottom();
-      }
+    if (forumChats.isNotEmpty) {
+      _processMessages(forumChats);
     }
 
     return SafeArea(
       top: false,
       child: Scaffold(
-        appBar: AppBar(
-          title: const PawsText(
-            'Forum Chat',
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: PawsColors.textPrimary,
-          ),
-          centerTitle: true,
-          backgroundColor: Colors.white,
-          elevation: 1,
-          shadowColor: Colors.black12,
-          actions: [
-            IconButton(
-              onPressed: () {
-                context.router.push(
-                  ForumSettingsRoute(forumId: widget.forumId),
-                );
-              },
-              icon: Icon(Icons.info),
-              color: PawsColors.textSecondary,
-            ),
-          ],
-        ),
-        body: Column(
-          children: [
-            Expanded(
-              child: isLoadingChats && forumChats.isEmpty
-                  ? ListView.builder(
-                      reverse: true,
-                      padding: const EdgeInsets.all(16),
-                      itemCount: 8, // Show 8 skeleton messages
-                      itemBuilder: (context, index) =>
-                          _buildSkeletonMessage(index),
-                    )
-                  : forumChats.isEmpty
-                  ? const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            LucideIcons.messageCircle,
-                            size: 64,
-                            color: PawsColors.textSecondary,
-                          ),
-                          SizedBox(height: 16),
-                          PawsText(
-                            'No messages yet',
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
-                            color: PawsColors.textPrimary,
-                          ),
-                          SizedBox(height: 8),
-                          PawsText(
-                            'Start the conversation!',
-                            color: PawsColors.textSecondary,
-                          ),
-                        ],
-                      ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: _loadChats,
-                      child: Builder(
-                        builder: (context) {
-                          // Build a combined list: server chats followed by pending chats
-                          final combined = <dynamic>[];
-                          combined.addAll(forumChats);
-                          combined.addAll(pendingChats);
-
-                          if (combined.isEmpty) {
-                            return const SizedBox.shrink();
-                          }
-
-                          return ListView.builder(
-                            controller: _scrollController,
-                            reverse: true,
-                            padding: const EdgeInsets.all(16),
-                            itemCount: combined.length,
-                            itemBuilder: (context, index) {
-                              final config = chat_reactions.ChatReactionsConfig(
-                                enableHapticFeedback: true,
-                                maxReactionsToShow: 3,
-                                enableDoubleTap: true,
-                              );
-                              // Reverse the index to show latest messages at bottom
-                              final reversedIndex = combined.length - 1 - index;
-                              final item = combined[reversedIndex];
-
-                              // If item is a ForumChat from the server
-                              if (item is ForumChat) {
-                                final chat = item;
-                                final isCurrentUser = chat.users?.id == USER_ID;
-                                final showAvatar =
-                                    reversedIndex == forumChats.length - 1 ||
-                                    (reversedIndex + 1 < forumChats.length
-                                        ? forumChats[reversedIndex + 1]
-                                                  .users
-                                                  ?.id !=
-                                              chat.users?.id
-                                        : true);
-
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 8),
-                                  child: Row(
-                                    mainAxisAlignment: isCurrentUser
-                                        ? MainAxisAlignment.end
-                                        : MainAxisAlignment.start,
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      if (!isCurrentUser) ...[
-                                        showAvatar
-                                            ? UserAvatar(
-                                                imageUrl:
-                                                    null, // no image in Users model
-                                                initials: chat.users?.username,
-                                                size: 32,
-                                              )
-                                            : const SizedBox(width: 32),
-                                        const SizedBox(width: 8),
-                                      ],
-
-                                      // Add gesture detector for manual reaction testing
-                                      GestureDetector(
-                                        onLongPress: () {
-                                          // Example: Add a reaction when long pressing
-                                          sendReactionToBackend(
-                                            chatId: chat.id,
-                                            reaction: "👍", // Default reaction
-                                            isAdding: true,
-                                          );
-                                        },
-                                        onDoubleTap: () {
-                                          // Example: Add heart reaction on double tap
-                                          sendReactionToBackend(
-                                            chatId: chat.id,
-                                            reaction: "❤️",
-                                            isAdding: true,
-                                          );
-                                        },
-                                        child: chat_reactions.ChatMessageWrapper(
-                                          messageId: chat.id.toString(),
-                                          controller: _controller,
-                                          config: config,
-                                          onReactionAdded: (reaction) {
-                                            sendReactionToBackend(
-                                              chatId: chat.id,
-                                              reaction: reaction,
-                                              isAdding: true,
-                                            );
-                                          },
-                                          child: Stack(
-                                            clipBehavior: Clip.none,
-                                            children: [
-                                              ChatBubble(
-                                                isMe: isCurrentUser,
-                                                color: isCurrentUser
-                                                    ? PawsColors.primary
-                                                    : PawsColors.border,
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    if (!isCurrentUser &&
-                                                        showAvatar)
-                                                      Padding(
-                                                        padding:
-                                                            const EdgeInsets.only(
-                                                              bottom: 4,
-                                                            ),
-                                                        child: PawsText(
-                                                          chat
-                                                                  .users
-                                                                  ?.username ??
-                                                              'Unknown',
-                                                          fontSize: 12,
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                          color: PawsColors
-                                                              .primary,
-                                                        ),
-                                                      ),
-                                                    if (chat.imageUrl != null)
-                                                      Padding(
-                                                        padding:
-                                                            const EdgeInsets.only(
-                                                              bottom: 8,
-                                                            ),
-                                                        child: NetworkImageView(
-                                                          chat.imageUrl!,
-                                                          height: 220,
-                                                          fit: BoxFit.cover,
-                                                        ),
-                                                      ),
-                                                    PawsText(
-                                                      chat.message,
-                                                      fontSize: 14,
-                                                      color: isCurrentUser
-                                                          ? Colors.white
-                                                          : PawsColors
-                                                                .textPrimary,
-                                                    ),
-                                                    const SizedBox(height: 4),
-
-                                                    // Display existing reactions from backend
-                                                    // if (chat.reactions != null &&
-                                                    //     chat.reactions!.isNotEmpty)
-                                                    //   _buildReactionsDisplay(
-                                                    //     chat.reactions!,
-                                                    //     isCurrentUser,
-                                                    //     chat.id,
-                                                    //   ),
-                                                    PawsText(
-                                                      timeago.format(
-                                                        chat.sentAt,
-                                                      ),
-                                                      fontSize: 10,
-                                                      color: isCurrentUser
-                                                          ? Colors.white70
-                                                          : PawsColors
-                                                                .textSecondary,
-                                                    ),
-
-                                                    // Add reaction test buttons
-                                                  ],
-                                                ),
-                                              ),
-                                              if (chat.reactions != null &&
-                                                  chat.reactions!.isNotEmpty)
-                                                Positioned(
-                                                  bottom: -16,
-                                                  right: -4,
-                                                  child: Container(
-                                                    padding:
-                                                        const EdgeInsets.all(2),
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.white,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            16,
-                                                          ),
-                                                      border: Border.all(
-                                                        color: Colors
-                                                            .grey
-                                                            .shade300,
-                                                        width: 1,
-                                                      ),
-                                                      boxShadow: [
-                                                        BoxShadow(
-                                                          color: Colors.black
-                                                              .withOpacity(0.1),
-                                                          blurRadius: 4,
-                                                          offset: const Offset(
-                                                            0,
-                                                            2,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    child: Row(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: chat.reactions!.map((
-                                                        reaction,
-                                                      ) {
-                                                        final userCount =
-                                                            reaction
-                                                                .users
-                                                                .length;
-                                                        final hasCurrentUser =
-                                                            reaction.users
-                                                                .contains(
-                                                                  USER_ID,
-                                                                );
-
-                                                        return GestureDetector(
-                                                          onTap: () {
-                                                            sendReactionToBackend(
-                                                              chatId: chat.id,
-                                                              reaction: reaction
-                                                                  .emoji,
-                                                              isAdding:
-                                                                  !hasCurrentUser,
-                                                            );
-                                                          },
-                                                          child: Container(
-                                                            margin:
-                                                                const EdgeInsets.symmetric(
-                                                                  horizontal: 1,
-                                                                ),
-                                                            padding:
-                                                                const EdgeInsets.symmetric(
-                                                                  horizontal: 6,
-                                                                  vertical: 2,
-                                                                ),
-                                                            decoration: BoxDecoration(
-                                                              color:
-                                                                  hasCurrentUser
-                                                                  ? PawsColors
-                                                                        .primary
-                                                                        .withOpacity(
-                                                                          0.15,
-                                                                        )
-                                                                  : Colors
-                                                                        .transparent,
-                                                              borderRadius:
-                                                                  BorderRadius.circular(
-                                                                    12,
-                                                                  ),
-                                                            ),
-                                                            child: Row(
-                                                              mainAxisSize:
-                                                                  MainAxisSize
-                                                                      .min,
-                                                              children: [
-                                                                Text(
-                                                                  reaction
-                                                                      .emoji,
-                                                                  style:
-                                                                      const TextStyle(
-                                                                        fontSize:
-                                                                            16,
-                                                                      ),
-                                                                ),
-                                                                if (userCount >
-                                                                    1) ...[
-                                                                  const SizedBox(
-                                                                    width: 2,
-                                                                  ),
-                                                                  Text(
-                                                                    userCount
-                                                                        .toString(),
-                                                                    style: TextStyle(
-                                                                      fontSize:
-                                                                          11,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .w600,
-                                                                      color:
-                                                                          hasCurrentUser
-                                                                          ? PawsColors.primary
-                                                                          : Colors.grey.shade600,
-                                                                    ),
-                                                                  ),
-                                                                ],
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        );
-                                                      }).toList(),
-                                                    ),
-                                                  ),
-                                                ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-
-                                      if (isCurrentUser)
-                                        const SizedBox(width: 8),
-                                    ],
-                                  ),
-                                );
-                              }
-
-                              // Otherwise it's a pending chat (String)
-                              final pendingMessage = item as String;
-
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 8),
-                                child: Align(
-                                  alignment: Alignment.centerRight,
-                                  child: PendingChatBubble(pendingMessage),
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ),
-            ),
-
-            // Message input area using component
-            MessageInputBar(
-              controller: _messageController,
-              isSending: _isSendingMessage,
-              onPickImage: _pickImage,
-              onSend: _sendMessage,
-              previewImage: _imageFile != null ? File(_imageFile!.path) : null,
-              onRemovePreview: () => setState(() => _imageFile = null),
-            ),
-          ],
-        ),
+        appBar: _buildAppBar(),
+        body: _buildBody(forumChats, pendingChats, isLoadingChats),
       ),
     );
   }
 
-  Widget _buildSkeletonMessage(int index) {
-    final isEven = index % 2 == 0;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        mainAxisAlignment: isEven
-            ? MainAxisAlignment.start
-            : MainAxisAlignment.end,
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      title: const PawsText(
+        'Forum Chat',
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+        color: PawsColors.textPrimary,
+      ),
+      centerTitle: true,
+      backgroundColor: Colors.white,
+      elevation: 1,
+      shadowColor: Colors.black12,
+      actions: [
+        IconButton(
+          onPressed: () =>
+              context.router.push(ForumSettingsRoute(forumId: widget.forumId)),
+          icon: const Icon(Icons.info),
+          color: PawsColors.textSecondary,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBody(
+    List<ForumChat> forumChats,
+    List<String> pendingChats,
+    bool isLoadingChats,
+  ) {
+    return Column(
+      children: [
+        Expanded(
+          child: _buildMessageList(forumChats, pendingChats, isLoadingChats),
+        ),
+        if (replyTo != null) _buildReplyIndicator(),
+        _buildMessageInput(),
+      ],
+    );
+  }
+
+  Widget _buildMessageList(
+    List<ForumChat> forumChats,
+    List<String> pendingChats,
+    bool isLoadingChats,
+  ) {
+    return ChatMessageList(
+      forumChats: forumChats,
+      pendingChats: pendingChats,
+      isLoadingChats: isLoadingChats,
+      scrollController: _scrollController,
+      chatKeys: _chatKeys,
+      reactionsController: _controller,
+      reactionsConfig: chat_reactions.ChatReactionsConfig(
+        enableHapticFeedback: true,
+        maxReactionsToShow: 3,
+        enableDoubleTap: true,
+      ),
+      currentUserId: USER_ID,
+      onRefresh: _loadChats,
+      onReactionAdded: (reaction, chatId) => sendReactionToBackend(
+        chatId: chatId,
+        reaction: reaction,
+        isAdding: true,
+      ),
+      onReactionRemoved: (reaction, chatId) => sendReactionToBackend(
+        chatId: chatId,
+        reaction: reaction,
+        isAdding: false,
+      ),
+      onMenuItemTapped: _handleMenuAction,
+      onLongPress: (chatId) =>
+          sendReactionToBackend(chatId: chatId, reaction: "👍", isAdding: true),
+      onDoubleTap: (chatId) =>
+          sendReactionToBackend(chatId: chatId, reaction: "❤️", isAdding: true),
+      onReplyToTapped: _handleReplyToTapped,
+    );
+  }
+
+  Widget _buildReplyIndicator() {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      width: MediaQuery.sizeOf(context).width,
+      decoration: BoxDecoration(
+        color: PawsColors.border,
+        border: const Border(
+          top: BorderSide(color: PawsColors.border, width: 1),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (isEven) ...[
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: 8),
-          ],
-          Container(
-            constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * 0.6,
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: isEven ? Colors.grey[200] : Colors.grey[300],
-              borderRadius: BorderRadius.only(
-                topLeft: const Radius.circular(16),
-                topRight: const Radius.circular(16),
-                bottomLeft: Radius.circular(isEven ? 4 : 16),
-                bottomRight: Radius.circular(isEven ? 16 : 4),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  height: 14,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[400],
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Container(
-                  height: 10,
-                  width: 60,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-              ],
-            ),
+          const PawsText(
+            'Replying to:',
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
           ),
-          if (!isEven) const SizedBox(width: 8),
+          PawsText(replyTo!.message, fontSize: 16),
         ],
       ),
     );
+  }
+
+  Widget _buildMessageInput() {
+    return MessageInputBar(
+      controller: _messageController,
+      isSending: _isSendingMessage,
+      onPickImage: _pickImage,
+      onSend: _sendMessage,
+      previewImage: _imageFile != null ? File(_imageFile!.path) : null,
+      onRemovePreview: () => setState(() => _imageFile = null),
+    );
+  }
+
+  void _handleMenuAction(String menuLabel, ForumChat chat) {
+    debugPrint('Menu tapped: $menuLabel');
+    if (menuLabel == 'Reply') {
+      setState(() {
+        replyTo = chat;
+      });
+    }
   }
 }

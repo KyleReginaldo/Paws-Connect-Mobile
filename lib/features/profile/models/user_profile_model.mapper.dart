@@ -15,6 +15,7 @@ class UserProfileMapper extends ClassMapperBase<UserProfile> {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = UserProfileMapper._());
       UserStatusMapper.ensureInitialized();
+      UserIdentificationMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -92,6 +93,15 @@ class UserProfileMapper extends ClassMapperBase<UserProfile> {
     key: r'password_changed',
     opt: true,
   );
+  static UserIdentification? _$userIdentification(UserProfile v) =>
+      v.userIdentification;
+  static const Field<UserProfile, UserIdentification> _f$userIdentification =
+      Field(
+        'userIdentification',
+        _$userIdentification,
+        key: r'user_identification',
+        opt: true,
+      );
 
   @override
   final MappableFields<UserProfile> fields = const {
@@ -108,6 +118,7 @@ class UserProfileMapper extends ClassMapperBase<UserProfile> {
     #profileImageLink: _f$profileImageLink,
     #createdBy: _f$createdBy,
     #passwordChanged: _f$passwordChanged,
+    #userIdentification: _f$userIdentification,
   };
 
   static UserProfile _instantiate(DecodingData data) {
@@ -125,6 +136,7 @@ class UserProfileMapper extends ClassMapperBase<UserProfile> {
       profileImageLink: data.dec(_f$profileImageLink),
       createdBy: data.dec(_f$createdBy),
       passwordChanged: data.dec(_f$passwordChanged),
+      userIdentification: data.dec(_f$userIdentification),
     );
   }
 
@@ -189,6 +201,8 @@ extension UserProfileValueCopy<$R, $Out>
 abstract class UserProfileCopyWith<$R, $In extends UserProfile, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get houseImages;
+  UserIdentificationCopyWith<$R, UserIdentification, UserIdentification>?
+  get userIdentification;
   $R call({
     String? id,
     String? createdAt,
@@ -203,6 +217,7 @@ abstract class UserProfileCopyWith<$R, $In extends UserProfile, $Out>
     String? profileImageLink,
     String? createdBy,
     bool? passwordChanged,
+    UserIdentification? userIdentification,
   });
   UserProfileCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -225,6 +240,11 @@ class _UserProfileCopyWithImpl<$R, $Out>
         )
       : null;
   @override
+  UserIdentificationCopyWith<$R, UserIdentification, UserIdentification>?
+  get userIdentification => $value.userIdentification?.copyWith.$chain(
+    (v) => call(userIdentification: v),
+  );
+  @override
   $R call({
     String? id,
     String? createdAt,
@@ -239,6 +259,7 @@ class _UserProfileCopyWithImpl<$R, $Out>
     Object? profileImageLink = $none,
     Object? createdBy = $none,
     Object? passwordChanged = $none,
+    Object? userIdentification = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -254,6 +275,7 @@ class _UserProfileCopyWithImpl<$R, $Out>
       if (profileImageLink != $none) #profileImageLink: profileImageLink,
       if (createdBy != $none) #createdBy: createdBy,
       if (passwordChanged != $none) #passwordChanged: passwordChanged,
+      if (userIdentification != $none) #userIdentification: userIdentification,
     }),
   );
   @override
@@ -271,11 +293,232 @@ class _UserProfileCopyWithImpl<$R, $Out>
     profileImageLink: data.get(#profileImageLink, or: $value.profileImageLink),
     createdBy: data.get(#createdBy, or: $value.createdBy),
     passwordChanged: data.get(#passwordChanged, or: $value.passwordChanged),
+    userIdentification: data.get(
+      #userIdentification,
+      or: $value.userIdentification,
+    ),
   );
 
   @override
   UserProfileCopyWith<$R2, UserProfile, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   ) => _UserProfileCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class UserIdentificationMapper extends ClassMapperBase<UserIdentification> {
+  UserIdentificationMapper._();
+
+  static UserIdentificationMapper? _instance;
+  static UserIdentificationMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = UserIdentificationMapper._());
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'UserIdentification';
+
+  static int _$id(UserIdentification v) => v.id;
+  static const Field<UserIdentification, int> _f$id = Field('id', _$id);
+  static DateTime _$createdAt(UserIdentification v) => v.createdAt;
+  static const Field<UserIdentification, DateTime> _f$createdAt = Field(
+    'createdAt',
+    _$createdAt,
+    key: r'created_at',
+  );
+  static String _$idNumber(UserIdentification v) => v.idNumber;
+  static const Field<UserIdentification, String> _f$idNumber = Field(
+    'idNumber',
+    _$idNumber,
+    key: r'id_number',
+  );
+  static String _$idAttachmentUrl(UserIdentification v) => v.idAttachmentUrl;
+  static const Field<UserIdentification, String> _f$idAttachmentUrl = Field(
+    'idAttachmentUrl',
+    _$idAttachmentUrl,
+    key: r'id_attachment_url',
+  );
+  static String _$idName(UserIdentification v) => v.idName;
+  static const Field<UserIdentification, String> _f$idName = Field(
+    'idName',
+    _$idName,
+    key: r'id_name',
+  );
+  static DateTime _$idExpiration(UserIdentification v) => v.idExpiration;
+  static const Field<UserIdentification, DateTime> _f$idExpiration = Field(
+    'idExpiration',
+    _$idExpiration,
+    key: r'id_expiration',
+  );
+  static String _$idType(UserIdentification v) => v.idType;
+  static const Field<UserIdentification, String> _f$idType = Field(
+    'idType',
+    _$idType,
+    key: r'id_type',
+  );
+  static String _$status(UserIdentification v) => v.status;
+  static const Field<UserIdentification, String> _f$status = Field(
+    'status',
+    _$status,
+  );
+
+  @override
+  final MappableFields<UserIdentification> fields = const {
+    #id: _f$id,
+    #createdAt: _f$createdAt,
+    #idNumber: _f$idNumber,
+    #idAttachmentUrl: _f$idAttachmentUrl,
+    #idName: _f$idName,
+    #idExpiration: _f$idExpiration,
+    #idType: _f$idType,
+    #status: _f$status,
+  };
+
+  static UserIdentification _instantiate(DecodingData data) {
+    return UserIdentification(
+      data.dec(_f$id),
+      data.dec(_f$createdAt),
+      data.dec(_f$idNumber),
+      data.dec(_f$idAttachmentUrl),
+      data.dec(_f$idName),
+      data.dec(_f$idExpiration),
+      data.dec(_f$idType),
+      data.dec(_f$status),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static UserIdentification fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<UserIdentification>(map);
+  }
+
+  static UserIdentification fromJson(String json) {
+    return ensureInitialized().decodeJson<UserIdentification>(json);
+  }
+}
+
+mixin UserIdentificationMappable {
+  String toJson() {
+    return UserIdentificationMapper.ensureInitialized()
+        .encodeJson<UserIdentification>(this as UserIdentification);
+  }
+
+  Map<String, dynamic> toMap() {
+    return UserIdentificationMapper.ensureInitialized()
+        .encodeMap<UserIdentification>(this as UserIdentification);
+  }
+
+  UserIdentificationCopyWith<
+    UserIdentification,
+    UserIdentification,
+    UserIdentification
+  >
+  get copyWith =>
+      _UserIdentificationCopyWithImpl<UserIdentification, UserIdentification>(
+        this as UserIdentification,
+        $identity,
+        $identity,
+      );
+  @override
+  String toString() {
+    return UserIdentificationMapper.ensureInitialized().stringifyValue(
+      this as UserIdentification,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return UserIdentificationMapper.ensureInitialized().equalsValue(
+      this as UserIdentification,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return UserIdentificationMapper.ensureInitialized().hashValue(
+      this as UserIdentification,
+    );
+  }
+}
+
+extension UserIdentificationValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, UserIdentification, $Out> {
+  UserIdentificationCopyWith<$R, UserIdentification, $Out>
+  get $asUserIdentification => $base.as(
+    (v, t, t2) => _UserIdentificationCopyWithImpl<$R, $Out>(v, t, t2),
+  );
+}
+
+abstract class UserIdentificationCopyWith<
+  $R,
+  $In extends UserIdentification,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
+  $R call({
+    int? id,
+    DateTime? createdAt,
+    String? idNumber,
+    String? idAttachmentUrl,
+    String? idName,
+    DateTime? idExpiration,
+    String? idType,
+    String? status,
+  });
+  UserIdentificationCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  );
+}
+
+class _UserIdentificationCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, UserIdentification, $Out>
+    implements UserIdentificationCopyWith<$R, UserIdentification, $Out> {
+  _UserIdentificationCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<UserIdentification> $mapper =
+      UserIdentificationMapper.ensureInitialized();
+  @override
+  $R call({
+    int? id,
+    DateTime? createdAt,
+    String? idNumber,
+    String? idAttachmentUrl,
+    String? idName,
+    DateTime? idExpiration,
+    String? idType,
+    String? status,
+  }) => $apply(
+    FieldCopyWithData({
+      if (id != null) #id: id,
+      if (createdAt != null) #createdAt: createdAt,
+      if (idNumber != null) #idNumber: idNumber,
+      if (idAttachmentUrl != null) #idAttachmentUrl: idAttachmentUrl,
+      if (idName != null) #idName: idName,
+      if (idExpiration != null) #idExpiration: idExpiration,
+      if (idType != null) #idType: idType,
+      if (status != null) #status: status,
+    }),
+  );
+  @override
+  UserIdentification $make(CopyWithData data) => UserIdentification(
+    data.get(#id, or: $value.id),
+    data.get(#createdAt, or: $value.createdAt),
+    data.get(#idNumber, or: $value.idNumber),
+    data.get(#idAttachmentUrl, or: $value.idAttachmentUrl),
+    data.get(#idName, or: $value.idName),
+    data.get(#idExpiration, or: $value.idExpiration),
+    data.get(#idType, or: $value.idType),
+    data.get(#status, or: $value.status),
+  );
+
+  @override
+  UserIdentificationCopyWith<$R2, UserIdentification, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  ) => _UserIdentificationCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 

@@ -41,7 +41,11 @@ class PawsElevatedButton extends StatelessWidget {
           label,
           style:
               textStyle ??
-              TextStyle(fontWeight: FontWeight.w600, fontSize: size ?? 15),
+              TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: size ?? 15,
+                color: foregroundColor,
+              ),
         ),
       ],
     );
@@ -50,17 +54,33 @@ class PawsElevatedButton extends StatelessWidget {
       width: isFullWidth ? double.infinity : null,
       child: ElevatedButton(
         onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor:
-              backgroundColor ?? Theme.of(context).colorScheme.primary,
-          foregroundColor: foregroundColor ?? Colors.white,
-          padding:
-              padding ??
-              const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(borderRadius),
+        style: ButtonStyle().copyWith(
+          backgroundColor: WidgetStateProperty.all<Color?>(
+            backgroundColor ?? Theme.of(context).colorScheme.primary,
+          ),
+          foregroundColor: WidgetStateProperty.all<Color?>(
+            foregroundColor ?? Colors.white,
+          ),
+          padding: WidgetStateProperty.all<EdgeInsetsGeometry?>(
+            padding ?? const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+          ),
+          shape: WidgetStateProperty.all<OutlinedBorder>(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(borderRadius),
+            ),
           ),
         ),
+        // ElevatedButton.styleFrom(
+        //   backgroundColor:
+        //       backgroundColor ?? Theme.of(context).colorScheme.primary,
+        //   foregroundColor: foregroundColor ?? Colors.white,
+        //   padding:
+        //       padding ??
+        //       const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+        //   shape: RoundedRectangleBorder(
+        //     borderRadius: BorderRadius.circular(borderRadius),
+        //   ),
+        // ),
         child: child,
       ),
     );

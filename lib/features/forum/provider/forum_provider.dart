@@ -97,6 +97,7 @@ class ForumProvider {
     required String message,
     required int forumId,
     XFile? imageFile,
+    int? repliedTo,
   }) async {
     String? imageUrl;
     if (imageFile != null) {
@@ -110,6 +111,7 @@ class ForumProvider {
         'sender': sender,
         'message': message,
         if (imageUrl != null) 'image_url': imageUrl,
+        if (repliedTo != null) 'replied_to': repliedTo,
       }),
     );
     if (response.statusCode != 201) {

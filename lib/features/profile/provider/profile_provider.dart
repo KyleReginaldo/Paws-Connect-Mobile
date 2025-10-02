@@ -135,4 +135,76 @@ class ProfileProvider {
       return Result.error('Failed to update profile: ${e.toString()}');
     }
   }
+
+  Future<Result<String>> submitIdVerification({
+    required String userId,
+    required String idNumber,
+    required XFile idAttachment,
+    required String idName,
+    required DateTime idExpiration,
+    required String idType,
+  }) async {
+    // Check internet connectivity first
+    final hasInternet = await InternetConnection().hasInternetAccess;
+    if (!hasInternet) {
+      return Result.error(
+        'No internet connection. Please check your network and try again.',
+      );
+    }
+    late String idAttachmentUrl;
+    try {
+      debugPrint('Uploading ID attachment: ${idAttachment.path}');
+      final fileName =
+          'id_${DateTime.now().microsecondsSinceEpoch.toString()}_${idAttachment.name}';
+
+      try {
+        final uploadResult = await supabase.storage
+            .from('files')
+            .upload(fileName, File(idAttachment.path));
+        debugPrint('Upload result: $uploadResult');
+
+        // Get the public URL using the correct bucket and file path
+        idAttachmentUrl = supabase.storage.from('files').getPublicUrl(fileName);
+        debugPrint('Uploaded ID attachment URL: $idAttachmentUrl');
+      } catch (uploadError) {
+        debugPrint('Upload error: $uploadError');
+        return Result.error(
+          'Failed to upload ID attachment: ${uploadError.toString()}',
+        );
+      }
+    } catch (e) {
+      return Result.error('Failed to upload ID attachment: ${e.toString()}');
+    }
+    try {
+      final response = await http.post(
+        Uri.parse('${dotenv.get('BASE_URL')}/users/$userId/id-verification'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'id_number': idNumber,
+          'id_attachment_url': idAttachmentUrl,
+          'id_name': idName,
+          'id_expiration': idExpiration.toIso8601String(),
+          'id_type': idType,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        debugPrint('ID verification submitted successfully');
+        return Result.success('ID verification submitted successfully');
+      } else {
+        debugPrint(
+          'Failed to submit ID verification. Server returned ${response.statusCode}',
+        );
+        debugPrint('Response body: ${response.body}');
+        return Result.error(
+          data['error'] ??
+              'Failed to submit ID verification. Server returned ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      return Result.error('Failed to submit ID verification: ${e.toString()}');
+    }
+  }
 }

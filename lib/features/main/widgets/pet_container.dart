@@ -36,6 +36,7 @@ class PetContainer extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Stack(
+                  clipBehavior: Clip.none,
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(6),
@@ -69,8 +70,14 @@ class PetContainer extends StatelessWidget {
                 ),
                 SizedBox(height: 4),
                 PawsText(pet.name, fontSize: 16, fontWeight: FontWeight.w500),
-                PawsText('Age: ${pet.age} year(s) old', fontSize: 14),
-                PawsText('Breed: ${pet.breed}', fontSize: 14),
+                PawsText('${pet.age} year(s) old', fontSize: 14),
+                PawsText(
+                  pet.breed,
+                  fontSize: 14,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  color: PawsColors.textSecondary,
+                ),
               ],
             ),
           ),

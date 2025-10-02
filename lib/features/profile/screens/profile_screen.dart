@@ -83,6 +83,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (!mounted) return;
       final repo = context.read<ProfileRepository>();
       repo.fetchVisitedProfile(widget.id);
+      debugPrint('user: ${widget.id}');
       context.read<AdoptionRepository>().fetchUserAdoptions(widget.id);
       context.read<DonationRepository>().fetchUserDonations(widget.id);
       listenToChanges();
@@ -106,6 +107,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final donations = context.select(
       (DonationRepository bloc) => bloc.donations,
     );
+    debugPrint('donations length: ${donations?.length}');
+    debugPrint('adoptions length: ${adoptions?.length}');
     return SafeArea(
       top: false,
       child: Scaffold(
@@ -275,18 +278,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 icon: LucideIcons.history,
                                 label: 'Adoption History',
                                 value: '${adoptions?.length ?? 0} adoption(s)',
-                                onTap: () {
-                                  context.router.push(AdoptionHistoryRoute());
-                                },
+                                onTap: widget.id == USER_ID
+                                    ? () {
+                                        context.router.push(
+                                          AdoptionHistoryRoute(),
+                                        );
+                                      }
+                                    : null,
                               ),
                               const SizedBox(height: 12),
                               _buildInfoRow(
                                 icon: LucideIcons.handHelping,
                                 label: 'Donation History',
                                 value: '${donations?.length ?? 0} donation(s)',
-                                onTap: () {
-                                  context.router.push(DonationHistoryRoute());
-                                },
+                                onTap: widget.id == USER_ID
+                                    ? () {
+                                        context.router.push(
+                                          DonationHistoryRoute(),
+                                        );
+                                      }
+                                    : null,
                               ),
                             ],
                           ),

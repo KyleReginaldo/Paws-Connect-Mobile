@@ -1,4 +1,6 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:paws_connect/features/profile/models/user_profile_model.dart';
 
 part 'pet_model.mapper.dart';
 
@@ -27,6 +29,8 @@ class Pet with PetMappable {
   String photo;
   String? color;
   bool? isFavorite;
+  final List<PetAdoption>? adoption;
+  final PetAdoption? adopted;
 
   Pet({
     required this.id,
@@ -52,5 +56,22 @@ class Pet with PetMappable {
     required this.photo,
     required this.color,
     this.isFavorite,
+    this.adoption,
+    required this.adopted,
+  });
+}
+
+@MappableClass(caseStyle: CaseStyle.snakeCase)
+class PetAdoption with PetAdoptionMappable {
+  final int id;
+  final DateTime createdAt;
+  final UserProfile user;
+  final String status;
+
+  PetAdoption({
+    required this.id,
+    required this.createdAt,
+    required this.user,
+    required this.status,
   });
 }
