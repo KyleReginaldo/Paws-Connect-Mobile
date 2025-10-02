@@ -52,8 +52,18 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
+}
+
+dependencies {
+    implementation("com.google.android.play:core:1.10.3")
+    implementation("com.google.android.play:core-ktx:1.8.1")
 }
 
 flutter {
@@ -64,27 +74,27 @@ flutter {
    🔑 Rename the APK after assembleRelease so Flutter's wrapper
    (which always outputs app-release.apk) is copied to a custom name
 ------------------------------------------------------------------- */
-tasks.register("renameReleaseApk") {
-    doLast {
-        val outputsDir = File(project.layout.buildDirectory.asFile.get(), "outputs/apk/release")
-        val src = File(outputsDir, "app-release.apk")
-        if (!src.exists()) {
-            logger.warn("Source APK not found: ${src.absolutePath}")
-            return@doLast
-        }
+// tasks.register("renameReleaseApk") {
+//     doLast {
+//         val outputsDir = File(project.layout.buildDirectory.asFile.get(), "outputs/apk/release")
+//         val src = File(outputsDir, "app-release.apk")
+//         if (!src.exists()) {
+//             logger.warn("Source APK not found: ${src.absolutePath}")
+//             return@doLast
+//         }
 
-        val appName = "pawsconnect"
-        val versionName = android.defaultConfig.versionName ?: "unknown"
-        val versionCode = android.defaultConfig.versionCode ?: 0
-        val destName = "${appName}-${versionName}(${versionCode})-release.apk"
-        val dest = File(outputsDir, destName)
+//         val appName = "pawsconnect"
+//         val versionName = android.defaultConfig.versionName ?: "unknown"
+//         val versionCode = android.defaultConfig.versionCode ?: 0
+//         val destName = "${appName}-${versionName}(${versionCode})-release.apk"
+//         val dest = File(outputsDir, destName)
 
-        src.copyTo(dest, overwrite = true)
-        println("✅ Renamed APK -> ${dest.absolutePath}")
-    }
-}
+//         src.copyTo(dest, overwrite = true)
+//         println("✅ Renamed APK -> ${dest.absolutePath}")
+//     }
+// }
 
 // run automatically after assembleRelease
-afterEvaluate {
-    tasks.findByName("assembleRelease")?.finalizedBy("renameReleaseApk")
-}
+// afterEvaluate {
+//     tasks.findByName("assembleRelease")?.finalizedBy("renameReleaseApk")
+// }
