@@ -164,7 +164,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                                         AspectRatio(
                                           aspectRatio: 4 / 3,
                                           child: NetworkImageView(
-                                            pet.photo,
+                                            pet.photos.first,
                                             fit: BoxFit.cover,
                                             width: double.infinity,
                                             enableTapToView: false,

@@ -98,7 +98,7 @@ class PetSearchDelegate extends SearchDelegate<Pet?> {
         final pet = results[index];
         return ListTile(
           leading: CircleAvatar(
-            backgroundImage: NetworkImage(pet.photo),
+            backgroundImage: NetworkImage(pet.photos.first),
             backgroundColor: Colors.grey.shade200,
           ),
           title: Text(pet.name),

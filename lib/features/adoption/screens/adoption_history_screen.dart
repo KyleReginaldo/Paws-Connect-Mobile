@@ -56,7 +56,7 @@ class _AdoptionHistoryScreenState extends State<AdoptionHistoryScreen> {
               },
               tileColor: Colors.white,
               leading: UserAvatar(
-                imageUrl: adoption.pets.photo,
+                imageUrl: adoption.pets.photos.first,
                 initials: adoption.pets.name,
                 size: 32,
               ),

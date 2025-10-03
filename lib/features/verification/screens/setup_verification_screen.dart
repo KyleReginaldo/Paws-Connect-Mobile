@@ -32,53 +32,17 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
 
   // Form controllers
   final _formKey = GlobalKey<FormState>();
-  final _idNumberController = TextEditingController();
   final _idNameController = TextEditingController();
-  final _idExpirationController = TextEditingController();
-  String _selectedIdType = 'PHILSYS_ID';
-
-  // Available ID types
-  static const List<String> _idTypes = [
-    'PHILSYS_ID',
-    'PASSPORT',
-    'DRIVER_LICENSE',
-    'SSS_ID',
-    'UMID_CARD',
-    'GSIS_ID',
-    'PRC_ID',
-    'TIN_ID',
-    'POSTAL_ID',
-    'VOTER_ID',
-    'PHILHEALTH_ID',
-    'PAGIBIG_ID',
-    'SENIOR_CITIZEN_ID',
-    'PWD_ID',
-    'STUDENT_ID',
-    'OFW_ID',
-    'NBI_CLEARANCE',
-    'POLICE_CLEARANCE',
-    'BARANGAY_ID',
-    'FIREARMS_LICENSE_ID',
-    'IBP_ID',
-    'SEAMAN_BOOK',
-    'ACR_I_CARD',
-  ];
+  final _addressController = TextEditingController();
+  final _dateOfBirthController = TextEditingController();
+  DateTime? _selectedDateOfBirth;
 
   @override
   void dispose() {
-    _idNumberController.dispose();
     _idNameController.dispose();
-    _idExpirationController.dispose();
+    _addressController.dispose();
+    _dateOfBirthController.dispose();
     super.dispose();
-  }
-
-  String _formatIdTypeName(String idType) {
-    return idType
-        .replaceAll('_', ' ')
-        .toLowerCase()
-        .split(' ')
-        .map((word) => word[0].toUpperCase() + word.substring(1))
-        .join(' ');
   }
 
   Future<void> _capturePhoto() async {
@@ -111,6 +75,38 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
     });
   }
 
+  Future<void> _selectDateOfBirth() async {
+    final DateTime now = DateTime.now();
+    final DateTime eighteenYearsAgo = DateTime(
+      now.year - 18,
+      now.month,
+      now.day,
+    );
+    final DateTime hundredYearsAgo = DateTime(
+      now.year - 100,
+      now.month,
+      now.day,
+    );
+
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedDateOfBirth ?? eighteenYearsAgo,
+      firstDate: hundredYearsAgo,
+      lastDate: eighteenYearsAgo,
+      helpText: 'Select your date of birth',
+      cancelText: 'Cancel',
+      confirmText: 'OK',
+    );
+
+    if (pickedDate != null && pickedDate != _selectedDateOfBirth) {
+      setState(() {
+        _selectedDateOfBirth = pickedDate;
+        _dateOfBirthController.text =
+            '${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}';
+      });
+    }
+  }
+
   Future<void> _submitVerification() async {
     // Set attempted submit flag for validation UI
     setState(() {
@@ -132,30 +128,24 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
       return;
     }
 
+    // Validate date of birth
+    if (_selectedDateOfBirth == null) {
+      EasyLoading.showError('Please select your date of birth');
+      return;
+    }
+
     setState(() => _submitting = true);
     EasyLoading.show(status: 'Submitting verification...');
 
     try {
-      // Parse the expiration date
-      DateTime expirationDate = DateTime.now().add(
-        Duration(days: 365 * 5),
-      ); // Default 5 years
-      try {
-        expirationDate = DateTime.parse(_idExpirationController.text);
-      } catch (e) {
-        // If parsing fails, use default or try alternative formats
-        debugPrint('Date parsing failed, using default expiration: $e');
-      }
-
-      // For now, using placeholder URL - in production you would upload the photos first
-
       final result = await ProfileProvider().submitIdVerification(
         userId: USER_ID!,
-        idNumber: _idNumberController.text.trim(),
+        idNumber:
+            '', // No longer using ID number - keeping empty for API compatibility
         idAttachment: _frontIdPhoto!,
         idName: _idNameController.text.trim(),
-        idExpiration: expirationDate,
-        idType: _selectedIdType,
+        address: _addressController.text.trim(),
+        dateOfBirth: _selectedDateOfBirth!,
       );
 
       EasyLoading.dismiss();
@@ -163,7 +153,9 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
       if (result.isSuccess) {
         EasyLoading.showSuccess(result.value);
         // Navigate back or to profile
-        context.router.maybePop();
+        if (mounted) {
+          context.router.maybePop();
+        }
       } else {
         EasyLoading.showError(result.error);
       }
@@ -314,73 +306,10 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
 
           // Form section
           const PawsText(
-            'ID Details',
+            'Personal Details',
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: PawsColors.textPrimary,
-          ),
-          const SizedBox(height: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const PawsText(
-                'ID Type',
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: PawsColors.textPrimary,
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: _selectedIdType,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                ),
-                items: _idTypes.map((String idType) {
-                  return DropdownMenuItem<String>(
-                    value: idType,
-                    child: PawsText(_formatIdTypeName(idType), fontSize: 14),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  if (newValue != null) {
-                    setState(() {
-                      _selectedIdType = newValue;
-                    });
-                  }
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please select an ID type';
-                  }
-                  return null;
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          PawsTextField(
-            label: 'ID Number',
-            controller: _idNumberController,
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Please enter ID number';
-              }
-              if (value.trim().length < 3) {
-                return 'ID number must be at least 3 characters';
-              }
-              // Remove special characters and spaces for validation
-              final cleanValue = value.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
-              if (cleanValue.length < 3) {
-                return 'ID number must contain at least 3 alphanumeric characters';
-              }
-              return null;
-            },
           ),
           const SizedBox(height: 12),
           PawsTextField(
@@ -406,39 +335,39 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
           ),
           const SizedBox(height: 12),
           PawsTextField(
-            label: 'Expiration Date (YYYY-MM-DD)',
-            controller: _idExpirationController,
+            label: 'Address',
+            controller: _addressController,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Please enter expiration date';
+                return 'Please enter your address';
               }
-
-              // Check date format
-              if (!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value.trim())) {
-                return 'Please use YYYY-MM-DD format (e.g., 2025-12-31)';
+              if (value.trim().length < 10) {
+                return 'Please enter a complete address';
               }
-
-              // Try parsing the date
-              try {
-                final date = DateTime.parse(value.trim());
-                final now = DateTime.now();
-
-                // Check if date is in the past
-                if (date.isBefore(now)) {
-                  return 'Expiration date cannot be in the past';
-                }
-
-                // Check if date is too far in the future (more than 50 years)
-                final maxDate = now.add(Duration(days: 365 * 50));
-                if (date.isAfter(maxDate)) {
-                  return 'Expiration date seems too far in the future';
-                }
-              } catch (e) {
-                return 'Please enter a valid date in YYYY-MM-DD format';
-              }
-
               return null;
             },
+          ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: _selectDateOfBirth,
+            child: AbsorbPointer(
+              child: PawsTextField(
+                label: 'Date of Birth',
+                controller: _dateOfBirthController,
+                suffixIcon: const Icon(Icons.calendar_today),
+                validator: (value) {
+                  if (_selectedDateOfBirth == null) {
+                    return 'Please select your date of birth';
+                  }
+                  final now = DateTime.now();
+                  final age = now.year - _selectedDateOfBirth!.year;
+                  if (age < 18) {
+                    return 'You must be at least 18 years old';
+                  }
+                  return null;
+                },
+              ),
+            ),
           ),
           const SizedBox(height: 20),
           SizedBox(
@@ -478,10 +407,10 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
                 tooltip: 'Clear Photo',
                 onPressed: () => setState(() {
                   _frontIdPhoto = null;
-                  _idNumberController.clear();
                   _idNameController.clear();
-                  _selectedIdType = 'PHILSYS_ID';
-                  _idExpirationController.clear();
+                  _addressController.clear();
+                  _dateOfBirthController.clear();
+                  _selectedDateOfBirth = null;
                   _error = null;
                   _hasAttemptedSubmit = false; // Reset validation state
                 }),
@@ -513,7 +442,7 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: const PawsText(
-                        'Take a photo of your government-issued ID and fill in the details to verify your identity.',
+                        'Take a photo of any valid ID (government-issued, school ID, or other official identification) and provide your personal details including address and date of birth to verify your identity.',
                         fontSize: 13,
                         color: PawsColors.textPrimary,
                       ),

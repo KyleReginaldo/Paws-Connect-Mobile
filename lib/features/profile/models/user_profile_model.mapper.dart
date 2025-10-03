@@ -327,12 +327,6 @@ class UserIdentificationMapper extends ClassMapperBase<UserIdentification> {
     _$createdAt,
     key: r'created_at',
   );
-  static String _$idNumber(UserIdentification v) => v.idNumber;
-  static const Field<UserIdentification, String> _f$idNumber = Field(
-    'idNumber',
-    _$idNumber,
-    key: r'id_number',
-  );
   static String _$idAttachmentUrl(UserIdentification v) => v.idAttachmentUrl;
   static const Field<UserIdentification, String> _f$idAttachmentUrl = Field(
     'idAttachmentUrl',
@@ -345,17 +339,16 @@ class UserIdentificationMapper extends ClassMapperBase<UserIdentification> {
     _$idName,
     key: r'id_name',
   );
-  static DateTime _$idExpiration(UserIdentification v) => v.idExpiration;
-  static const Field<UserIdentification, DateTime> _f$idExpiration = Field(
-    'idExpiration',
-    _$idExpiration,
-    key: r'id_expiration',
+  static String? _$address(UserIdentification v) => v.address;
+  static const Field<UserIdentification, String> _f$address = Field(
+    'address',
+    _$address,
   );
-  static String _$idType(UserIdentification v) => v.idType;
-  static const Field<UserIdentification, String> _f$idType = Field(
-    'idType',
-    _$idType,
-    key: r'id_type',
+  static String? _$dateOfBirth(UserIdentification v) => v.dateOfBirth;
+  static const Field<UserIdentification, String> _f$dateOfBirth = Field(
+    'dateOfBirth',
+    _$dateOfBirth,
+    key: r'date_of_birth',
   );
   static String _$status(UserIdentification v) => v.status;
   static const Field<UserIdentification, String> _f$status = Field(
@@ -367,11 +360,10 @@ class UserIdentificationMapper extends ClassMapperBase<UserIdentification> {
   final MappableFields<UserIdentification> fields = const {
     #id: _f$id,
     #createdAt: _f$createdAt,
-    #idNumber: _f$idNumber,
     #idAttachmentUrl: _f$idAttachmentUrl,
     #idName: _f$idName,
-    #idExpiration: _f$idExpiration,
-    #idType: _f$idType,
+    #address: _f$address,
+    #dateOfBirth: _f$dateOfBirth,
     #status: _f$status,
   };
 
@@ -379,11 +371,10 @@ class UserIdentificationMapper extends ClassMapperBase<UserIdentification> {
     return UserIdentification(
       data.dec(_f$id),
       data.dec(_f$createdAt),
-      data.dec(_f$idNumber),
       data.dec(_f$idAttachmentUrl),
       data.dec(_f$idName),
-      data.dec(_f$idExpiration),
-      data.dec(_f$idType),
+      data.dec(_f$address),
+      data.dec(_f$dateOfBirth),
       data.dec(_f$status),
     );
   }
@@ -462,11 +453,10 @@ abstract class UserIdentificationCopyWith<
   $R call({
     int? id,
     DateTime? createdAt,
-    String? idNumber,
     String? idAttachmentUrl,
     String? idName,
-    DateTime? idExpiration,
-    String? idType,
+    String? address,
+    String? dateOfBirth,
     String? status,
   });
   UserIdentificationCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
@@ -486,21 +476,19 @@ class _UserIdentificationCopyWithImpl<$R, $Out>
   $R call({
     int? id,
     DateTime? createdAt,
-    String? idNumber,
     String? idAttachmentUrl,
     String? idName,
-    DateTime? idExpiration,
-    String? idType,
+    Object? address = $none,
+    Object? dateOfBirth = $none,
     String? status,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
       if (createdAt != null) #createdAt: createdAt,
-      if (idNumber != null) #idNumber: idNumber,
       if (idAttachmentUrl != null) #idAttachmentUrl: idAttachmentUrl,
       if (idName != null) #idName: idName,
-      if (idExpiration != null) #idExpiration: idExpiration,
-      if (idType != null) #idType: idType,
+      if (address != $none) #address: address,
+      if (dateOfBirth != $none) #dateOfBirth: dateOfBirth,
       if (status != null) #status: status,
     }),
   );
@@ -508,11 +496,10 @@ class _UserIdentificationCopyWithImpl<$R, $Out>
   UserIdentification $make(CopyWithData data) => UserIdentification(
     data.get(#id, or: $value.id),
     data.get(#createdAt, or: $value.createdAt),
-    data.get(#idNumber, or: $value.idNumber),
     data.get(#idAttachmentUrl, or: $value.idAttachmentUrl),
     data.get(#idName, or: $value.idName),
-    data.get(#idExpiration, or: $value.idExpiration),
-    data.get(#idType, or: $value.idType),
+    data.get(#address, or: $value.address),
+    data.get(#dateOfBirth, or: $value.dateOfBirth),
     data.get(#status, or: $value.status),
   );
 

@@ -9,6 +9,7 @@ import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/core/widgets/button.dart';
 import 'package:paws_connect/features/adoption/repository/adoption_repository.dart';
 import 'package:paws_connect/features/auth/repository/auth_repository.dart';
+import 'package:paws_connect/features/events/repository/event_repository.dart';
 import 'package:paws_connect/features/google_map/repository/address_repository.dart';
 import 'package:paws_connect/features/main/screens/search_delegate.dart';
 import 'package:paws_connect/features/pets/repository/pet_repository.dart';
@@ -17,7 +18,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../core/provider/common_provider.dart';
-import '../../../core/services/shopee_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/session/session_manager.dart';
 import '../../../core/theme/paws_theme.dart';
@@ -30,6 +30,7 @@ import '../../internet/internet.dart';
 import '../../notifications/repository/notification_repository.dart';
 import '../../profile/repository/profile_repository.dart';
 import '../widgets/app_bar.dart';
+import '../widgets/event_container.dart';
 import '../widgets/fundraising_container.dart';
 import '../widgets/pet_container.dart';
 
@@ -52,6 +53,7 @@ class HomeScreen extends StatefulWidget implements AutoRouteWrapper {
         ChangeNotifierProvider.value(value: sl<FavoriteRepository>()),
         ChangeNotifierProvider.value(value: sl<NotificationRepository>()),
         ChangeNotifierProvider.value(value: sl<AdoptionRepository>()),
+        ChangeNotifierProvider.value(value: sl<EventRepository>()),
       ],
       child: this,
     );
@@ -141,7 +143,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void handleListeners() {
     debugPrint('USER ID: $USER_ID');
-    // Listen to notifications for current user
     final notificationsChannel = supabase.channel('public:notifications');
     notificationsChannel
         .onPostgresChanges(
@@ -219,13 +220,6 @@ class _HomeScreenState extends State<HomeScreen> {
         .subscribe();
   }
 
-  void testFetchShopee() async {
-    final result = await scrapeProductImageWithHeadless(
-      'https://shopee.ph/Pet-Comb-Cat-Comb-Grooming-Dog-Comb-Grooming-Hair-i.416734455.13759810215',
-    );
-    debugPrint('shopee result: $result');
-  }
-
   void _toggleFavorite(int petId, bool isCurrentlyFavorite) async {
     if (USER_ID == null || (USER_ID?.isEmpty ?? true)) {
       if (!mounted) return;
@@ -269,10 +263,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     initializeChannels();
     handleListeners();
-    testFetchShopee();
 
-    // Defer initial data fetches until after the first frame to avoid
-    // calling notifyListeners during the build phase
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<PetRepository>().fetchRecentPets(userId: USER_ID);
@@ -281,6 +272,7 @@ class _HomeScreenState extends State<HomeScreen> {
         context.read<AddressRepository>().fetchAllAddresses(USER_ID ?? '');
         context.read<ProfileRepository>().fetchUserProfile(USER_ID ?? '');
         context.read<AdoptionRepository>().fetchUserAdoptions(USER_ID ?? '');
+        context.read<EventRepository>().fetchEvents();
       }
     });
 
@@ -325,8 +317,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     final user = context.watch<ProfileRepository>().userProfile;
     final isConnected = context.watch<InternetProvider>().isConnected;
+    final events = context.watch<EventRepository>().events;
     // Removed debug print to prevent console spam
-    debugPrint('User profile: ${user?.userIdentification == null}');
+    debugPrint('may laman ba yung events: ${events?.length}');
     return Scaffold(
       key: scaffoldKey,
 
@@ -587,6 +580,22 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 },
               ),
+              if (events != null && events.isNotEmpty) ...[
+                PawsText(
+                  'Posted by Admin',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: ClampingScrollPhysics(),
+                  child: Row(
+                    children: events.map((e) {
+                      return EventContainer(event: e);
+                    }).toList(),
+                  ),
+                ),
+              ],
               // PromotionContainer(),
               // PawsText('Category', fontSize: 16, fontWeight: FontWeight.w500),
               // CategoriesList(),
@@ -617,61 +626,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-              // Container(
-              //   width: double.infinity,
-              //   padding: const EdgeInsets.all(12),
-              //   decoration: BoxDecoration(
-              //     color: Colors.grey.shade100,
-              //     borderRadius: BorderRadius.circular(8),
-              //     border: Border.all(color: Colors.grey.shade200),
-              //   ),
-              //   child: Row(
-              //     children: [
-              //       Container(
-              //         height: 72,
-              //         width: 72,
-              //         decoration: BoxDecoration(
-              //           color: Colors.white,
-              //           borderRadius: BorderRadius.circular(8),
-              //           border: Border.all(color: Colors.grey.shade300),
-              //         ),
-              //         child: const Icon(Icons.shopping_cart_outlined, size: 36),
-              //       ),
-              //       const SizedBox(width: 12),
-              //       Expanded(
-              //         child: Column(
-              //           crossAxisAlignment: CrossAxisAlignment.start,
-              //           children: [
-              //             PawsText(
-              //               'Visit our Shopee Store(test)',
-              //               fontSize: 16,
-              //               fontWeight: FontWeight.w600,
-              //             ),
-              //             const SizedBox(height: 6),
-              //             PawsText(
-              //               'Tap the button to open shop in full screen',
-              //               color: Colors.grey,
-              //               fontSize: 13,
-              //             ),
-              //           ],
-              //         ),
-              //       ),
-              //       ElevatedButton(
-              //         onPressed: () {
-              //           Navigator.of(context).push(
-              //             MaterialPageRoute(
-              //               builder: (_) => const ShopeeScreen(
-              //                 initialUrl:
-              //                     'https://shopee.ph/Pet-Comb-Cat-Comb-Grooming-Dog-Comb-Grooming-Hair-i.416734455.13759810215',
-              //               ),
-              //             ),
-              //           );
-              //         },
-              //         child: const Text('Open(test)'),
-              //       ),
-              //     ],
-              //   ),
-              // ),
               if (user?.status != UserStatus.INDEFINITE &&
                   user?.status != UserStatus.PENDING &&
                   adoptions != null &&

@@ -38,6 +38,25 @@ class PetDetailScreen extends StatefulWidget implements AutoRouteWrapper {
 }
 
 class _PetDetailScreenState extends State<PetDetailScreen> {
+  late PageController _pageController;
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      sl<ProfileRepository>().fetchUserProfile(USER_ID ?? "");
+      context.read<PetRepository>().fetchPetById(widget.pet.id);
+    });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
   void toggleFavorite() async {
     if (USER_ID == null || (USER_ID?.isEmpty ?? true)) {
       // Not signed in; navigate to sign in
@@ -112,13 +131,84 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
     }
   }
 
-  @override
-  void initState() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      sl<ProfileRepository>().fetchUserProfile(USER_ID ?? "");
-      context.read<PetRepository>().fetchPetById(widget.pet.id);
-    });
-    super.initState();
+  Widget _buildImageCarousel(Pet pet) {
+    final images = pet.photos.isNotEmpty ? pet.photos : [''];
+
+    return Container(
+      height: MediaQuery.sizeOf(context).height * 0.3,
+      width: MediaQuery.sizeOf(context).width,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.black, Colors.transparent, Colors.transparent],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
+      child: Stack(
+        children: [
+          PageView.builder(
+            controller: _pageController,
+            itemCount: images.length,
+            onPageChanged: (index) {
+              setState(() {
+                _currentPage = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              return Opacity(
+                opacity: 0.9,
+                child: NetworkImageView(
+                  images[index],
+                  fit: BoxFit.cover,
+                  height: MediaQuery.sizeOf(context).height * 0.3,
+                  width: MediaQuery.sizeOf(context).width,
+                ),
+              );
+            },
+          ),
+          if (images.length > 1)
+            Positioned(
+              bottom: 16,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  images.length,
+                  (index) => Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _currentPage == index
+                          ? Colors.white
+                          : Colors.white.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          if (images.length > 1)
+            Positioned(
+              bottom: 16,
+              right: 16,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: PawsText(
+                  '${_currentPage + 1}/${images.length}',
+                  color: Colors.white,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -153,30 +243,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
 
               children: [
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.black,
-                        Colors.transparent,
-                        Colors.transparent,
-                      ],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
-                  ),
-                  height: MediaQuery.sizeOf(context).height * 0.3,
-                  width: MediaQuery.sizeOf(context).width,
-                  child: Opacity(
-                    opacity: 0.9,
-                    child: NetworkImageView(
-                      pet.photo,
-                      fit: BoxFit.cover,
-                      height: MediaQuery.sizeOf(context).height * 0.3,
-                      width: MediaQuery.sizeOf(context).width,
-                    ),
-                  ),
-                ),
+                _buildImageCarousel(pet),
                 SizedBox(height: 10),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),

@@ -201,7 +201,7 @@ class _CreateAdoptionScreenState extends State<CreateAdoptionScreen> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: CachedNetworkImage(
-                        imageUrl: pet.photo,
+                        imageUrl: pet.photos.first,
                         width: 80,
                         height: 80,
                         fit: BoxFit.cover,

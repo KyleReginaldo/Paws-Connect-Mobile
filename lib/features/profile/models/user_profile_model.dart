@@ -43,21 +43,19 @@ class UserProfile with UserProfileMappable {
 class UserIdentification with UserIdentificationMappable {
   final int id;
   final DateTime createdAt;
-  final String idNumber;
   final String idAttachmentUrl;
   final String idName;
-  final DateTime idExpiration;
-  final String idType;
+  final String? address;
+  final String? dateOfBirth;
   final String status;
 
   UserIdentification(
     this.id,
     this.createdAt,
-    this.idNumber,
     this.idAttachmentUrl,
     this.idName,
-    this.idExpiration,
-    this.idType,
+    this.address,
+    this.dateOfBirth,
     this.status,
   );
 }

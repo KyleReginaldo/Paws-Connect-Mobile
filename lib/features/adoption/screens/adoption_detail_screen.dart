@@ -130,7 +130,7 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
             children: [
               NetworkImageView(
                 width: MediaQuery.sizeOf(context).width,
-                adoption.pets.photo,
+                adoption.pets.photos.first,
                 fit: BoxFit.cover,
                 enableTapToView: false,
               ),

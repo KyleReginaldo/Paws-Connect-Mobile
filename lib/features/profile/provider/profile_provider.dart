@@ -141,8 +141,8 @@ class ProfileProvider {
     required String idNumber,
     required XFile idAttachment,
     required String idName,
-    required DateTime idExpiration,
-    required String idType,
+    required String address,
+    required DateTime dateOfBirth,
   }) async {
     // Check internet connectivity first
     final hasInternet = await InternetConnection().hasInternetAccess;
@@ -183,8 +183,10 @@ class ProfileProvider {
           'id_number': idNumber,
           'id_attachment_url': idAttachmentUrl,
           'id_name': idName,
-          'id_expiration': idExpiration.toIso8601String(),
-          'id_type': idType,
+          'address': address,
+          'date_of_birth': dateOfBirth.toIso8601String().split(
+            'T',
+          )[0], // Format as YYYY-MM-DD
         }),
       );
 

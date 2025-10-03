@@ -26,11 +26,12 @@ class Pet with PetMappable {
   String specialNeeds;
   String addedBy;
   String requestStatus;
-  String photo;
+  List<String> photos;
   String? color;
   bool? isFavorite;
   final List<PetAdoption>? adoption;
   final PetAdoption? adopted;
+  final String? happinessImage;
 
   Pet({
     required this.id,
@@ -53,11 +54,12 @@ class Pet with PetMappable {
     required this.specialNeeds,
     required this.addedBy,
     required this.requestStatus,
-    required this.photo,
+    required this.photos,
     required this.color,
     this.isFavorite,
     this.adoption,
     required this.adopted,
+    this.happinessImage,
   });
 }
 

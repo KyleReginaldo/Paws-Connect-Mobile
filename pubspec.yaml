@@ -75,6 +75,7 @@ dependencies:
   package_info_plus: ^8.2.1
   progressive_blur: ^0.0.2
   flutter_chat_reactions: ^0.2.6
+  glow_container: ^1.0.1
 
 dev_dependencies:
   flutter_test:

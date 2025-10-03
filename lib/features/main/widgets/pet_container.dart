@@ -41,7 +41,7 @@ class PetContainer extends StatelessWidget {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(6),
                       child: NetworkImageView(
-                        pet.photo,
+                        pet.photos.first,
                         width: MediaQuery.sizeOf(context).width * 0.40,
                         height: 120,
                         fit: BoxFit.cover,

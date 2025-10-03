@@ -109,8 +109,8 @@ class PetMapper extends ClassMapperBase<Pet> {
     _$requestStatus,
     key: r'request_status',
   );
-  static String _$photo(Pet v) => v.photo;
-  static const Field<Pet, String> _f$photo = Field('photo', _$photo);
+  static List<String> _$photos(Pet v) => v.photos;
+  static const Field<Pet, List<String>> _f$photos = Field('photos', _$photos);
   static String? _$color(Pet v) => v.color;
   static const Field<Pet, String> _f$color = Field('color', _$color);
   static bool? _$isFavorite(Pet v) => v.isFavorite;
@@ -128,6 +128,13 @@ class PetMapper extends ClassMapperBase<Pet> {
   );
   static PetAdoption? _$adopted(Pet v) => v.adopted;
   static const Field<Pet, PetAdoption> _f$adopted = Field('adopted', _$adopted);
+  static String? _$happinessImage(Pet v) => v.happinessImage;
+  static const Field<Pet, String> _f$happinessImage = Field(
+    'happinessImage',
+    _$happinessImage,
+    key: r'happiness_image',
+    opt: true,
+  );
 
   @override
   final MappableFields<Pet> fields = const {
@@ -151,11 +158,12 @@ class PetMapper extends ClassMapperBase<Pet> {
     #specialNeeds: _f$specialNeeds,
     #addedBy: _f$addedBy,
     #requestStatus: _f$requestStatus,
-    #photo: _f$photo,
+    #photos: _f$photos,
     #color: _f$color,
     #isFavorite: _f$isFavorite,
     #adoption: _f$adoption,
     #adopted: _f$adopted,
+    #happinessImage: _f$happinessImage,
   };
 
   static Pet _instantiate(DecodingData data) {
@@ -180,11 +188,12 @@ class PetMapper extends ClassMapperBase<Pet> {
       specialNeeds: data.dec(_f$specialNeeds),
       addedBy: data.dec(_f$addedBy),
       requestStatus: data.dec(_f$requestStatus),
-      photo: data.dec(_f$photo),
+      photos: data.dec(_f$photos),
       color: data.dec(_f$color),
       isFavorite: data.dec(_f$isFavorite),
       adoption: data.dec(_f$adoption),
       adopted: data.dec(_f$adopted),
+      happinessImage: data.dec(_f$happinessImage),
     );
   }
 
@@ -235,6 +244,7 @@ extension PetValueCopy<$R, $Out> on ObjectCopyWith<$R, Pet, $Out> {
 abstract class PetCopyWith<$R, $In extends Pet, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>> get goodWith;
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>> get photos;
   ListCopyWith<
     $R,
     PetAdoption,
@@ -263,11 +273,12 @@ abstract class PetCopyWith<$R, $In extends Pet, $Out>
     String? specialNeeds,
     String? addedBy,
     String? requestStatus,
-    String? photo,
+    List<String>? photos,
     String? color,
     bool? isFavorite,
     List<PetAdoption>? adoption,
     PetAdoption? adopted,
+    String? happinessImage,
   });
   PetCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -284,6 +295,13 @@ class _PetCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Pet, $Out>
         $value.goodWith,
         (v, t) => ObjectCopyWith(v, $identity, t),
         (v) => call(goodWith: v),
+      );
+  @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>> get photos =>
+      ListCopyWith(
+        $value.photos,
+        (v, t) => ObjectCopyWith(v, $identity, t),
+        (v) => call(photos: v),
       );
   @override
   ListCopyWith<
@@ -323,11 +341,12 @@ class _PetCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Pet, $Out>
     String? specialNeeds,
     String? addedBy,
     String? requestStatus,
-    String? photo,
+    List<String>? photos,
     Object? color = $none,
     Object? isFavorite = $none,
     Object? adoption = $none,
     Object? adopted = $none,
+    Object? happinessImage = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -350,11 +369,12 @@ class _PetCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Pet, $Out>
       if (specialNeeds != null) #specialNeeds: specialNeeds,
       if (addedBy != null) #addedBy: addedBy,
       if (requestStatus != null) #requestStatus: requestStatus,
-      if (photo != null) #photo: photo,
+      if (photos != null) #photos: photos,
       if (color != $none) #color: color,
       if (isFavorite != $none) #isFavorite: isFavorite,
       if (adoption != $none) #adoption: adoption,
       if (adopted != $none) #adopted: adopted,
+      if (happinessImage != $none) #happinessImage: happinessImage,
     }),
   );
   @override
@@ -382,11 +402,12 @@ class _PetCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Pet, $Out>
     specialNeeds: data.get(#specialNeeds, or: $value.specialNeeds),
     addedBy: data.get(#addedBy, or: $value.addedBy),
     requestStatus: data.get(#requestStatus, or: $value.requestStatus),
-    photo: data.get(#photo, or: $value.photo),
+    photos: data.get(#photos, or: $value.photos),
     color: data.get(#color, or: $value.color),
     isFavorite: data.get(#isFavorite, or: $value.isFavorite),
     adoption: data.get(#adoption, or: $value.adoption),
     adopted: data.get(#adopted, or: $value.adopted),
+    happinessImage: data.get(#happinessImage, or: $value.happinessImage),
   );
 
   @override

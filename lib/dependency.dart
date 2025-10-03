@@ -6,6 +6,8 @@ import 'package:paws_connect/features/auth/provider/auth_provider.dart';
 import 'package:paws_connect/features/auth/repository/auth_repository.dart';
 import 'package:paws_connect/features/donation/provider/donation_provider.dart';
 import 'package:paws_connect/features/donation/repository/donation_repository.dart';
+import 'package:paws_connect/features/events/provider/event_provider.dart';
+import 'package:paws_connect/features/events/repository/event_repository.dart';
 import 'package:paws_connect/features/favorite/provider/favorite_provider.dart';
 import 'package:paws_connect/features/forum/provider/forum_provider.dart';
 import 'package:paws_connect/features/forum/repository/forum_repository.dart';
@@ -50,4 +52,6 @@ Future<void> init() async {
   sl.registerLazySingleton(() => NotificationRepository(sl()));
   sl.registerLazySingleton(() => CommonProvider());
   sl.registerLazySingleton(() => CommonRepository(sl()));
+  sl.registerLazySingleton(() => EventProvider());
+  sl.registerLazySingleton(() => EventRepository(sl()));
 }
