@@ -672,11 +672,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      PawsText('Simple reminder for you'),
-                                      PawsText(
-                                        'Please be mindful of using AI because it may not always be accurate.',
-                                      ),
-                                      SizedBox(height: 10),
+                                    
                                       PawsText(
                                         suggestion,
                                         fontSize: 16,

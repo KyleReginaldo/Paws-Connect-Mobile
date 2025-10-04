@@ -280,6 +280,7 @@ class _MentionableTextFieldState extends State<MentionableTextField> {
   }
 
   Widget _buildUserItem(AvailableUser user) {
+    debugPrint('Building user item for ${user.profileImageLink}');
     return InkWell(
       onTap: () => _selectUser(user),
       child: Padding(

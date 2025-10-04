@@ -630,7 +630,11 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     final pendingChats = repo.pendingChats;
     final forum = repo.forum;
     _forumMembers = (forum?.members ?? []).map((e) {
-      return AvailableUser(id: e.id, username: e.username);
+      return AvailableUser(
+        id: e.id,
+        username: e.username,
+        profileImageLink: e.profileImageLink,
+      );
     }).toList();
     if (forumChats.isNotEmpty) {
       _processMessages(forumChats);

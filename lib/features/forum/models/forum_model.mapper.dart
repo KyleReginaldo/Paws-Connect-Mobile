@@ -588,15 +588,27 @@ class UsersMapper extends ClassMapperBase<Users> {
   static const Field<Users, String> _f$id = Field('id', _$id);
   static String _$username(Users v) => v.username;
   static const Field<Users, String> _f$username = Field('username', _$username);
+  static String? _$profileImageLink(Users v) => v.profileImageLink;
+  static const Field<Users, String> _f$profileImageLink = Field(
+    'profileImageLink',
+    _$profileImageLink,
+    key: r'profile_image_link',
+    opt: true,
+  );
 
   @override
   final MappableFields<Users> fields = const {
     #id: _f$id,
     #username: _f$username,
+    #profileImageLink: _f$profileImageLink,
   };
 
   static Users _instantiate(DecodingData data) {
-    return Users(id: data.dec(_f$id), username: data.dec(_f$username));
+    return Users(
+      id: data.dec(_f$id),
+      username: data.dec(_f$username),
+      profileImageLink: data.dec(_f$profileImageLink),
+    );
   }
 
   @override
@@ -645,7 +657,7 @@ extension UsersValueCopy<$R, $Out> on ObjectCopyWith<$R, Users, $Out> {
 
 abstract class UsersCopyWith<$R, $In extends Users, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({String? id, String? username});
+  $R call({String? id, String? username, String? profileImageLink});
   UsersCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -656,16 +668,19 @@ class _UsersCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Users, $Out>
   @override
   late final ClassMapperBase<Users> $mapper = UsersMapper.ensureInitialized();
   @override
-  $R call({String? id, String? username}) => $apply(
-    FieldCopyWithData({
-      if (id != null) #id: id,
-      if (username != null) #username: username,
-    }),
-  );
+  $R call({String? id, String? username, Object? profileImageLink = $none}) =>
+      $apply(
+        FieldCopyWithData({
+          if (id != null) #id: id,
+          if (username != null) #username: username,
+          if (profileImageLink != $none) #profileImageLink: profileImageLink,
+        }),
+      );
   @override
   Users $make(CopyWithData data) => Users(
     id: data.get(#id, or: $value.id),
     username: data.get(#username, or: $value.username),
+    profileImageLink: data.get(#profileImageLink, or: $value.profileImageLink),
   );
 
   @override

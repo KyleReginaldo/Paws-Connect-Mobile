@@ -71,7 +71,7 @@ class ChatMessageWidget extends StatelessWidget {
               if (!isCurrentUser) ...[
                 showAvatar
                     ? UserAvatar(
-                        imageUrl: null,
+                        imageUrl: chat.users?.profileImageLink,
                         initials: chat.users?.username,
                         size: 32,
                       )
@@ -145,7 +145,9 @@ class ChatMessageWidget extends StatelessWidget {
                   : const EdgeInsets.only(left: 40),
               height: 24,
               child: AnimatedAvatarStack(
-                width: (24 * (filteredViewers.length)).toDouble(),
+                width: filteredViewers.length >= 5
+                    ? (24 * 5).toDouble()
+                    : (24 * (filteredViewers.length)).toDouble(),
                 settings: RestrictedPositions(
                   align: isCurrentUser ? StackAlign.right : StackAlign.left,
                   maxCoverage: (filteredViewers.length > 5) ? 0.7 : 0.9,

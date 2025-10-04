@@ -78,8 +78,9 @@ class Mention with MentionMappable {
 class Users with UsersMappable {
   final String id;
   final String username;
+  final String? profileImageLink;
 
-  Users({required this.id, required this.username});
+  Users({required this.id, required this.username, this.profileImageLink});
 }
 
 @MappableClass(caseStyle: CaseStyle.snakeCase)
