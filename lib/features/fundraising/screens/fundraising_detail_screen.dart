@@ -153,7 +153,7 @@ class _FundraisingDetailScreenState extends State<FundraisingDetailScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       PawsText(
-                        'created ${DateFormat('MMM dd, yyyy').format(fundraising.createdAt)}',
+                        'published ${DateFormat('MMM dd, yyyy').format(fundraising.createdAt)}',
                         fontSize: 12,
                         color: PawsColors.textSecondary,
                       ),
@@ -357,8 +357,7 @@ class _FundraisingDetailScreenState extends State<FundraisingDetailScreen> {
                             await SharePlus.instance.share(
                               ShareParams(
                                 text:
-                                    'Title: ${fundraising.title}\nDescription: ${fundraising.description}\nLink: https://paws-connect-sable.vercel.app/forum-chat/${fundraising.id}',
-                                files: file != null ? [file] : null,
+                                    'Title: ${fundraising.title}\nDescription: ${fundraising.description}\nLink: https://paws-connect-sable.vercel.app/fundraising/${fundraising.id}',
                               ),
                             );
                           }

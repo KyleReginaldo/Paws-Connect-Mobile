@@ -76,6 +76,11 @@ dependencies:
   progressive_blur: ^0.0.2
   flutter_chat_reactions: ^0.2.6
   glow_container: ^1.0.1
+  animated_text_kit: ^4.2.3
+  gpt_markdown: ^1.1.2
+  carousel_slider: ^5.1.1
+  shared_preferences: ^2.2.2
+  avatar_stack: ^3.0.0
 
 dev_dependencies:
   flutter_test:

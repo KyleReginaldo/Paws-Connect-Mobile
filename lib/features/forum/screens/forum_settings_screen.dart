@@ -1,10 +1,12 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/core/theme/paws_theme.dart';
+import 'package:paws_connect/core/widgets/global_confirm_dialog.dart';
 import 'package:paws_connect/core/widgets/text.dart';
 import 'package:paws_connect/dependency.dart';
 import 'package:provider/provider.dart';
@@ -167,6 +169,44 @@ class _ForumSettingsScreenState extends State<ForumSettingsScreen> {
     }
   }
 
+  void leaveForum(int id) async {
+    final result = await ForumProvider().quitForum(
+      forumId: id,
+      userId: USER_ID ?? "",
+    );
+    if (result.isError) {
+      if (!mounted) return;
+      EasyLoading.showError(result.error);
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.value)));
+      context.router.popUntilRoot();
+    }
+  }
+
+  void kickMember(int id, String memberId) async {
+    final result = await ForumProvider().kickMember(
+      forumId: id,
+      kickedBy: USER_ID ?? "",
+      userId: memberId,
+    );
+    if (result.isError) {
+      if (!mounted) return;
+      EasyLoading.showError(result.error);
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.value)));
+      context.read<ForumRepository>().setForumById(
+        widget.forumId,
+        USER_ID ?? "",
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final forum = context.watch<ForumRepository>().forum;
@@ -187,7 +227,30 @@ class _ForumSettingsScreenState extends State<ForumSettingsScreen> {
     debugPrint('private: ${forum?.private}');
     if (forum != null) {
       return Scaffold(
-        appBar: AppBar(),
+        appBar: AppBar(
+          actions: [
+            IconButton(
+              onPressed: () {
+                showGlobalConfirmDialog(
+                  context,
+                  title: 'Leave Forum',
+                  message: 'Are you sure you want to leave this forum?',
+                  confirmLabel: 'Leave',
+                  cancelLabel: 'Cancel',
+                ).then((value) {
+                  if (value == true) {
+                    leaveForum(forum.id);
+                  }
+                });
+              },
+              icon: Icon(
+                LucideIcons.doorOpen,
+                size: 24,
+                color: PawsColors.error,
+              ),
+            ),
+          ],
+        ),
         body: isLoading
             ? LinearProgressIndicator()
             : RefreshIndicator(
@@ -442,7 +505,51 @@ class _ForumSettingsScreenState extends State<ForumSettingsScreen> {
                                                   ),
                                                 ],
                                               )
-                                            : null,
+                                            : PopupMenuButton(
+                                                itemBuilder: (context) {
+                                                  return [
+                                                    if (forum.createdBy ==
+                                                            USER_ID &&
+                                                        member.id != USER_ID &&
+                                                        member.invitationStatus ==
+                                                            'APPROVED')
+                                                      PopupMenuItem(
+                                                        value: 'kick',
+                                                        child: Row(
+                                                          spacing: 8,
+                                                          children: [
+                                                            Icon(
+                                                              LucideIcons.userX,
+                                                              size: 16,
+                                                              color: PawsColors
+                                                                  .error,
+                                                            ),
+                                                            PawsText('Kick'),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                  ];
+                                                },
+                                                onSelected: (value) {
+                                                  if (value == 'kick') {
+                                                    showGlobalConfirmDialog(
+                                                      context,
+                                                      title: 'Kick Member',
+                                                      message:
+                                                          'Are you sure you want to kick ${member.username} from this forum?',
+                                                      confirmLabel: 'Kick',
+                                                      cancelLabel: 'Cancel',
+                                                    ).then((value) {
+                                                      if (value == true) {
+                                                        kickMember(
+                                                          forum.id,
+                                                          member.id,
+                                                        );
+                                                      }
+                                                    });
+                                                  }
+                                                },
+                                              ),
                                         // Container(
                                         //     padding: EdgeInsets.symmetric(
                                         //       vertical: 4,

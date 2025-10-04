@@ -1,5 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:auto_route/auto_route.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -128,11 +129,21 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
         children: [
           Stack(
             children: [
-              NetworkImageView(
-                width: MediaQuery.sizeOf(context).width,
-                adoption.pets.photos.first,
-                fit: BoxFit.cover,
-                enableTapToView: false,
+              CarouselSlider(
+                items: adoption.pets.photos.map((e) {
+                  return NetworkImageView(
+                    width: MediaQuery.sizeOf(context).width,
+                    e,
+                    fit: BoxFit.cover,
+                    enableTapToView: false,
+                  );
+                }).toList(),
+                options: CarouselOptions(
+                  height: 280,
+                  viewportFraction: 1.0,
+                  enableInfiniteScroll: false,
+                  autoPlay: adoption.pets.photos.length > 1,
+                ),
               ),
               Positioned(
                 bottom: 0,

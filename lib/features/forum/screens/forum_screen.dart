@@ -31,6 +31,8 @@ class ForumScreen extends StatefulWidget implements AutoRouteWrapper {
 
 class _ForumScreenState extends State<ForumScreen> {
   late RealtimeChannel _forumChatsChannel;
+  late RealtimeChannel _forumMembersChannel;
+
   DateTime _lastRealtimeRefresh = DateTime.fromMillisecondsSinceEpoch(0);
 
   @override
@@ -43,7 +45,8 @@ class _ForumScreenState extends State<ForumScreen> {
     });
 
     // Screen-level listener: keep forum list (e.g., last message preview) fresh
-    _forumChatsChannel = supabase.channel('public:forum_chats_forum_screen');
+    _forumChatsChannel = supabase.channel('public:forum_chats');
+    _forumMembersChannel = supabase.channel('public:forum_members');
     _forumChatsChannel
         .onPostgresChanges(
           event: PostgresChangeEvent.insert,
@@ -57,6 +60,17 @@ class _ForumScreenState extends State<ForumScreen> {
               return;
             }
             _lastRealtimeRefresh = now;
+            context.read<ForumRepository>().setForums(USER_ID ?? '');
+          },
+        )
+        .subscribe();
+    _forumMembersChannel
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'forum_members',
+          callback: (_) {
+            if (!mounted) return;
             context.read<ForumRepository>().setForums(USER_ID ?? '');
           },
         )

@@ -99,12 +99,49 @@ class ForumProvider {
     }
   }
 
+  Future<Result<List<AvailableUser>>> fetchForumMembers(int forumId) async {
+    try {
+      final response = await supabase
+          .from('forum_members')
+          .select('''
+            id,
+            users!inner (
+              id,
+              username,
+              profile_image_link
+            )
+          ''')
+          .eq('forum', forumId)
+          .eq('status', 'approved');
+
+      final List<AvailableUser> members = [];
+      for (final row in response) {
+        final user = row['users'];
+        if (user != null) {
+          members.add(
+            AvailableUser(
+              id: user['id'],
+              username: user['username'],
+              profileImageLink: user['profile_image_link'],
+            ),
+          );
+        }
+      }
+
+      return Result.success(members);
+    } catch (e) {
+      debugPrint('Error fetching forum members: $e');
+      return Result.error('Failed to fetch forum members');
+    }
+  }
+
   Future<void> sendChat({
     required String sender,
     required String message,
     required int forumId,
     XFile? imageFile,
     int? repliedTo,
+    List<String>? mentions,
   }) async {
     String? imageUrl;
     if (imageFile != null) {
@@ -119,6 +156,7 @@ class ForumProvider {
         'message': message,
         if (imageUrl != null) 'image_url': imageUrl,
         if (repliedTo != null) 'replied_to': repliedTo,
+        if (mentions != null && mentions.isNotEmpty) 'mentions': mentions,
       }),
     );
     if (response.statusCode != 201) {
@@ -263,6 +301,94 @@ class ForumProvider {
         return Result.success(data['message'] ?? 'Reaction removed');
       } else {
         return Result.error(data['message'] ?? 'Failed to remove reaction');
+      }
+    } catch (e) {
+      return Result.error('Something went wrong: $e');
+    }
+  }
+
+  /// Quit a forum
+  ///
+  /// Allows a user to leave a forum by providing their user ID.
+  ///
+  /// Parameters:
+  /// - [forumId]: The ID of the forum to quit
+  /// - [userId]: The ID of the user who wants to quit the forum
+  ///
+  /// Returns a [Result] with success message or error message
+  Future<Result<String>> quitForum({
+    required int forumId,
+    required String userId,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${dotenv.get('BASE_URL')}/forum/$forumId/quit'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'user_id': userId}),
+      );
+
+      final data = jsonDecode(response.body);
+      debugPrint('Quit Forum Response: $data');
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return Result.success(data['message'] ?? 'Successfully quit the forum');
+      } else {
+        return Result.error(data['error'] ?? 'Failed to quit forum');
+      }
+    } catch (e) {
+      return Result.error('Something went wrong: $e');
+    }
+  }
+
+  /// Kick a member from a forum
+  ///
+  /// Allows a forum admin/moderator to remove a member from the forum.
+  ///
+  /// Parameters:
+  /// - [forumId]: The ID of the forum
+  /// - [userId]: The ID of the user to be kicked
+  /// - [kickedBy]: The ID of the user performing the kick action
+  ///
+  /// Returns a [Result] with success message or error message
+  Future<Result<String>> kickMember({
+    required int forumId,
+    required String userId,
+    required String kickedBy,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${dotenv.get('BASE_URL')}/forum/$forumId/kick'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'user_id': userId, 'kicked_by': kickedBy}),
+      );
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return Result.success(data['message'] ?? 'Member kicked successfully');
+      } else {
+        return Result.error(data['message'] ?? 'Failed to kick member');
+      }
+    } catch (e) {
+      return Result.error('Something went wrong: $e');
+    }
+  }
+
+  Future<Result<String>> removeChat({
+    required int forumId,
+    required int chatId,
+    required String sender,
+  }) async {
+    try {
+      final response = await http.delete(
+        Uri.parse(
+          '${dotenv.get('BASE_URL')}/forum/$forumId/chats/$chatId?sender=$sender',
+        ),
+      );
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return Result.success(data['message'] ?? 'Chat deleted successfully');
+      } else {
+        return Result.error(data['error'] ?? 'Failed to delete chat');
       }
     } catch (e) {
       return Result.error('Something went wrong: $e');

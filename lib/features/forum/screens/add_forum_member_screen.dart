@@ -90,7 +90,7 @@ class _AddForumMemberScreenState extends State<AddForumMemberScreen> {
             ),
         ],
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           spacing: 10,

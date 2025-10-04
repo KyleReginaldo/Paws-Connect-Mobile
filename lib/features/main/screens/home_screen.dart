@@ -1,9 +1,11 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:gpt_markdown/gpt_markdown.dart';
 import 'package:lottie/lottie.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/enum/user.enum.dart';
+import 'package:paws_connect/core/repository/common_repository.dart';
 import 'package:paws_connect/core/router/app_route.gr.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/core/widgets/button.dart';
@@ -66,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final userIdentificationChannel = supabase.channel(
     'public:user_identification:user=eq.$USER_ID',
   );
-
+  final OverlayPortalController overlayController = OverlayPortalController();
   final fundraisingChannel = supabase.channel('public:fundraising');
   late final WebViewController webviewController;
   late RealtimeChannel addressChannel;
@@ -318,6 +320,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final user = context.watch<ProfileRepository>().userProfile;
     final isConnected = context.watch<InternetProvider>().isConnected;
     final events = context.watch<EventRepository>().events;
+    final aiSuggestions = context
+        .watch<CommonRepository>()
+        .suggestionCompletion;
     // Removed debug print to prevent console spam
     debugPrint('may laman ba yung events: ${events?.length}');
     return Scaffold(
@@ -581,17 +586,132 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
               if (events != null && events.isNotEmpty) ...[
-                PawsText(
-                  'Posted by Admin',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
+                Row(
+                  spacing: 5,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    PawsText(
+                      'Posted by Admin',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        overlayController.toggle();
+                      },
+                      child: OverlayPortal(
+                        controller: overlayController,
+                        overlayChildBuilder: (context) {
+                          return Positioned(
+                            top: 85,
+                            left: 50,
+                            right: 50,
+                            child: Container(
+                              constraints: BoxConstraints(
+                                maxWidth:
+                                    MediaQuery.sizeOf(context).width * 0.70,
+                              ),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(8),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color.fromARGB(66, 94, 85, 85),
+                                    blurRadius: 6,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: PawsText(
+                                'Events are posted by the admin to keep you informed about upcoming activities and important announcements.',
+                              ),
+                            ),
+                          );
+                        },
+                        child: Icon(
+                          Icons.info_outline,
+                          size: 16,
+                          color: PawsColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   physics: ClampingScrollPhysics(),
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 8,
                     children: events.map((e) {
-                      return EventContainer(event: e);
+                      return EventContainer(
+                        event: e,
+                        onSuggestionTap: (suggestion) {
+                          context
+                              .read<CommonRepository>()
+                              .getSuggestionCompletion(
+                                suggestion,
+                                '${e.title}, ${e.description}',
+                              );
+                          showModalBottomSheet(
+                            context: context,
+                            shape: RoundedRectangleBorder(),
+                            builder: (_) {
+                              return Container(
+                                height:
+                                    MediaQuery.sizeOf(context).height * 0.70,
+                                padding: EdgeInsets.all(16),
+                                decoration: BoxDecoration(),
+                                width: MediaQuery.sizeOf(context).width,
+                                child: SingleChildScrollView(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      PawsText('Simple reminder for you'),
+                                      PawsText(
+                                        'Please be mindful of using AI because it may not always be accurate.',
+                                      ),
+                                      SizedBox(height: 10),
+                                      PawsText(
+                                        suggestion,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      SizedBox(height: 10),
+                                      aiSuggestions == null
+                                          ? Center(
+                                              child: LottieBuilder.asset(
+                                                'assets/json/paw_loader.json',
+                                                height: 64,
+                                                width: 64,
+                                              ),
+                                            )
+                                          : aiSuggestions.isEmpty
+                                          ? PawsText(
+                                              'No suggestions available. Please try again later.',
+                                              fontSize: 14,
+                                              color: PawsColors.textSecondary,
+                                            )
+                                          : GptMarkdown(
+                                              aiSuggestions,
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: PawsColors.textSecondary,
+                                              ),
+                                            ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      );
                     }).toList(),
                   ),
                 ),

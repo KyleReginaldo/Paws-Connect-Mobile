@@ -683,6 +683,8 @@ class ForumChatMapper extends ClassMapperBase<ForumChat> {
       UsersMapper.ensureInitialized();
       ForumChatMapper.ensureInitialized();
       ReactionMapper.ensureInitialized();
+      ViewerMapper.ensureInitialized();
+      MentionMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -727,6 +729,18 @@ class ForumChatMapper extends ClassMapperBase<ForumChat> {
     _$reactions,
     opt: true,
   );
+  static List<Viewer>? _$viewers(ForumChat v) => v.viewers;
+  static const Field<ForumChat, List<Viewer>> _f$viewers = Field(
+    'viewers',
+    _$viewers,
+    opt: true,
+  );
+  static List<Mention>? _$mentions(ForumChat v) => v.mentions;
+  static const Field<ForumChat, List<Mention>> _f$mentions = Field(
+    'mentions',
+    _$mentions,
+    opt: true,
+  );
 
   @override
   final MappableFields<ForumChat> fields = const {
@@ -738,6 +752,8 @@ class ForumChatMapper extends ClassMapperBase<ForumChat> {
     #imageUrl: _f$imageUrl,
     #repliedTo: _f$repliedTo,
     #reactions: _f$reactions,
+    #viewers: _f$viewers,
+    #mentions: _f$mentions,
   };
 
   static ForumChat _instantiate(DecodingData data) {
@@ -750,6 +766,8 @@ class ForumChatMapper extends ClassMapperBase<ForumChat> {
       imageUrl: data.dec(_f$imageUrl),
       repliedTo: data.dec(_f$repliedTo),
       reactions: data.dec(_f$reactions),
+      viewers: data.dec(_f$viewers),
+      mentions: data.dec(_f$mentions),
     );
   }
 
@@ -816,6 +834,9 @@ abstract class ForumChatCopyWith<$R, $In extends ForumChat, $Out>
   ForumChatCopyWith<$R, ForumChat, ForumChat>? get repliedTo;
   ListCopyWith<$R, Reaction, ReactionCopyWith<$R, Reaction, Reaction>>?
   get reactions;
+  ListCopyWith<$R, Viewer, ViewerCopyWith<$R, Viewer, Viewer>>? get viewers;
+  ListCopyWith<$R, Mention, MentionCopyWith<$R, Mention, Mention>>?
+  get mentions;
   $R call({
     int? id,
     DateTime? sentAt,
@@ -825,6 +846,8 @@ abstract class ForumChatCopyWith<$R, $In extends ForumChat, $Out>
     String? imageUrl,
     ForumChat? repliedTo,
     List<Reaction>? reactions,
+    List<Viewer>? viewers,
+    List<Mention>? mentions,
   });
   ForumChatCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -853,6 +876,24 @@ class _ForumChatCopyWithImpl<$R, $Out>
         )
       : null;
   @override
+  ListCopyWith<$R, Viewer, ViewerCopyWith<$R, Viewer, Viewer>>? get viewers =>
+      $value.viewers != null
+      ? ListCopyWith(
+          $value.viewers!,
+          (v, t) => v.copyWith.$chain(t),
+          (v) => call(viewers: v),
+        )
+      : null;
+  @override
+  ListCopyWith<$R, Mention, MentionCopyWith<$R, Mention, Mention>>?
+  get mentions => $value.mentions != null
+      ? ListCopyWith(
+          $value.mentions!,
+          (v, t) => v.copyWith.$chain(t),
+          (v) => call(mentions: v),
+        )
+      : null;
+  @override
   $R call({
     int? id,
     DateTime? sentAt,
@@ -862,6 +903,8 @@ class _ForumChatCopyWithImpl<$R, $Out>
     Object? imageUrl = $none,
     Object? repliedTo = $none,
     Object? reactions = $none,
+    Object? viewers = $none,
+    Object? mentions = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -872,6 +915,8 @@ class _ForumChatCopyWithImpl<$R, $Out>
       if (imageUrl != $none) #imageUrl: imageUrl,
       if (repliedTo != $none) #repliedTo: repliedTo,
       if (reactions != $none) #reactions: reactions,
+      if (viewers != $none) #viewers: viewers,
+      if (mentions != $none) #mentions: mentions,
     }),
   );
   @override
@@ -884,6 +929,8 @@ class _ForumChatCopyWithImpl<$R, $Out>
     imageUrl: data.get(#imageUrl, or: $value.imageUrl),
     repliedTo: data.get(#repliedTo, or: $value.repliedTo),
     reactions: data.get(#reactions, or: $value.reactions),
+    viewers: data.get(#viewers, or: $value.viewers),
+    mentions: data.get(#mentions, or: $value.mentions),
   );
 
   @override
@@ -1015,6 +1062,271 @@ class _ReactionCopyWithImpl<$R, $Out>
   ReactionCopyWith<$R2, Reaction, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   ) => _ReactionCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class ViewerMapper extends ClassMapperBase<Viewer> {
+  ViewerMapper._();
+
+  static ViewerMapper? _instance;
+  static ViewerMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = ViewerMapper._());
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'Viewer';
+
+  static String _$id(Viewer v) => v.id;
+  static const Field<Viewer, String> _f$id = Field('id', _$id);
+  static String _$name(Viewer v) => v.name;
+  static const Field<Viewer, String> _f$name = Field('name', _$name);
+  static String? _$profileImage(Viewer v) => v.profileImage;
+  static const Field<Viewer, String> _f$profileImage = Field(
+    'profileImage',
+    _$profileImage,
+    key: r'profile_image',
+  );
+
+  @override
+  final MappableFields<Viewer> fields = const {
+    #id: _f$id,
+    #name: _f$name,
+    #profileImage: _f$profileImage,
+  };
+
+  static Viewer _instantiate(DecodingData data) {
+    return Viewer(
+      data.dec(_f$id),
+      data.dec(_f$name),
+      data.dec(_f$profileImage),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static Viewer fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<Viewer>(map);
+  }
+
+  static Viewer fromJson(String json) {
+    return ensureInitialized().decodeJson<Viewer>(json);
+  }
+}
+
+mixin ViewerMappable {
+  String toJson() {
+    return ViewerMapper.ensureInitialized().encodeJson<Viewer>(this as Viewer);
+  }
+
+  Map<String, dynamic> toMap() {
+    return ViewerMapper.ensureInitialized().encodeMap<Viewer>(this as Viewer);
+  }
+
+  ViewerCopyWith<Viewer, Viewer, Viewer> get copyWith =>
+      _ViewerCopyWithImpl<Viewer, Viewer>(this as Viewer, $identity, $identity);
+  @override
+  String toString() {
+    return ViewerMapper.ensureInitialized().stringifyValue(this as Viewer);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return ViewerMapper.ensureInitialized().equalsValue(this as Viewer, other);
+  }
+
+  @override
+  int get hashCode {
+    return ViewerMapper.ensureInitialized().hashValue(this as Viewer);
+  }
+}
+
+extension ViewerValueCopy<$R, $Out> on ObjectCopyWith<$R, Viewer, $Out> {
+  ViewerCopyWith<$R, Viewer, $Out> get $asViewer =>
+      $base.as((v, t, t2) => _ViewerCopyWithImpl<$R, $Out>(v, t, t2));
+}
+
+abstract class ViewerCopyWith<$R, $In extends Viewer, $Out>
+    implements ClassCopyWith<$R, $In, $Out> {
+  $R call({String? id, String? name, String? profileImage});
+  ViewerCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
+}
+
+class _ViewerCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Viewer, $Out>
+    implements ViewerCopyWith<$R, Viewer, $Out> {
+  _ViewerCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<Viewer> $mapper = ViewerMapper.ensureInitialized();
+  @override
+  $R call({String? id, String? name, Object? profileImage = $none}) => $apply(
+    FieldCopyWithData({
+      if (id != null) #id: id,
+      if (name != null) #name: name,
+      if (profileImage != $none) #profileImage: profileImage,
+    }),
+  );
+  @override
+  Viewer $make(CopyWithData data) => Viewer(
+    data.get(#id, or: $value.id),
+    data.get(#name, or: $value.name),
+    data.get(#profileImage, or: $value.profileImage),
+  );
+
+  @override
+  ViewerCopyWith<$R2, Viewer, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
+      _ViewerCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class MentionMapper extends ClassMapperBase<Mention> {
+  MentionMapper._();
+
+  static MentionMapper? _instance;
+  static MentionMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = MentionMapper._());
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'Mention';
+
+  static String _$id(Mention v) => v.id;
+  static const Field<Mention, String> _f$id = Field('id', _$id);
+  static String _$name(Mention v) => v.name;
+  static const Field<Mention, String> _f$name = Field('name', _$name);
+  static String? _$profileImage(Mention v) => v.profileImage;
+  static const Field<Mention, String> _f$profileImage = Field(
+    'profileImage',
+    _$profileImage,
+    key: r'profile_image',
+  );
+  static DateTime? _$mentionedAt(Mention v) => v.mentionedAt;
+  static const Field<Mention, DateTime> _f$mentionedAt = Field(
+    'mentionedAt',
+    _$mentionedAt,
+    key: r'mentioned_at',
+  );
+
+  @override
+  final MappableFields<Mention> fields = const {
+    #id: _f$id,
+    #name: _f$name,
+    #profileImage: _f$profileImage,
+    #mentionedAt: _f$mentionedAt,
+  };
+
+  static Mention _instantiate(DecodingData data) {
+    return Mention(
+      data.dec(_f$id),
+      data.dec(_f$name),
+      data.dec(_f$profileImage),
+      data.dec(_f$mentionedAt),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static Mention fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<Mention>(map);
+  }
+
+  static Mention fromJson(String json) {
+    return ensureInitialized().decodeJson<Mention>(json);
+  }
+}
+
+mixin MentionMappable {
+  String toJson() {
+    return MentionMapper.ensureInitialized().encodeJson<Mention>(
+      this as Mention,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return MentionMapper.ensureInitialized().encodeMap<Mention>(
+      this as Mention,
+    );
+  }
+
+  MentionCopyWith<Mention, Mention, Mention> get copyWith =>
+      _MentionCopyWithImpl<Mention, Mention>(
+        this as Mention,
+        $identity,
+        $identity,
+      );
+  @override
+  String toString() {
+    return MentionMapper.ensureInitialized().stringifyValue(this as Mention);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return MentionMapper.ensureInitialized().equalsValue(
+      this as Mention,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return MentionMapper.ensureInitialized().hashValue(this as Mention);
+  }
+}
+
+extension MentionValueCopy<$R, $Out> on ObjectCopyWith<$R, Mention, $Out> {
+  MentionCopyWith<$R, Mention, $Out> get $asMention =>
+      $base.as((v, t, t2) => _MentionCopyWithImpl<$R, $Out>(v, t, t2));
+}
+
+abstract class MentionCopyWith<$R, $In extends Mention, $Out>
+    implements ClassCopyWith<$R, $In, $Out> {
+  $R call({
+    String? id,
+    String? name,
+    String? profileImage,
+    DateTime? mentionedAt,
+  });
+  MentionCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
+}
+
+class _MentionCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, Mention, $Out>
+    implements MentionCopyWith<$R, Mention, $Out> {
+  _MentionCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<Mention> $mapper =
+      MentionMapper.ensureInitialized();
+  @override
+  $R call({
+    String? id,
+    String? name,
+    Object? profileImage = $none,
+    Object? mentionedAt = $none,
+  }) => $apply(
+    FieldCopyWithData({
+      if (id != null) #id: id,
+      if (name != null) #name: name,
+      if (profileImage != $none) #profileImage: profileImage,
+      if (mentionedAt != $none) #mentionedAt: mentionedAt,
+    }),
+  );
+  @override
+  Mention $make(CopyWithData data) => Mention(
+    data.get(#id, or: $value.id),
+    data.get(#name, or: $value.name),
+    data.get(#profileImage, or: $value.profileImage),
+    data.get(#mentionedAt, or: $value.mentionedAt),
+  );
+
+  @override
+  MentionCopyWith<$R2, Mention, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
+      _MentionCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class AvailableUserMapper extends ClassMapperBase<AvailableUser> {

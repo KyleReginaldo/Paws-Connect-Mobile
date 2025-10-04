@@ -3,7 +3,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../features/forum/models/forum_model.dart';
 import '../../theme/paws_theme.dart';
+import 'mention_text_field.dart';
 
 class MessageInputBar extends StatelessWidget {
   final TextEditingController controller;
@@ -12,6 +14,9 @@ class MessageInputBar extends StatelessWidget {
   final bool isSending;
   final File? previewImage;
   final VoidCallback? onRemovePreview;
+  final List<AvailableUser> availableUsers;
+  final String? currentUserId;
+  final Function(AvailableUser)? onUserMentioned;
 
   const MessageInputBar({
     super.key,
@@ -21,6 +26,9 @@ class MessageInputBar extends StatelessWidget {
     this.isSending = false,
     this.previewImage,
     this.onRemovePreview,
+    this.availableUsers = const [],
+    this.currentUserId,
+    this.onUserMentioned,
   });
 
   @override
@@ -57,20 +65,13 @@ class MessageInputBar extends StatelessWidget {
             children: [
               IconButton(onPressed: onPickImage, icon: const Icon(Icons.image)),
               Expanded(
-                child: TextField(
+                child: MentionableTextField(
                   controller: controller,
-                  onSubmitted: (_) => onSend(),
-                  decoration: InputDecoration(
-                    hintText: 'Type a message',
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    isDense: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                  ),
+                  hintText: 'Type a message',
+                  onSubmitted: onSend,
+                  availableUsers: availableUsers,
+                  currentUserId: currentUserId,
+                  onUserMentioned: onUserMentioned,
                 ),
               ),
               const SizedBox(width: 8),

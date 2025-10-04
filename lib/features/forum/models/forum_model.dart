@@ -38,6 +38,8 @@ class ForumChat with ForumChatMappable {
   final String? imageUrl;
   final ForumChat? repliedTo;
   final List<Reaction>? reactions;
+  final List<Viewer>? viewers;
+  final List<Mention>? mentions;
 
   ForumChat({
     required this.id,
@@ -48,7 +50,28 @@ class ForumChat with ForumChatMappable {
     this.imageUrl,
     this.repliedTo,
     this.reactions,
+    this.viewers,
+    this.mentions,
   });
+}
+
+@MappableClass(caseStyle: CaseStyle.snakeCase)
+class Viewer with ViewerMappable {
+  final String id;
+  final String name;
+  final String? profileImage;
+
+  Viewer(this.id, this.name, this.profileImage);
+}
+
+@MappableClass(caseStyle: CaseStyle.snakeCase)
+class Mention with MentionMappable {
+  final String id;
+  final String name;
+  final String? profileImage;
+  final DateTime? mentionedAt;
+
+  Mention(this.id, this.name, this.profileImage, this.mentionedAt);
 }
 
 @MappableClass(caseStyle: CaseStyle.snakeCase)

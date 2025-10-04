@@ -156,6 +156,7 @@ class ChatMessageList extends StatelessWidget {
       controller: reactionsController,
       config: reactionsConfig,
       currentUserId: currentUserId,
+      allChats: forumChats, // Pass all chats for viewer filtering
       onReactionAdded: (reaction) => onReactionAdded(reaction, chat.id),
       onReactionRemoved: (reaction) => onReactionRemoved(reaction, chat.id),
       onMenuItemTapped: (menuLabel) => onMenuItemTapped(menuLabel, chat),

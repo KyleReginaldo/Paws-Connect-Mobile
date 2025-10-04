@@ -29,15 +29,16 @@ class AppRouter extends RootStackRouter {
           page: PetRoute.page,
           transitionsBuilder: TransitionsBuilders.fadeIn,
         ),
-        CustomRoute(
-          page: FavoriteRoute.page,
-          transitionsBuilder: TransitionsBuilders.fadeIn,
-        ),
+
         CustomRoute(
           page: ForumRoute.page,
           transitionsBuilder: TransitionsBuilders.fadeIn,
         ),
       ],
+    ),
+    CustomRoute(
+      page: FavoriteRoute.page,
+      transitionsBuilder: TransitionsBuilders.fadeIn,
     ),
     CustomRoute(
       page: MapRoute.page,

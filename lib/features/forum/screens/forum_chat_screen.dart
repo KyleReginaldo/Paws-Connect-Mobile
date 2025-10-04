@@ -2,8 +2,10 @@ import 'dart:io';
 
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_chat_reactions/flutter_chat_reactions.dart'
     as chat_reactions;
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/dependency.dart';
@@ -59,6 +61,8 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
   late RealtimeChannel chatChannel;
   bool _isSendingMessage = false;
   bool _isInitialLoad = true;
+  List<AvailableUser> _forumMembers = [];
+  bool _isLoadingUsers = false;
   @override
   void initState() {
     super.initState();
@@ -66,6 +70,14 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     _setupRealtimeChannel();
     _loadInitialData();
     _setupScrollListener();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<ForumRepository>().setForumById(
+          widget.forumId,
+          USER_ID ?? "",
+        );
+      }
+    });
   }
 
   void _initializeControllers() {
@@ -84,7 +96,39 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
 
   void _loadInitialData() {
     _loadChats();
+    _loadForumMembers();
     _markMessagesAsViewed();
+  }
+
+  Future<void> _loadForumMembers() async {
+    if (_isLoadingUsers) return;
+
+    setState(() {
+      _isLoadingUsers = true;
+    });
+
+    try {
+      debugPrint('Loading forum members for forumId: ${widget.forumId}');
+      final result = await ForumProvider().fetchForumMembers(widget.forumId);
+
+      if (result.isSuccess && mounted) {
+        debugPrint('Forum members loaded: ${result.value.length} members');
+        for (final member in result.value) {
+          debugPrint('Member: ${member.username} (${member.id})');
+        }
+        setState(() {});
+      } else {
+        debugPrint('Failed to load forum members: ${result.error}');
+      }
+    } catch (e) {
+      debugPrint('Exception loading forum members: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingUsers = false;
+        });
+      }
+    }
   }
 
   void _markMessagesAsViewed() {
@@ -98,6 +142,23 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
           );
         } catch (e) {
           debugPrint('Failed to mark messages viewed: $e');
+        }
+      }
+    });
+  }
+
+  void _markNewMessagesAsViewed() {
+    // Use a slight delay to ensure the new messages are loaded first
+    Future.delayed(const Duration(milliseconds: 500), () {
+      final userId = USER_ID;
+      if (mounted && userId != null && userId.isNotEmpty) {
+        try {
+          sl<CommonRepository>().markMessagesViewed(
+            userId: userId,
+            forumId: widget.forumId,
+          );
+        } catch (e) {
+          debugPrint('Failed to mark new messages viewed: $e');
         }
       }
     });
@@ -124,7 +185,10 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
           ),
           callback: (payload) {
             if (mounted) {
+              // Refresh the chat list
               context.read<ForumRepository>().setForumChats(widget.forumId);
+              // Auto-mark new messages as viewed when they come in via realtime
+              _markNewMessagesAsViewed();
             }
           },
         )
@@ -221,10 +285,10 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
       await WidgetsBinding.instance.endOfFrame;
 
       final key = _chatKeys[messageId.toString()];
-      final context = key?.currentContext;
-      if (context != null) {
+      final keyContext = key?.currentContext;
+      if (keyContext != null && mounted) {
         await Scrollable.ensureVisible(
-          context,
+          keyContext,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
           alignment: 0.3,
@@ -441,6 +505,18 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     if (_messageController.text.trim().isEmpty || _isSendingMessage) return;
 
     final message = _messageController.text.trim();
+    final mentionUUIDs = _extractMentionsFromMessage(message);
+
+    // Log mentions for debugging
+    if (mentionUUIDs.isNotEmpty) {
+      debugPrint('Message contains mention UUIDs: $mentionUUIDs');
+      // Also log the usernames for easier debugging
+      final mentionedUsernames = RegExp(
+        r'@(\w+)',
+      ).allMatches(message).map((match) => match.group(1)!).toList();
+      debugPrint('Mentioned usernames: $mentionedUsernames');
+    }
+
     _messageController.clear();
 
     // Add to pending messages immediately for better UX
@@ -450,24 +526,51 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     setState(() {
       _isSendingMessage = true;
     });
-
+    _markMessagesAsViewed();
     _performSendMessage(message);
   }
 
   Future<void> _performSendMessage(String message) async {
     try {
+      // Extract mentions from the message using the MentionParser
+      final mentions = _extractMentionsFromMessage(message);
+
       await ForumProvider().sendChat(
         sender: USER_ID ?? '',
         message: message,
         forumId: widget.forumId,
         imageFile: _imageFile,
         repliedTo: replyTo?.id,
+        mentions: mentions.isNotEmpty ? mentions : null,
       );
 
       _handleSendSuccess();
     } catch (e) {
       _handleSendError(e, message);
     }
+  }
+
+  List<String> _extractMentionsFromMessage(String message) {
+    // Use regex to find all @mentions in the message
+    final RegExp mentionRegex = RegExp(r'@(\w+)');
+    final matches = mentionRegex.allMatches(message);
+
+    // Extract usernames from mentions
+    final mentionedUsernames = matches.map((match) => match.group(1)!).toList();
+
+    // Convert usernames to UUIDs using forum members list
+    final mentionedUUIDs = <String>[];
+    for (final username in mentionedUsernames) {
+      final user = _forumMembers.firstWhere(
+        (user) => user.username == username,
+        orElse: () => AvailableUser(id: '', username: ''),
+      );
+      if (user.id.isNotEmpty) {
+        mentionedUUIDs.add(user.id);
+      }
+    }
+
+    return mentionedUUIDs;
   }
 
   void _handleSendSuccess() {
@@ -501,6 +604,21 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     }
   }
 
+  Future<void> removeChat({required int chatId}) async {
+    final result = await ForumProvider().removeChat(
+      chatId: chatId,
+      forumId: widget.forumId,
+      sender: USER_ID ?? '',
+    );
+    if (result.isError) {
+      EasyLoading.showError(result.error);
+    } else {
+      if (mounted) {
+        context.read<ForumRepository>().setForumChats(widget.forumId);
+      }
+    }
+  }
+
   final Map<String, GlobalKey> _chatKeys = {};
 
   @override
@@ -510,7 +628,10 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     final isLoadingChats = repo.isLoadingChats;
     final isLoadingMoreChats = repo.isLoadingMoreChats;
     final pendingChats = repo.pendingChats;
-
+    final forum = repo.forum;
+    _forumMembers = (forum?.members ?? []).map((e) {
+      return AvailableUser(id: e.id, username: e.username);
+    }).toList();
     if (forumChats.isNotEmpty) {
       _processMessages(forumChats);
     }
@@ -646,6 +767,12 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
       onSend: _sendMessage,
       previewImage: _imageFile != null ? File(_imageFile!.path) : null,
       onRemovePreview: () => setState(() => _imageFile = null),
+      availableUsers: _forumMembers,
+      currentUserId: USER_ID,
+      onUserMentioned: (user) {
+        debugPrint('User mentioned: ${user.username}');
+        HapticFeedback.lightImpact();
+      },
     );
   }
 
@@ -655,6 +782,9 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
       setState(() {
         replyTo = chat;
       });
+    }
+    if (menuLabel == 'Delete') {
+      removeChat(chatId: chat.id);
     }
   }
 }

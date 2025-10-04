@@ -236,13 +236,7 @@ class _MainScreenState extends State<MainScreen> {
     return AutoTabsScaffold(
       homeIndex: 4,
 
-      routes: [
-        HomeRoute(),
-        FundraisingRoute(),
-        PetRoute(),
-        FavoriteRoute(),
-        ForumRoute(),
-      ],
+      routes: [HomeRoute(), FundraisingRoute(), PetRoute(), ForumRoute()],
 
       bottomNavigationBuilder: (_, tabsRouter) {
         // Set initial index only once when the widget is first built
@@ -279,10 +273,7 @@ class _MainScreenState extends State<MainScreen> {
               label: '',
               icon: Icon(LucideIcons.dog),
             ),
-            const BottomNavigationBarItem(
-              label: '',
-              icon: Icon(LucideIcons.heart),
-            ),
+
             BottomNavigationBarItem(
               label: '',
               icon: Stack(

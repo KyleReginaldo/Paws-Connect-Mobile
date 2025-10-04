@@ -1,3 +1,5 @@
+import 'package:avatar_stack/animated_avatar_stack.dart';
+import 'package:avatar_stack/positions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_reactions/flutter_chat_reactions.dart'
     as chat_reactions;
@@ -6,6 +8,7 @@ import 'package:timeago/timeago.dart' as timeago;
 
 import '../../../core/components/components.dart';
 import '../../../core/theme/paws_theme.dart';
+import '../../../core/utils/mention_parser.dart';
 import '../../../core/widgets/text.dart';
 import '../models/forum_model.dart';
 
@@ -23,6 +26,7 @@ class ChatMessageWidget extends StatelessWidget {
   final Function() onDoubleTap;
   final Function(int messageId)? onReplyToTapped;
   final String? currentUserId;
+  final List<ForumChat> allChats; // Add this to filter viewers properly
 
   const ChatMessageWidget({
     super.key,
@@ -38,6 +42,7 @@ class ChatMessageWidget extends StatelessWidget {
     required this.onLongPress,
     required this.onDoubleTap,
     required this.currentUserId,
+    required this.allChats, // Add this parameter
     this.onReplyToTapped,
   });
 
@@ -48,83 +53,158 @@ class ChatMessageWidget extends StatelessWidget {
       reactionCount += reaction.users.length;
     });
 
+    final filteredViewers = _getViewersForMessage();
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        mainAxisAlignment: isCurrentUser
-            ? MainAxisAlignment.end
-            : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.end,
+      child: Column(
+        crossAxisAlignment: isCurrentUser
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         children: [
-          if (!isCurrentUser) ...[
-            showAvatar
-                ? UserAvatar(
-                    imageUrl: null,
-                    initials: chat.users?.username,
-                    size: 32,
-                  )
-                : const SizedBox(width: 32),
-            const SizedBox(width: 8),
-          ],
-          GestureDetector(
-            onLongPress: onLongPress,
-            onDoubleTap: onDoubleTap,
-            child: Column(
-              crossAxisAlignment: isCurrentUser
-                  ? CrossAxisAlignment.end
-                  : CrossAxisAlignment.start,
-              children: [
-                if (chat.repliedTo != null)
-                  ReplyIndicator(
-                    repliedMessage: chat.repliedTo!,
-                    onTap: () => onReplyToTapped?.call(chat.repliedTo!.id),
-                  ),
-                chat_reactions.ChatMessageWrapper(
-                  key: messageKey,
-                  messageId: chat.id.toString(),
-                  controller: controller,
-                  config: config,
-                  onReactionAdded: onReactionAdded,
-                  onReactionRemoved: onReactionRemoved,
-                  onMenuItemTapped: (menu) => onMenuItemTapped(menu.label),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      ChatBubble(
-                        isMe: isCurrentUser,
-                        color: isCurrentUser
-                            ? PawsColors.primary
-                            : PawsColors.border,
-                        child: MessageContent(
-                          chat: chat,
-                          isCurrentUser: isCurrentUser,
-                          showAvatar: showAvatar,
-                        ),
-                      ),
-                      if (chat.reactions != null && chat.reactions!.isNotEmpty)
-                        MessageReactions(
-                          reactions: chat.reactions!,
-                          isCurrentUser: isCurrentUser,
-                          reactionCount: reactionCount,
-                          currentUserId: currentUserId,
-                          onReactionTapped: (reaction, hasCurrentUser) {
-                            if (hasCurrentUser) {
-                              onReactionRemoved(reaction.emoji);
-                            } else {
-                              onReactionAdded(reaction.emoji);
-                            }
-                          },
-                        ),
-                    ],
-                  ),
-                ),
+          Row(
+            mainAxisAlignment: isCurrentUser
+                ? MainAxisAlignment.end
+                : MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (!isCurrentUser) ...[
+                showAvatar
+                    ? UserAvatar(
+                        imageUrl: null,
+                        initials: chat.users?.username,
+                        size: 32,
+                      )
+                    : const SizedBox(width: 32),
+                const SizedBox(width: 8),
               ],
-            ),
+              GestureDetector(
+                onLongPress: onLongPress,
+                onDoubleTap: onDoubleTap,
+                child: Column(
+                  crossAxisAlignment: isCurrentUser
+                      ? CrossAxisAlignment.end
+                      : CrossAxisAlignment.start,
+                  children: [
+                    if (chat.repliedTo != null)
+                      ReplyIndicator(
+                        repliedMessage: chat.repliedTo!,
+                        onTap: () => onReplyToTapped?.call(chat.repliedTo!.id),
+                      ),
+                    chat_reactions.ChatMessageWrapper(
+                      key: messageKey,
+                      messageId: chat.id.toString(),
+                      controller: controller,
+                      config: config,
+                      onReactionAdded: onReactionAdded,
+                      onReactionRemoved: onReactionRemoved,
+                      onMenuItemTapped: (menu) => onMenuItemTapped(menu.label),
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          ChatBubble(
+                            isMe: isCurrentUser,
+                            color: isCurrentUser
+                                ? PawsColors.primary
+                                : PawsColors.border,
+                            child: MessageContent(
+                              chat: chat,
+                              isCurrentUser: isCurrentUser,
+                              showAvatar: showAvatar,
+                            ),
+                          ),
+                          if (chat.reactions != null &&
+                              chat.reactions!.isNotEmpty)
+                            MessageReactions(
+                              reactions: chat.reactions!,
+                              isCurrentUser: isCurrentUser,
+                              reactionCount: reactionCount,
+                              currentUserId: currentUserId,
+                              onReactionTapped: (reaction, hasCurrentUser) {
+                                if (hasCurrentUser) {
+                                  onReactionRemoved(reaction.emoji);
+                                } else {
+                                  onReactionAdded(reaction.emoji);
+                                }
+                              },
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isCurrentUser) const SizedBox(width: 8),
+            ],
           ),
-          if (isCurrentUser) const SizedBox(width: 8),
+          if (filteredViewers.isNotEmpty) ...{
+            SizedBox(height: 8),
+            Container(
+              margin: isCurrentUser
+                  ? const EdgeInsets.only(right: 8)
+                  : const EdgeInsets.only(left: 40),
+              height: 24,
+              child: AnimatedAvatarStack(
+                width: (24 * (filteredViewers.length)).toDouble(),
+                settings: RestrictedPositions(
+                  align: isCurrentUser ? StackAlign.right : StackAlign.left,
+                  maxCoverage: (filteredViewers.length > 5) ? 0.7 : 0.9,
+                ),
+                borderColor: PawsColors.primary,
+                avatars: filteredViewers.map((viewer) {
+                  return viewer.profileImage != null &&
+                          viewer.profileImage!.isNotEmpty
+                      ? NetworkImage(viewer.profileImage!)
+                      : const AssetImage('assets/images/user.png')
+                            as ImageProvider;
+                }).toList(),
+              ),
+            ),
+          },
         ],
       ),
     );
+  }
+
+  /// Filter viewers to show only those who have seen up to this message but not beyond
+  /// This creates the Messenger-like behavior where each viewer's avatar appears
+  /// only on the last message they've seen
+  List<Viewer> _getViewersForMessage() {
+    if (chat.viewers == null || chat.viewers!.isEmpty) {
+      return [];
+    }
+
+    final List<Viewer> result = [];
+
+    // Sort chats by timestamp (newest first, which is how they're usually ordered)
+    final sortedChats = List<ForumChat>.from(allChats)
+      ..sort((a, b) => b.sentAt.compareTo(a.sentAt));
+
+    // Find the index of current message
+    final currentMessageIndex = sortedChats.indexWhere((c) => c.id == chat.id);
+    if (currentMessageIndex == -1) return [];
+
+    // For each viewer of the current message, check if they appear in any newer message
+    for (final viewer in chat.viewers!) {
+      bool appearsInNewerMessage = false;
+
+      // Check all messages newer than current message (lower index means newer)
+      for (int i = 0; i < currentMessageIndex; i++) {
+        final newerChat = sortedChats[i];
+        if (newerChat.viewers != null &&
+            newerChat.viewers!.any((v) => v.id == viewer.id)) {
+          appearsInNewerMessage = true;
+          break;
+        }
+      }
+
+      // Only add viewer if they don't appear in any newer message
+      if (!appearsInNewerMessage) {
+        result.add(viewer);
+      }
+    }
+
+    return result;
   }
 }
 
@@ -166,7 +246,7 @@ class ReplyIndicator extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
               color: PawsColors.border,
               border: Border.all(
-                color: PawsColors.primary.withOpacity(0.3),
+                color: PawsColors.primary.withValues(alpha: 0.3),
                 width: 1,
               ),
             ),
@@ -214,10 +294,19 @@ class MessageContent extends StatelessWidget {
               fit: BoxFit.cover,
             ),
           ),
-        PawsText(
-          chat.message,
-          fontSize: 14,
-          color: isCurrentUser ? Colors.white : PawsColors.textPrimary,
+        RichText(
+          text: MentionParser.parseMessage(
+            text: chat.message,
+            baseStyle: TextStyle(
+              fontSize: 14,
+              color: isCurrentUser ? Colors.white : PawsColors.textPrimary,
+            ),
+            mentionColor: isCurrentUser ? Colors.white : Colors.black,
+            onMentionTapped: (username) {
+              // Handle mention tap - could show user profile or scroll to their message
+              debugPrint('Mentioned user tapped: $username');
+            },
+          ),
         ),
         const SizedBox(height: 4),
         PawsText(
@@ -250,8 +339,7 @@ class MessageReactions extends StatelessWidget {
   Widget build(BuildContext context) {
     return Positioned(
       bottom: -8,
-      right: isCurrentUser ? 8 : null,
-      left: !isCurrentUser ? 8 : null,
+      left: 8,
       child: Container(
         constraints: const BoxConstraints(maxWidth: 200),
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),

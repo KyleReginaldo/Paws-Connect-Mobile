@@ -3,13 +3,27 @@ import 'package:intl/intl.dart';
 
 extension DoubleExt on double {
   double progress(double targetAmount) {
-    if (targetAmount <= 0) return 0; // avoid division by zero
-    return (this / targetAmount).clamp(0.0, 1.0);
+    if (targetAmount <= 0) return 0.0; // avoid division by zero
+    final result = this / targetAmount;
+    if (result.isNaN || result.isInfinite) return 0.0; // avoid NaN/Infinity
+    return result.clamp(0.0, 1.0);
   }
 
-  int get percentage => (this * 100).round();
-  String get fee => (this * 0.025).toStringAsFixed(2);
-  String get totalWithFee => (this + (this * 0.025)).toStringAsFixed(2);
+  int get percentage {
+    if (isNaN || isInfinite) return 0; // avoid NaN/Infinity
+    return (this * 100).round();
+  }
+
+  String get fee {
+    if (isNaN || isInfinite) return '0.00'; // avoid NaN/Infinity
+    return (this * 0.025).toStringAsFixed(2);
+  }
+
+  String get totalWithFee {
+    if (isNaN || isInfinite) return '0.00'; // avoid NaN/Infinity
+    return (this + (this * 0.025)).toStringAsFixed(2);
+  }
+
   String displayMoney() {
     final formatter = NumberFormat.currency(
       locale: 'en_US',
@@ -26,6 +40,7 @@ extension StringExt on String {
       '$this.00';
     }
     final parsed = double.tryParse(this) ?? 0.0;
+    if (parsed.isNaN || parsed.isInfinite) return 0; // avoid NaN/Infinity
     return (parsed * 100).round();
   }
 

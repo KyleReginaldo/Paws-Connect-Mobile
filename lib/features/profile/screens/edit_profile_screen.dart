@@ -4,7 +4,6 @@ import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:paws_connect/core/enum/user.enum.dart';
-import 'package:paws_connect/core/extension/int.ext.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/features/profile/repository/image_repository.dart';
 import 'package:paws_connect/features/profile/repository/profile_repository.dart';
@@ -516,7 +515,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 PawsText(
-                                  'Account Status: ${user.status.name.capitalize()}',
+                                  'Account Status: ${user.status.label}',
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: _getStatusColor(user.status),

@@ -9,6 +9,159 @@ import 'package:paws_connect/core/services/supabase_service.dart';
 import 'package:paws_connect/core/transfer_object/address.dto.dart';
 
 class CommonProvider {
+  // In-memory cache for quick access
+  static final Map<String, String> _responseCache = {};
+  static const int _maxCacheEntries = 100; // Limit cache size
+
+  /// Generate a cache key from content and about parameters
+  String _generateCacheKey(String content, String about) {
+    final combinedInput = '$content|$about';
+    final normalized = combinedInput.toLowerCase().trim();
+    // Simple hash function using string hashCode
+    return normalized.hashCode.abs().toString();
+  }
+
+  /// Get cached response if available
+  Future<String?> _getCachedResponse(String cacheKey) async {
+    // Check in-memory cache first
+    if (_responseCache.containsKey(cacheKey)) {
+      debugPrint('Found response in memory cache');
+      // Update usage stats in background
+      _updateUsageStats(cacheKey);
+      return _responseCache[cacheKey];
+    }
+
+    // Check database cache
+    try {
+      final result = await supabase
+          .from('ai_responses')
+          .select('response')
+          .eq('cache_key', cacheKey)
+          .maybeSingle();
+
+      if (result != null) {
+        final response = result['response'] as String;
+        // Load into memory cache for faster access next time
+        _responseCache[cacheKey] = response;
+        // Update usage stats in background
+        _updateUsageStats(cacheKey);
+        debugPrint('Found response in database cache');
+        return response;
+      }
+    } catch (e) {
+      debugPrint('Error reading from database cache: $e');
+    }
+    return null;
+  }
+
+  /// Store response in cache
+  Future<void> _storeInCache(
+    String cacheKey,
+    String content,
+    String about,
+    String response,
+  ) async {
+    try {
+      // Store in memory cache
+      _responseCache[cacheKey] = response;
+
+      // Limit memory cache size
+      if (_responseCache.length > _maxCacheEntries) {
+        final keysToRemove = _responseCache.keys
+            .take(_responseCache.length - _maxCacheEntries)
+            .toList();
+        for (final key in keysToRemove) {
+          _responseCache.remove(key);
+        }
+      }
+
+      // Store in database cache
+      await supabase.from('ai_responses').upsert({
+        'cache_key': cacheKey,
+        'content': content,
+        'about': about,
+        'response': response,
+        'usage_count': 1,
+        'last_used_at': DateTime.now().toIso8601String(),
+      });
+      debugPrint('Stored response in database cache');
+    } catch (e) {
+      debugPrint('Error storing in database cache: $e');
+    }
+  }
+
+  /// Update usage statistics for cached response
+  Future<void> _updateUsageStats(String cacheKey) async {
+    try {
+      // First, get the current usage count
+      final result = await supabase
+          .from('ai_responses')
+          .select('usage_count')
+          .eq('cache_key', cacheKey)
+          .maybeSingle();
+
+      if (result != null) {
+        final currentCount = (result['usage_count'] as int?) ?? 0;
+
+        // Update both last_used_at and usage_count
+        await supabase
+            .from('ai_responses')
+            .update({
+              'last_used_at': DateTime.now().toIso8601String(),
+              'usage_count': currentCount + 1,
+            })
+            .eq('cache_key', cacheKey);
+      }
+    } catch (e) {
+      debugPrint('Error updating usage stats: $e');
+    }
+  }
+
+  /// Clear all cached responses (useful for testing or when needed)
+  Future<void> clearResponseCache() async {
+    try {
+      _responseCache.clear();
+      await supabase.from('ai_responses').delete().neq('id', 0); // Delete all
+      debugPrint('Cleared all cached responses from database');
+    } catch (e) {
+      debugPrint('Error clearing database cache: $e');
+    }
+  }
+
+  /// Get cache statistics
+  Future<Map<String, dynamic>> getCacheStatistics() async {
+    try {
+      final result = await supabase
+          .from('ai_responses')
+          .select('id, usage_count, created_at')
+          .order('usage_count', ascending: false);
+
+      final responses = result as List;
+      final totalResponses = responses.length;
+      final totalUsage = responses.fold<int>(
+        0,
+        (sum, item) => sum + (item['usage_count'] as int? ?? 0),
+      );
+
+      return {
+        'total_cached_responses': totalResponses,
+        'total_usage_count': totalUsage,
+        'average_usage_per_response': totalResponses > 0
+            ? totalUsage / totalResponses
+            : 0,
+        'memory_cache_size': _responseCache.length,
+      };
+    } catch (e) {
+      debugPrint('Error getting cache statistics: $e');
+      return {
+        'total_cached_responses': 0,
+        'total_usage_count': 0,
+        'average_usage_per_response': 0,
+        'memory_cache_size': _responseCache.length,
+      };
+    }
+  }
+
   Future<Result<String>> addAddress(AddAddressDTO dto) async {
     // Check internet connectivity first
     final hasInternet = await InternetConnection().hasInternetAccess;
@@ -297,6 +450,67 @@ class CommonProvider {
       return Result.success(true);
     } catch (e) {
       return Result.error('Failed to mark notification viewed: $e');
+    }
+  }
+
+  Future<Result<String>> requestCompletion({
+    required String content,
+    required String about,
+  }) async {
+    // Generate cache key
+    final cacheKey = _generateCacheKey(content, about);
+
+    // Check cache first
+    final cachedResponse = await _getCachedResponse(cacheKey);
+    if (cachedResponse != null) {
+      return Result.success(cachedResponse);
+    }
+
+    // Check internet connectivity
+    final hasInternet = await InternetConnection().hasInternetAccess;
+    if (!hasInternet) {
+      return Result.error(
+        'No internet connection. Please check your network and try again.',
+      );
+    }
+
+    try {
+      final body = {
+        "model": "gpt-4o",
+        "messages": [
+          {
+            "role": "system",
+            "content":
+                "You are a helpful and knowledgeable assistant for Paws Connect, a pet adoption and care mobile application. You specialize in providing information about pet care, adoption processes, animal health, training, nutrition, and general pet-related questions. Your responses should be friendly, informative, and focused on helping pet owners and potential adopters. The context provided will include specific information about the user's situation or help they are seeking: $about. Always acknowledge their need for help and provide supportive, actionable advice. When users ask about which shelter or where the shelter is located, inform them that the shelter is 'Tails of Freedom - Tails of Haven' located in Silang, Cavite. If a question is completely unrelated to pets, animals, or the Paws Connect app, politely redirect the conversation back to pet-related topics.",
+          },
+          {"role": "user", "content": content},
+        ],
+      };
+
+      final response = await http.post(
+        Uri.parse('https://api.openai.com/v1/chat/completions'),
+        headers: {
+          'Content-Type': "application/json",
+          'Authorization': 'Bearer ${dotenv.get('OPENAI_API_KEY')}',
+        },
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final aiResponse = data['choices'][0]['message']['content'] as String;
+
+        // Store in cache for future use
+        await _storeInCache(cacheKey, content, about, aiResponse);
+
+        return Result.success(aiResponse);
+      } else {
+        return Result.error(
+          'Failed to get completion: ${response.statusCode} ${response.body}',
+        );
+      }
+    } catch (e) {
+      return Result.error('Error requesting completion: ${e.toString()}');
     }
   }
 }

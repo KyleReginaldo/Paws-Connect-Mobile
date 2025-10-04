@@ -4,8 +4,10 @@ import 'package:paws_connect/core/provider/common_provider.dart';
 class CommonRepository extends ChangeNotifier {
   int? _messageCount;
   int? _notificationCount;
+  String? _suggestionCompletion;
   int? get messageCount => _messageCount;
   int? get notificationCount => _notificationCount;
+  String? get suggestionCompletion => _suggestionCompletion;
   final CommonProvider _provider;
   CommonRepository(this._provider);
 
@@ -56,6 +58,20 @@ class CommonRepository extends ChangeNotifier {
     if (result.isSuccess) {
       // Refresh count after marking viewed
       getNotificationCount(userId);
+    }
+  }
+
+  Future<void> getSuggestionCompletion(String content, String about) async {
+    final result = await _provider.requestCompletion(
+      content: content,
+      about: about,
+    );
+    if (result.isSuccess) {
+      _suggestionCompletion = result.value;
+      notifyListeners();
+    } else {
+      _suggestionCompletion = null;
+      notifyListeners();
     }
   }
 }

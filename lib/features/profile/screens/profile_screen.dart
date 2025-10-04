@@ -7,7 +7,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:paws_connect/core/enum/user.enum.dart';
-import 'package:paws_connect/core/extension/int.ext.dart';
 import 'package:paws_connect/core/repository/common_repository.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/core/widgets/button.dart';
@@ -210,9 +209,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: PawsText(
-                                      visited?.status.name.capitalize() ??
-                                          "Pending",
-                                      fontSize: 8,
+                                      visited?.status.label ??
+                                          UserStatus.PENDING.label,
+                                      fontSize: 10,
                                       fontWeight: FontWeight.w600,
                                       color: _getStatusColor(
                                         visited?.status ?? UserStatus.PENDING,
@@ -272,6 +271,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   visited?.createdAt ??
                                       DateTime.now().toString(),
                                 ),
+                              ),
+                              const SizedBox(height: 12),
+                              _buildInfoRow(
+                                icon: LucideIcons.history,
+                                label: 'Favorites',
+                                value: 'View your favorite pets',
+                                onTap: widget.id == USER_ID
+                                    ? () {
+                                        context.router.push(FavoriteRoute());
+                                      }
+                                    : null,
                               ),
                               const SizedBox(height: 12),
                               _buildInfoRow(
