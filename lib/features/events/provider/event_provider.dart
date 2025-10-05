@@ -87,4 +87,64 @@ class EventProvider {
       return Result.error('Failed to like comment. ${e.toString()}');
     }
   }
+
+  /// Join an event as a member
+  Future<Result<String>> joinEvent({
+    required int eventId,
+    required String userId,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${dotenv.get('BASE_URL')}/events/$eventId'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'user_id': userId}),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return Result.success(
+          data['message'] ?? 'Successfully joined the event!',
+        );
+      } else {
+        return Result.error(
+          data['message'] ??
+              data['error'] ??
+              'Failed to join event. Server returned ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      return Result.error('Failed to join event: ${e.toString()}');
+    }
+  }
+
+  /// Leave an event as a member
+  Future<Result<String>> leaveEvent({
+    required int eventId,
+    required String userId,
+  }) async {
+    try {
+      final response = await http.patch(
+        Uri.parse('${dotenv.get('BASE_URL')}/events/$eventId'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'user_id': userId}),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return Result.success(
+          data['message'] ?? 'Successfully left the event!',
+        );
+      } else {
+        return Result.error(
+          data['message'] ??
+              data['error'] ??
+              'Failed to leave event. Server returned ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      return Result.error('Failed to leave event: ${e.toString()}');
+    }
+  }
 }

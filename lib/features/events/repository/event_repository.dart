@@ -51,4 +51,42 @@ class EventRepository extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  /// Join an event and update local state
+  Future<String?> joinEvent({
+    required int eventId,
+    required String userId,
+  }) async {
+    final result = await _eventProvider.joinEvent(
+      eventId: eventId,
+      userId: userId,
+    );
+
+    if (result.isSuccess) {
+      // Refresh the event data to get updated members list
+      await fetchEventById(eventId: eventId);
+      return result.value;
+    } else {
+      return result.error;
+    }
+  }
+
+  /// Leave an event and update local state
+  Future<String?> leaveEvent({
+    required int eventId,
+    required String userId,
+  }) async {
+    final result = await _eventProvider.leaveEvent(
+      eventId: eventId,
+      userId: userId,
+    );
+
+    if (result.isSuccess) {
+      // Refresh the event data to get updated members list
+      await fetchEventById(eventId: eventId);
+      return result.value;
+    } else {
+      return result.error;
+    }
+  }
 }

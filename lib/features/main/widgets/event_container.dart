@@ -132,6 +132,15 @@ class EventContainer extends StatelessWidget {
                   fontSize: 14,
                   color: PawsColors.textSecondary,
                 ),
+                SizedBox(width: 16),
+
+                Icon(LucideIcons.users, size: 16, color: Colors.green),
+                const SizedBox(width: 4),
+                PawsText(
+                  "${event.members?.length ?? 0}",
+                  fontSize: 14,
+                  color: PawsColors.textSecondary,
+                ),
               ],
             ),
             if (event.suggestions != null && event.suggestions!.isNotEmpty) ...[

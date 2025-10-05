@@ -70,6 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
   );
   final eventChannel = supabase.channel('public:events');
   final commentChannel = supabase.channel('public:event_comments');
+  final memberChannel = supabase.channel('public:event_members');
 
   final OverlayPortalController overlayController = OverlayPortalController();
   final fundraisingChannel = supabase.channel('public:fundraising');
@@ -220,6 +221,16 @@ class _HomeScreenState extends State<HomeScreen> {
           event: PostgresChangeEvent.all,
           schema: 'public',
           table: 'event_comments',
+          callback: (payload) {
+            context.read<EventRepository>().fetchEvents();
+          },
+        )
+        .subscribe();
+    memberChannel
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'event_members',
           callback: (payload) {
             context.read<EventRepository>().fetchEvents();
           },
@@ -507,6 +518,7 @@ class _HomeScreenState extends State<HomeScreen> {
           context.read<AddressRepository>().fetchAllAddresses(USER_ID ?? '');
           context.read<ProfileRepository>().fetchUserProfile(USER_ID ?? '');
           context.read<AdoptionRepository>().fetchUserAdoptions(USER_ID ?? "");
+          context.read<EventRepository>().fetchEvents();
         },
         child: SingleChildScrollView(
           physics: AlwaysScrollableScrollPhysics(),

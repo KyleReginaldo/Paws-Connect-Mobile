@@ -15,6 +15,7 @@ class EventMapper extends ClassMapperBase<Event> {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = EventMapper._());
       CommentMapper.ensureInitialized();
+      EventMemberMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -55,6 +56,30 @@ class EventMapper extends ClassMapperBase<Event> {
     'comments',
     _$comments,
   );
+  static DateTime? _$startingAt(Event v) => v.startingAt;
+  static const Field<Event, DateTime> _f$startingAt = Field(
+    'startingAt',
+    _$startingAt,
+    key: r'starting_at',
+  );
+  static DateTime? _$endedAt(Event v) => v.endedAt;
+  static const Field<Event, DateTime> _f$endedAt = Field(
+    'endedAt',
+    _$endedAt,
+    key: r'ended_at',
+  );
+  static List<EventMember>? _$members(Event v) => v.members;
+  static const Field<Event, List<EventMember>> _f$members = Field(
+    'members',
+    _$members,
+  );
+  static int _$memberCount(Event v) => v.memberCount;
+  static const Field<Event, int> _f$memberCount = Field(
+    'memberCount',
+    _$memberCount,
+    key: r'member_count',
+    mode: FieldMode.member,
+  );
 
   @override
   final MappableFields<Event> fields = const {
@@ -66,6 +91,10 @@ class EventMapper extends ClassMapperBase<Event> {
     #images: _f$images,
     #suggestions: _f$suggestions,
     #comments: _f$comments,
+    #startingAt: _f$startingAt,
+    #endedAt: _f$endedAt,
+    #members: _f$members,
+    #memberCount: _f$memberCount,
   };
 
   static Event _instantiate(DecodingData data) {
@@ -78,6 +107,9 @@ class EventMapper extends ClassMapperBase<Event> {
       data.dec(_f$images),
       data.dec(_f$suggestions),
       data.dec(_f$comments),
+      data.dec(_f$startingAt),
+      data.dec(_f$endedAt),
+      data.dec(_f$members),
     );
   }
 
@@ -131,6 +163,12 @@ abstract class EventCopyWith<$R, $In extends Event, $Out>
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get suggestions;
   ListCopyWith<$R, Comment, CommentCopyWith<$R, Comment, Comment>>?
   get comments;
+  ListCopyWith<
+    $R,
+    EventMember,
+    EventMemberCopyWith<$R, EventMember, EventMember>
+  >?
+  get members;
   $R call({
     int? id,
     String? title,
@@ -140,6 +178,9 @@ abstract class EventCopyWith<$R, $In extends Event, $Out>
     List<String>? images,
     List<String>? suggestions,
     List<Comment>? comments,
+    DateTime? startingAt,
+    DateTime? endedAt,
+    List<EventMember>? members,
   });
   EventCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -178,6 +219,19 @@ class _EventCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Event, $Out>
         )
       : null;
   @override
+  ListCopyWith<
+    $R,
+    EventMember,
+    EventMemberCopyWith<$R, EventMember, EventMember>
+  >?
+  get members => $value.members != null
+      ? ListCopyWith(
+          $value.members!,
+          (v, t) => v.copyWith.$chain(t),
+          (v) => call(members: v),
+        )
+      : null;
+  @override
   $R call({
     int? id,
     String? title,
@@ -187,6 +241,9 @@ class _EventCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Event, $Out>
     Object? images = $none,
     Object? suggestions = $none,
     Object? comments = $none,
+    Object? startingAt = $none,
+    Object? endedAt = $none,
+    Object? members = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -197,6 +254,9 @@ class _EventCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Event, $Out>
       if (images != $none) #images: images,
       if (suggestions != $none) #suggestions: suggestions,
       if (comments != $none) #comments: comments,
+      if (startingAt != $none) #startingAt: startingAt,
+      if (endedAt != $none) #endedAt: endedAt,
+      if (members != $none) #members: members,
     }),
   );
   @override
@@ -209,6 +269,9 @@ class _EventCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Event, $Out>
     data.get(#images, or: $value.images),
     data.get(#suggestions, or: $value.suggestions),
     data.get(#comments, or: $value.comments),
+    data.get(#startingAt, or: $value.startingAt),
+    data.get(#endedAt, or: $value.endedAt),
+    data.get(#members, or: $value.members),
   );
 
   @override
@@ -518,5 +581,262 @@ class _CommentUserCopyWithImpl<$R, $Out>
   CommentUserCopyWith<$R2, CommentUser, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   ) => _CommentUserCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class EventMemberMapper extends ClassMapperBase<EventMember> {
+  EventMemberMapper._();
+
+  static EventMemberMapper? _instance;
+  static EventMemberMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = EventMemberMapper._());
+      MemberMapper.ensureInitialized();
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'EventMember';
+
+  static int _$id(EventMember v) => v.id;
+  static const Field<EventMember, int> _f$id = Field('id', _$id);
+  static DateTime _$joinedAt(EventMember v) => v.joinedAt;
+  static const Field<EventMember, DateTime> _f$joinedAt = Field(
+    'joinedAt',
+    _$joinedAt,
+    key: r'joined_at',
+  );
+  static Member _$user(EventMember v) => v.user;
+  static const Field<EventMember, Member> _f$user = Field('user', _$user);
+
+  @override
+  final MappableFields<EventMember> fields = const {
+    #id: _f$id,
+    #joinedAt: _f$joinedAt,
+    #user: _f$user,
+  };
+
+  static EventMember _instantiate(DecodingData data) {
+    return EventMember(
+      data.dec(_f$id),
+      data.dec(_f$joinedAt),
+      data.dec(_f$user),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static EventMember fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<EventMember>(map);
+  }
+
+  static EventMember fromJson(String json) {
+    return ensureInitialized().decodeJson<EventMember>(json);
+  }
+}
+
+mixin EventMemberMappable {
+  String toJson() {
+    return EventMemberMapper.ensureInitialized().encodeJson<EventMember>(
+      this as EventMember,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return EventMemberMapper.ensureInitialized().encodeMap<EventMember>(
+      this as EventMember,
+    );
+  }
+
+  EventMemberCopyWith<EventMember, EventMember, EventMember> get copyWith =>
+      _EventMemberCopyWithImpl<EventMember, EventMember>(
+        this as EventMember,
+        $identity,
+        $identity,
+      );
+  @override
+  String toString() {
+    return EventMemberMapper.ensureInitialized().stringifyValue(
+      this as EventMember,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return EventMemberMapper.ensureInitialized().equalsValue(
+      this as EventMember,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return EventMemberMapper.ensureInitialized().hashValue(this as EventMember);
+  }
+}
+
+extension EventMemberValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, EventMember, $Out> {
+  EventMemberCopyWith<$R, EventMember, $Out> get $asEventMember =>
+      $base.as((v, t, t2) => _EventMemberCopyWithImpl<$R, $Out>(v, t, t2));
+}
+
+abstract class EventMemberCopyWith<$R, $In extends EventMember, $Out>
+    implements ClassCopyWith<$R, $In, $Out> {
+  MemberCopyWith<$R, Member, Member> get user;
+  $R call({int? id, DateTime? joinedAt, Member? user});
+  EventMemberCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
+}
+
+class _EventMemberCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, EventMember, $Out>
+    implements EventMemberCopyWith<$R, EventMember, $Out> {
+  _EventMemberCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<EventMember> $mapper =
+      EventMemberMapper.ensureInitialized();
+  @override
+  MemberCopyWith<$R, Member, Member> get user =>
+      $value.user.copyWith.$chain((v) => call(user: v));
+  @override
+  $R call({int? id, DateTime? joinedAt, Member? user}) => $apply(
+    FieldCopyWithData({
+      if (id != null) #id: id,
+      if (joinedAt != null) #joinedAt: joinedAt,
+      if (user != null) #user: user,
+    }),
+  );
+  @override
+  EventMember $make(CopyWithData data) => EventMember(
+    data.get(#id, or: $value.id),
+    data.get(#joinedAt, or: $value.joinedAt),
+    data.get(#user, or: $value.user),
+  );
+
+  @override
+  EventMemberCopyWith<$R2, EventMember, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  ) => _EventMemberCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class MemberMapper extends ClassMapperBase<Member> {
+  MemberMapper._();
+
+  static MemberMapper? _instance;
+  static MemberMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = MemberMapper._());
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'Member';
+
+  static String _$username(Member v) => v.username;
+  static const Field<Member, String> _f$username = Field(
+    'username',
+    _$username,
+  );
+  static String _$profileImageLink(Member v) => v.profileImageLink;
+  static const Field<Member, String> _f$profileImageLink = Field(
+    'profileImageLink',
+    _$profileImageLink,
+    key: r'profile_image_link',
+  );
+  static String _$id(Member v) => v.id;
+  static const Field<Member, String> _f$id = Field('id', _$id);
+
+  @override
+  final MappableFields<Member> fields = const {
+    #username: _f$username,
+    #profileImageLink: _f$profileImageLink,
+    #id: _f$id,
+  };
+
+  static Member _instantiate(DecodingData data) {
+    return Member(
+      data.dec(_f$username),
+      data.dec(_f$profileImageLink),
+      data.dec(_f$id),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static Member fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<Member>(map);
+  }
+
+  static Member fromJson(String json) {
+    return ensureInitialized().decodeJson<Member>(json);
+  }
+}
+
+mixin MemberMappable {
+  String toJson() {
+    return MemberMapper.ensureInitialized().encodeJson<Member>(this as Member);
+  }
+
+  Map<String, dynamic> toMap() {
+    return MemberMapper.ensureInitialized().encodeMap<Member>(this as Member);
+  }
+
+  MemberCopyWith<Member, Member, Member> get copyWith =>
+      _MemberCopyWithImpl<Member, Member>(this as Member, $identity, $identity);
+  @override
+  String toString() {
+    return MemberMapper.ensureInitialized().stringifyValue(this as Member);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return MemberMapper.ensureInitialized().equalsValue(this as Member, other);
+  }
+
+  @override
+  int get hashCode {
+    return MemberMapper.ensureInitialized().hashValue(this as Member);
+  }
+}
+
+extension MemberValueCopy<$R, $Out> on ObjectCopyWith<$R, Member, $Out> {
+  MemberCopyWith<$R, Member, $Out> get $asMember =>
+      $base.as((v, t, t2) => _MemberCopyWithImpl<$R, $Out>(v, t, t2));
+}
+
+abstract class MemberCopyWith<$R, $In extends Member, $Out>
+    implements ClassCopyWith<$R, $In, $Out> {
+  $R call({String? username, String? profileImageLink, String? id});
+  MemberCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
+}
+
+class _MemberCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Member, $Out>
+    implements MemberCopyWith<$R, Member, $Out> {
+  _MemberCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<Member> $mapper = MemberMapper.ensureInitialized();
+  @override
+  $R call({String? username, String? profileImageLink, String? id}) => $apply(
+    FieldCopyWithData({
+      if (username != null) #username: username,
+      if (profileImageLink != null) #profileImageLink: profileImageLink,
+      if (id != null) #id: id,
+    }),
+  );
+  @override
+  Member $make(CopyWithData data) => Member(
+    data.get(#username, or: $value.username),
+    data.get(#profileImageLink, or: $value.profileImageLink),
+    data.get(#id, or: $value.id),
+  );
+
+  @override
+  MemberCopyWith<$R2, Member, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
+      _MemberCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 

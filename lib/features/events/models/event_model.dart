@@ -13,6 +13,9 @@ class Event with EventMappable {
   final List<String>? images;
   final List<String>? suggestions;
   final List<Comment>? comments;
+  final DateTime? startingAt;
+  final DateTime? endedAt;
+  final List<EventMember>? members; // List of user IDs who joined the event
 
   Event(
     this.id,
@@ -23,7 +26,18 @@ class Event with EventMappable {
     this.images,
     this.suggestions,
     this.comments,
+    this.startingAt,
+    this.endedAt,
+    this.members,
   );
+
+  /// Check if a user is a member of this event
+  bool isUserMember(String userId) {
+    return members?.any((e) => e.user.id == userId) ?? false;
+  }
+
+  /// Get the number of members in this event
+  int get memberCount => members?.length ?? 0;
 }
 
 @MappableClass(caseStyle: CaseStyle.snakeCase)
@@ -44,4 +58,22 @@ class CommentUser with CommentUserMappable {
   final String id;
 
   CommentUser(this.username, this.profileImageLink, this.id);
+}
+
+@MappableClass(caseStyle: CaseStyle.snakeCase)
+class Member with MemberMappable {
+  final String username;
+  final String profileImageLink;
+  final String id;
+
+  Member(this.username, this.profileImageLink, this.id);
+}
+
+@MappableClass(caseStyle: CaseStyle.snakeCase)
+class EventMember with EventMemberMappable {
+  final int id;
+  final DateTime joinedAt;
+  final Member user;
+
+  EventMember(this.id, this.joinedAt, this.user);
 }
