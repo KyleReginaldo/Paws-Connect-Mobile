@@ -28,12 +28,13 @@ class Event with EventMappable {
 
 @MappableClass(caseStyle: CaseStyle.snakeCase)
 class Comment with CommentMappable {
+  final int id;
   final int like;
   final String content;
   final DateTime createdAt;
   final CommentUser user;
 
-  Comment(this.like, this.content, this.createdAt, this.user);
+  Comment(this.id, this.like, this.content, this.createdAt, this.user);
 }
 
 @MappableClass(caseStyle: CaseStyle.snakeCase)

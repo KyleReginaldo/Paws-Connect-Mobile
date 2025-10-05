@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:paws_connect/core/config/result.dart';
 import 'package:paws_connect/core/services/supabase_service.dart';
 import 'package:paws_connect/features/events/models/event_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class EventProvider {
   Future<Result<List<Event>>> fetchEvents() async {
@@ -71,30 +72,30 @@ class EventProvider {
   }
 
   Future<Result<String>> likeComment({required int commentId}) async {
-    final response = await supabase.rpc(
-      'increment_comment_like',
-      params: {'comment_id': commentId, 'step': 1},
-    );
-    if (response.error == null) {
-      return Result.success('Comment liked successfully');
-    } else {
-      return Result.error(
-        'Failed to like comment. Server returned ${response.error!.message}',
+    try {
+      await supabase.rpc(
+        'increment_comment_like',
+        params: {'comment_id': commentId, 'step': 1},
       );
+      return Result.success('Comment liked successfully');
+    } on PostgrestException catch (e) {
+      return Result.error('Failed to like comment. ${e.message}');
+    } catch (e) {
+      return Result.error('Failed to like comment. ${e.toString()}');
     }
   }
 
   Future<Result<String>> unlikeComment({required int commentId}) async {
-    final response = await supabase.rpc(
-      'decrement_comment_like',
-      params: {'comment_id': commentId, 'step': 1},
-    );
-    if (response.error == null) {
-      return Result.success('Comment unliked successfully');
-    } else {
-      return Result.error(
-        'Failed to unlike comment. Server returned ${response.error!.message}',
+    try {
+      await supabase.rpc(
+        'decrement_comment_like',
+        params: {'comment_id': commentId, 'step': 1},
       );
+      return Result.success('Comment unliked successfully');
+    } on PostgrestException catch (e) {
+      return Result.error('Failed to unlike comment. ${e.message}');
+    } catch (e) {
+      return Result.error('Failed to unlike comment. ${e.toString()}');
     }
   }
 }

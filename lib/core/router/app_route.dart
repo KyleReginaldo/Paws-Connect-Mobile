@@ -149,5 +149,10 @@ class AppRouter extends RootStackRouter {
       page: UserHouseRoute.page,
       transitionsBuilder: TransitionsBuilders.fadeIn,
     ),
+    CustomRoute(
+      page: EventDetailRoute.page,
+      path: '/event-detail/:id',
+      transitionsBuilder: TransitionsBuilders.fadeIn,
+    ),
   ];
 }

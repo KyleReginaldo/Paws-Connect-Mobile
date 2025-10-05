@@ -650,6 +650,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: events.map((e) {
                       return EventContainer(
                         event: e,
+                        onTap: () =>
+                            context.router.push(EventDetailRoute(id: e.id)),
                         onSuggestionTap: (suggestion) {
                           context
                               .read<CommonRepository>()
@@ -660,6 +662,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           showModalBottomSheet(
                             context: context,
                             shape: RoundedRectangleBorder(),
+
                             builder: (_) {
                               return Container(
                                 height:
@@ -672,7 +675,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                    
                                       PawsText(
                                         suggestion,
                                         fontSize: 16,

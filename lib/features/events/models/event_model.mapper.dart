@@ -231,6 +231,8 @@ class CommentMapper extends ClassMapperBase<Comment> {
   @override
   final String id = 'Comment';
 
+  static int _$id(Comment v) => v.id;
+  static const Field<Comment, int> _f$id = Field('id', _$id);
   static int _$like(Comment v) => v.like;
   static const Field<Comment, int> _f$like = Field('like', _$like);
   static String _$content(Comment v) => v.content;
@@ -246,6 +248,7 @@ class CommentMapper extends ClassMapperBase<Comment> {
 
   @override
   final MappableFields<Comment> fields = const {
+    #id: _f$id,
     #like: _f$like,
     #content: _f$content,
     #createdAt: _f$createdAt,
@@ -254,6 +257,7 @@ class CommentMapper extends ClassMapperBase<Comment> {
 
   static Comment _instantiate(DecodingData data) {
     return Comment(
+      data.dec(_f$id),
       data.dec(_f$like),
       data.dec(_f$content),
       data.dec(_f$createdAt),
@@ -319,7 +323,13 @@ extension CommentValueCopy<$R, $Out> on ObjectCopyWith<$R, Comment, $Out> {
 abstract class CommentCopyWith<$R, $In extends Comment, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   CommentUserCopyWith<$R, CommentUser, CommentUser> get user;
-  $R call({int? like, String? content, DateTime? createdAt, CommentUser? user});
+  $R call({
+    int? id,
+    int? like,
+    String? content,
+    DateTime? createdAt,
+    CommentUser? user,
+  });
   CommentCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -336,12 +346,14 @@ class _CommentCopyWithImpl<$R, $Out>
       $value.user.copyWith.$chain((v) => call(user: v));
   @override
   $R call({
+    int? id,
     int? like,
     String? content,
     DateTime? createdAt,
     CommentUser? user,
   }) => $apply(
     FieldCopyWithData({
+      if (id != null) #id: id,
       if (like != null) #like: like,
       if (content != null) #content: content,
       if (createdAt != null) #createdAt: createdAt,
@@ -350,6 +362,7 @@ class _CommentCopyWithImpl<$R, $Out>
   );
   @override
   Comment $make(CopyWithData data) => Comment(
+    data.get(#id, or: $value.id),
     data.get(#like, or: $value.like),
     data.get(#content, or: $value.content),
     data.get(#createdAt, or: $value.createdAt),
