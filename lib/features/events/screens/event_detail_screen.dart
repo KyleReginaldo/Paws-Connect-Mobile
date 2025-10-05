@@ -6,12 +6,16 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:glow_container/glow_container.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/components/components.dart';
+import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/core/theme/paws_theme.dart';
 import 'package:paws_connect/core/widgets/text.dart';
 import 'package:paws_connect/features/events/provider/event_provider.dart';
 import 'package:paws_connect/features/events/repository/event_repository.dart';
+import 'package:paws_connect/features/events/widgets/comment_input_field.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/services/supabase_service.dart';
 import '../../../dependency.dart';
 
 @RoutePage()
@@ -32,6 +36,7 @@ class EventDetailScreen extends StatefulWidget implements AutoRouteWrapper {
 }
 
 class _EventDetailScreenState extends State<EventDetailScreen> {
+  late RealtimeChannel commentChannel;
   // Helper method to format date
   String _formatDate(DateTime date) {
     final now = DateTime.now();
@@ -48,8 +53,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     }
   }
 
-  Future<void> likeComment(int commentId) async {
-    final response = await EventProvider().likeComment(commentId: commentId);
+  Future<void> toogleLike(int commentId) async {
+    final response = await EventProvider().toogleLike(
+      commentId: commentId,
+      userId: USER_ID ?? "",
+    );
     if (response.isError) {
       EasyLoading.showToast(
         response.error,
@@ -57,7 +65,26 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       );
     } else {
       EasyLoading.showToast(
-        'Comment liked!',
+        response.value,
+        toastPosition: EasyLoadingToastPosition.top,
+      );
+    }
+  }
+
+  Future<void> uploadComment(String content) async {
+    final response = await EventProvider().uploadComment(
+      content: content,
+      userId: USER_ID ?? "",
+      eventId: widget.id,
+    );
+    if (response.isError) {
+      EasyLoading.showToast(
+        response.error,
+        toastPosition: EasyLoadingToastPosition.top,
+      );
+    } else {
+      EasyLoading.showToast(
+        response.value,
         toastPosition: EasyLoadingToastPosition.top,
       );
     }
@@ -65,12 +92,38 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
   @override
   void initState() {
+    commentChannel = supabase.channel(
+      'public:event_comments:event=eq.${widget.id}',
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Fetch event details using widget.id
-      // Example: context.read<EventRepository>().fetchEventDetails(widget.id);
       context.read<EventRepository>().fetchEventById(eventId: widget.id);
     });
+    listenToChanges();
     super.initState();
+  }
+
+  void listenToChanges() {
+    commentChannel
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'event_comments',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'event',
+            value: widget.id,
+          ),
+          callback: (payload) {
+            // Check if widget is still mounted before accessing context
+            debugPrint('Comment change detected: $payload');
+            if (mounted) {
+              context.read<EventRepository>().reloadComments(
+                eventId: widget.id,
+              );
+            }
+          },
+        )
+        .subscribe();
   }
 
   @override
@@ -300,11 +353,36 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                   ),
                                   PawsText(e.content, fontSize: 14),
                                   SizedBox(height: 8),
-                                  InkWell(
-                                    onTap: () {
-                                      likeComment(e.id);
-                                    },
-                                    child: Icon(LucideIcons.thumbsUp, size: 16),
+                                  Row(
+                                    spacing: 8,
+                                    children: [
+                                      InkWell(
+                                        borderRadius: BorderRadius.circular(8),
+                                        onTap: () {
+                                          toogleLike(e.id);
+                                        },
+                                        child: Padding(
+                                          padding: EdgeInsets.all(8.0),
+                                          child: Icon(
+                                            e.likes?.any(
+                                                      (like) => like == USER_ID,
+                                                    ) ??
+                                                    false
+                                                ? Icons.favorite
+                                                : Icons.favorite_outline,
+                                            size: 16,
+                                            color:
+                                                e.likes?.any(
+                                                      (like) => like == USER_ID,
+                                                    ) ??
+                                                    false
+                                                ? Colors.red
+                                                : Colors.grey,
+                                          ),
+                                        ),
+                                      ),
+                                      PawsText('${e.likes?.length ?? 0}'),
+                                    ],
                                   ),
                                 ],
                               ),
@@ -320,6 +398,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           ),
           SliverToBoxAdapter(child: SizedBox(height: 24)),
         ],
+      ),
+      bottomNavigationBar: CommentInputField(
+        onSubmit: (content) {
+          uploadComment(content);
+        },
       ),
     );
   }

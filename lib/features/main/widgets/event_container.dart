@@ -109,7 +109,31 @@ class EventContainer extends StatelessWidget {
                 ),
               ),
             ],
+            SizedBox(height: 10),
+            Row(
+              children: [
+                Icon(
+                  LucideIcons.messageCircle,
+                  size: 16,
+                  color: PawsColors.info,
+                ),
+                const SizedBox(width: 4),
+                PawsText(
+                  event.comments?.length.toString() ?? "0",
+                  fontSize: 14,
+                  color: PawsColors.textSecondary,
+                ),
+                SizedBox(width: 16),
 
+                Icon(LucideIcons.heart, size: 16, color: Colors.red),
+                const SizedBox(width: 4),
+                PawsText(
+                  "${event.comments?.map((e) => e.likes?.length ?? 0).fold<int>(0, (a, b) => a + b) ?? 0}",
+                  fontSize: 14,
+                  color: PawsColors.textSecondary,
+                ),
+              ],
+            ),
             if (event.suggestions != null && event.suggestions!.isNotEmpty) ...[
               const SizedBox(height: 4),
               PawsDivider(text: 'PawsAI'),

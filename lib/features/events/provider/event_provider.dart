@@ -54,7 +54,7 @@ class EventProvider {
 
   Future<Result<String>> uploadComment({
     required String userId,
-    required String eventId,
+    required int eventId,
     required String content,
   }) async {
     final response = await http.post(
@@ -71,31 +71,20 @@ class EventProvider {
     }
   }
 
-  Future<Result<String>> likeComment({required int commentId}) async {
+  Future<Result<String>> toogleLike({
+    required int commentId,
+    required String userId,
+  }) async {
     try {
       await supabase.rpc(
-        'increment_comment_like',
-        params: {'comment_id': commentId, 'step': 1},
+        'toggle_comment_like',
+        params: {'comment_id': commentId, 'user_id': userId},
       );
-      return Result.success('Comment liked successfully');
+      return Result.success('Comment like toggled successfully');
     } on PostgrestException catch (e) {
       return Result.error('Failed to like comment. ${e.message}');
     } catch (e) {
       return Result.error('Failed to like comment. ${e.toString()}');
-    }
-  }
-
-  Future<Result<String>> unlikeComment({required int commentId}) async {
-    try {
-      await supabase.rpc(
-        'decrement_comment_like',
-        params: {'comment_id': commentId, 'step': 1},
-      );
-      return Result.success('Comment unliked successfully');
-    } on PostgrestException catch (e) {
-      return Result.error('Failed to unlike comment. ${e.message}');
-    } catch (e) {
-      return Result.error('Failed to unlike comment. ${e.toString()}');
     }
   }
 }

@@ -68,6 +68,9 @@ class _HomeScreenState extends State<HomeScreen> {
   final userIdentificationChannel = supabase.channel(
     'public:user_identification:user=eq.$USER_ID',
   );
+  final eventChannel = supabase.channel('public:events');
+  final commentChannel = supabase.channel('public:event_comments');
+
   final OverlayPortalController overlayController = OverlayPortalController();
   final fundraisingChannel = supabase.channel('public:fundraising');
   late final WebViewController webviewController;
@@ -199,6 +202,26 @@ class _HomeScreenState extends State<HomeScreen> {
           table: 'fundraising',
           callback: (payload) {
             context.read<FundraisingRepository>().fetchFundraisings();
+          },
+        )
+        .subscribe();
+    eventChannel
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'events',
+          callback: (payload) {
+            context.read<EventRepository>().fetchEvents();
+          },
+        )
+        .subscribe();
+    commentChannel
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'event_comments',
+          callback: (payload) {
+            context.read<EventRepository>().fetchEvents();
           },
         )
         .subscribe();

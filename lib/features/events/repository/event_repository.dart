@@ -40,4 +40,15 @@ class EventRepository extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future reloadComments({required int eventId}) async {
+    final result = await _eventProvider.fetchEventById(eventId: eventId);
+    if (result.isSuccess) {
+      _event = result.value;
+      notifyListeners();
+    } else {
+      _event = null;
+      notifyListeners();
+    }
+  }
 }
