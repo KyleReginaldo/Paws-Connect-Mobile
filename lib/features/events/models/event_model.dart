@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:dart_mappable/dart_mappable.dart';
 
 part 'event_model.mapper.dart';
@@ -11,6 +12,7 @@ class Event with EventMappable {
   final String createdBy;
   final List<String>? images;
   final List<String>? suggestions;
+  final List<Comment>? comments;
 
   Event(
     this.id,
@@ -20,5 +22,25 @@ class Event with EventMappable {
     this.createdBy,
     this.images,
     this.suggestions,
+    this.comments,
   );
+}
+
+@MappableClass(caseStyle: CaseStyle.snakeCase)
+class Comment with CommentMappable {
+  final int like;
+  final String content;
+  final DateTime createdAt;
+  final CommentUser user;
+
+  Comment(this.like, this.content, this.createdAt, this.user);
+}
+
+@MappableClass(caseStyle: CaseStyle.snakeCase)
+class CommentUser with CommentUserMappable {
+  final String username;
+  final String profileImageLink;
+  final String id;
+
+  CommentUser(this.username, this.profileImageLink, this.id);
 }
