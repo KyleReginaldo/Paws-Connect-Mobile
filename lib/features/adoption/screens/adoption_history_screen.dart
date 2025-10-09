@@ -42,7 +42,7 @@ class _AdoptionHistoryScreenState extends State<AdoptionHistoryScreen> {
       (AdoptionRepository bloc) => bloc.adoptions,
     );
     return Scaffold(
-      appBar: AppBar(title: PawsText('Adoption History')),
+      appBar: AppBar(title: Text('Adoption History')),
       body: ListView.builder(
         padding: EdgeInsets.all(16),
         itemCount: adoptions?.length ?? 0,

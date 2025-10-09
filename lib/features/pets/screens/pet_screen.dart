@@ -102,12 +102,7 @@ class _PetScreenState extends State<PetScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const PawsText(
-          'Pet',
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          color: PawsColors.textPrimary,
-        ),
+        title: const Text('Pet'),
         centerTitle: true,
         actions: [
           Stack(

@@ -72,7 +72,7 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     _setupScrollListener();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<ForumRepository>().setForumById(
+        context.read<ForumRepository>().fetchForumById(
           widget.forumId,
           USER_ID ?? "",
         );
@@ -656,16 +656,8 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      title: const PawsText(
-        'Forum Chat',
-        fontSize: 16,
-        fontWeight: FontWeight.w500,
-        color: PawsColors.textPrimary,
-      ),
+      title: const Text('Forum Chat'),
       centerTitle: true,
-      backgroundColor: Colors.white,
-      elevation: 1,
-      shadowColor: Colors.black12,
       actions: [
         IconButton(
           onPressed: () =>

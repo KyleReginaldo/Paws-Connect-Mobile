@@ -84,15 +84,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
       (FavoriteRepository repo) => repo.favorites,
     );
     return Scaffold(
-      appBar: AppBar(
-        title: const PawsText(
-          'Favorites',
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          color: PawsColors.textPrimary,
-        ),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Favorites'), centerTitle: true),
       body: favorites == null || favorites.isEmpty
           ? Center(
               child: Column(

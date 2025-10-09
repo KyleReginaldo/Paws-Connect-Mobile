@@ -112,18 +112,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       top: false,
       child: Scaffold(
         backgroundColor: Colors.grey[50],
-        appBar: AppBar(
-          title: const PawsText(
-            'Profile',
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: PawsColors.textPrimary,
-          ),
-          centerTitle: true,
-          backgroundColor: Colors.white,
-          elevation: 0.5,
-          shadowColor: Colors.black12,
-        ),
+        appBar: AppBar(title: const Text('Profile'), centerTitle: true),
         body: isLoading
             ? const Center(
                 child: CircularProgressIndicator(

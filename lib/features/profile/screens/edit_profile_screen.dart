@@ -214,16 +214,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const PawsText(
-          'Edit Profile',
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: PawsColors.textPrimary,
-        ),
+        title: const Text('Edit Profile'),
         centerTitle: true,
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        shadowColor: Colors.black12,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: PawsColors.textPrimary),
           onPressed: () => context.router.pop(),

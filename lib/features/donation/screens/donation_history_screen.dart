@@ -41,7 +41,7 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
       (DonationRepository bloc) => bloc.donations,
     );
     return Scaffold(
-      appBar: AppBar(title: PawsText('Donation History')),
+      appBar: AppBar(title: Text('Donation History')),
       body: ListView.builder(
         padding: EdgeInsets.all(16),
         itemCount: donations?.length ?? 0,

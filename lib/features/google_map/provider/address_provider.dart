@@ -9,7 +9,6 @@ import '../../../core/config/result.dart';
 
 class AddressProvider {
   Future<Result<Address>> fetchDefaultAddress(String userId) async {
-    // Check internet connectivity first
     final hasInternet = await InternetConnection().hasInternetAccess;
     if (!hasInternet) {
       return Result.error(
@@ -26,17 +25,14 @@ class AddressProvider {
         final address = AddressMapper.fromMap(data['data']);
         return Result.success(address);
       } else {
-        return Result.error(
-          'Failed to fetch default address. Server returned ${response.statusCode}',
-        );
+        return Result.error('Failed to load default address');
       }
     } catch (e) {
-      return Result.error('Failed to fetch default address: ${e.toString()}');
+      return Result.error('Failed to load default address');
     }
   }
 
   Future<Result<List<Address>>> fetchAllAddresses(String userId) async {
-    // Check internet connectivity first
     final hasInternet = await InternetConnection().hasInternetAccess;
     if (!hasInternet) {
       return Result.error(
@@ -56,12 +52,10 @@ class AddressProvider {
         });
         return Result.success(addresses);
       } else {
-        return Result.error(
-          'Failed to fetch addresses. Server returned ${response.statusCode}',
-        );
+        return Result.error('Failed to load address');
       }
     } catch (e) {
-      return Result.error('Failed to fetch addresses: ${e.toString()}');
+      return Result.error('Failed to load address');
     }
   }
 }

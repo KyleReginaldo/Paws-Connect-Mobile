@@ -75,11 +75,7 @@ class _AddForumMemberScreenState extends State<AddForumMemberScreen> {
     final isLoading = context.watch<ForumRepository>().usersLoading;
     return Scaffold(
       appBar: AppBar(
-        title: PawsText(
-          'Add Forum Members',
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
+        title: Text('Add Forum Members'),
         actions: [
           if (selectedUsers.isNotEmpty)
             PawsTextButton(

@@ -13,7 +13,7 @@ class Event with EventMappable {
   final List<String>? images;
   final List<String>? suggestions;
   final List<Comment>? comments;
-  final DateTime? startingAt;
+  final DateTime? startingDate;
   final DateTime? endedAt;
   final List<EventMember>? members; // List of user IDs who joined the event
 
@@ -26,7 +26,7 @@ class Event with EventMappable {
     this.images,
     this.suggestions,
     this.comments,
-    this.startingAt,
+    this.startingDate,
     this.endedAt,
     this.members,
   );

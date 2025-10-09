@@ -62,18 +62,7 @@ class _FundraisingScreenState extends State<FundraisingScreen>
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: const PawsText(
-          'Fundraising',
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: PawsColors.textPrimary,
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        elevation: 0,
-        shadowColor: Colors.black12,
-      ),
+      appBar: AppBar(title: const Text('Fundraising'), centerTitle: true),
       body: Column(
         children: [
           // Custom Tab Bar Container

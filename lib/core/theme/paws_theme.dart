@@ -98,6 +98,18 @@ class PawsTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     ),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Colors.white,
+      foregroundColor: PawsColors.textPrimary,
+      elevation: 0,
+      surfaceTintColor: Colors.transparent,
+      titleTextStyle: TextStyle(
+        color: PawsColors.textPrimary,
+        fontSize: 15,
+        fontWeight: FontWeight.w500,
+      ),
+      iconTheme: IconThemeData(color: PawsColors.textPrimary),
+    ),
   );
 
   static ThemeData darkTheme = ThemeData(

@@ -159,11 +159,13 @@ class _CreateAdoptionScreenState extends State<CreateAdoptionScreen> {
           iconTheme: IconThemeData(color: Colors.white),
           centerTitle: true,
           backgroundColor: PawsColors.primary,
-          title: PawsText(
+          title: Text(
             'Create Adoption',
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: Colors.white,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+            ),
           ),
         ),
         body: Form(

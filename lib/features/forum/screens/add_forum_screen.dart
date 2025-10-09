@@ -87,16 +87,8 @@ class _AddForumScreenState extends State<AddForumScreen> {
       child: Scaffold(
         backgroundColor: Colors.grey[50],
         appBar: AppBar(
-          title: const PawsText(
-            'Create Forum',
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: PawsColors.textPrimary,
-          ),
+          title: const Text('Create Forum'),
           centerTitle: true,
-          backgroundColor: Colors.white,
-          elevation: 0.5,
-          shadowColor: Colors.black12,
           leading: IconButton(
             icon: const Icon(
               Icons.arrow_back_ios,

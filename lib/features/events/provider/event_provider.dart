@@ -23,12 +23,10 @@ class EventProvider {
         }
         return Result.success(events);
       } else {
-        return Result.error(
-          'Failed to load events. Server returned ${response.statusCode}',
-        );
+        return Result.error('Failed to load events');
       }
     } catch (e) {
-      return Result.error('Failed to load events: ${e.toString()}');
+      return Result.error('Failed to load events');
     }
   }
 
@@ -43,12 +41,10 @@ class EventProvider {
         final event = EventMapper.fromMap(data['data']);
         return Result.success(event);
       } else {
-        return Result.error(
-          'Failed to load event. Server returned ${response.statusCode}',
-        );
+        return Result.error('Failed to load event');
       }
     } catch (e) {
-      return Result.error('Failed to load event: ${e.toString()}');
+      return Result.error('Failed to load event');
     }
   }
 
@@ -65,9 +61,7 @@ class EventProvider {
     if (response.statusCode == 201) {
       return Result.success('Comment uploaded successfully');
     } else {
-      return Result.error(
-        'Failed to upload comment. Server returned ${response.statusCode}',
-      );
+      return Result.error('Failed to comment');
     }
   }
 
@@ -80,15 +74,14 @@ class EventProvider {
         'toggle_comment_like',
         params: {'comment_id': commentId, 'user_id': userId},
       );
-      return Result.success('Comment like toggled successfully');
-    } on PostgrestException catch (e) {
-      return Result.error('Failed to like comment. ${e.message}');
+      return Result.success('Reacted to comment');
+    } on PostgrestException catch (_) {
+      return Result.error('Failed to react');
     } catch (e) {
-      return Result.error('Failed to like comment. ${e.toString()}');
+      return Result.error('Failed to react');
     }
   }
 
-  /// Join an event as a member
   Future<Result<String>> joinEvent({
     required int eventId,
     required String userId,
@@ -118,7 +111,6 @@ class EventProvider {
     }
   }
 
-  /// Leave an event as a member
   Future<Result<String>> leaveEvent({
     required int eventId,
     required String userId,

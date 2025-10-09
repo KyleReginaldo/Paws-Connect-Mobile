@@ -4,6 +4,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:glow_container/glow_container.dart';
+import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/components/components.dart';
 import 'package:paws_connect/core/supabase/client.dart';
@@ -261,11 +262,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           // Simple app bar for when there are no images
           if (event.images == null || event.images!.isEmpty)
             SliverAppBar(
-              title: PawsText(
-                event.title,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
+              title: Text(event.title),
               pinned: true,
               backgroundColor: PawsColors.primary,
               foregroundColor: Colors.white,
@@ -560,7 +557,34 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     ],
                   ),
                   SizedBox(height: 8),
-
+                  if (event.startingDate != null) ...[
+                    Row(
+                      children: [
+                        Icon(LucideIcons.clock, size: 16),
+                        SizedBox(width: 8),
+                        PawsText(
+                          'Starting: ${DateFormat('MMM dd, yyyy').format(event.startingDate!)}',
+                          fontSize: 14,
+                          color: PawsColors.textSecondary,
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                  ],
+                  if (event.endedAt != null) ...[
+                    Row(
+                      children: [
+                        Icon(LucideIcons.clock10, size: 16),
+                        SizedBox(width: 8),
+                        PawsText(
+                          'Ended: ${DateFormat('MMM dd, yyyy').format(event.endedAt!)}',
+                          fontSize: 14,
+                          color: PawsColors.textSecondary,
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                  ],
                   Row(
                     children: [
                       Icon(LucideIcons.shieldUser, size: 20),

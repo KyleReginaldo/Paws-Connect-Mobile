@@ -390,11 +390,7 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
       child: Scaffold(
         backgroundColor: PawsColors.background,
         appBar: AppBar(
-          title: const PawsText(
-            'ID Verification',
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
+          title: const Text('ID Verification'),
           backgroundColor: PawsColors.primary,
           foregroundColor: Colors.white,
           leading: IconButton(

@@ -56,11 +56,11 @@ class EventMapper extends ClassMapperBase<Event> {
     'comments',
     _$comments,
   );
-  static DateTime? _$startingAt(Event v) => v.startingAt;
-  static const Field<Event, DateTime> _f$startingAt = Field(
-    'startingAt',
-    _$startingAt,
-    key: r'starting_at',
+  static DateTime? _$startingDate(Event v) => v.startingDate;
+  static const Field<Event, DateTime> _f$startingDate = Field(
+    'startingDate',
+    _$startingDate,
+    key: r'starting_date',
   );
   static DateTime? _$endedAt(Event v) => v.endedAt;
   static const Field<Event, DateTime> _f$endedAt = Field(
@@ -91,7 +91,7 @@ class EventMapper extends ClassMapperBase<Event> {
     #images: _f$images,
     #suggestions: _f$suggestions,
     #comments: _f$comments,
-    #startingAt: _f$startingAt,
+    #startingDate: _f$startingDate,
     #endedAt: _f$endedAt,
     #members: _f$members,
     #memberCount: _f$memberCount,
@@ -107,7 +107,7 @@ class EventMapper extends ClassMapperBase<Event> {
       data.dec(_f$images),
       data.dec(_f$suggestions),
       data.dec(_f$comments),
-      data.dec(_f$startingAt),
+      data.dec(_f$startingDate),
       data.dec(_f$endedAt),
       data.dec(_f$members),
     );
@@ -178,7 +178,7 @@ abstract class EventCopyWith<$R, $In extends Event, $Out>
     List<String>? images,
     List<String>? suggestions,
     List<Comment>? comments,
-    DateTime? startingAt,
+    DateTime? startingDate,
     DateTime? endedAt,
     List<EventMember>? members,
   });
@@ -241,7 +241,7 @@ class _EventCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Event, $Out>
     Object? images = $none,
     Object? suggestions = $none,
     Object? comments = $none,
-    Object? startingAt = $none,
+    Object? startingDate = $none,
     Object? endedAt = $none,
     Object? members = $none,
   }) => $apply(
@@ -254,7 +254,7 @@ class _EventCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Event, $Out>
       if (images != $none) #images: images,
       if (suggestions != $none) #suggestions: suggestions,
       if (comments != $none) #comments: comments,
-      if (startingAt != $none) #startingAt: startingAt,
+      if (startingDate != $none) #startingDate: startingDate,
       if (endedAt != $none) #endedAt: endedAt,
       if (members != $none) #members: members,
     }),
@@ -269,7 +269,7 @@ class _EventCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Event, $Out>
     data.get(#images, or: $value.images),
     data.get(#suggestions, or: $value.suggestions),
     data.get(#comments, or: $value.comments),
-    data.get(#startingAt, or: $value.startingAt),
+    data.get(#startingDate, or: $value.startingDate),
     data.get(#endedAt, or: $value.endedAt),
     data.get(#members, or: $value.members),
   );

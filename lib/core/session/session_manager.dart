@@ -100,7 +100,7 @@ class SessionManager {
       futures.add(sl<DonationRepository>().fetchUserDonations(USER_ID!));
     }
     if (sl.isRegistered<ForumRepository>()) {
-      futures.add(sl<ForumRepository>().setForums(USER_ID!));
+      futures.add(sl<ForumRepository>().fetchForums(USER_ID!));
     }
 
     // Fetch unread message & notification counts early so UI badges update immediately

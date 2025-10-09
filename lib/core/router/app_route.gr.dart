@@ -49,7 +49,7 @@ import 'package:paws_connect/features/main/screens/home_screen.dart' as _i17;
 import 'package:paws_connect/features/main/screens/main_screen.dart' as _i18;
 import 'package:paws_connect/features/main/screens/no_internet_screen.dart'
     as _i20;
-import 'package:paws_connect/features/main/screens/notfound_screen.dart'
+import 'package:paws_connect/features/main/screens/not_found_screen.dart'
     as _i21;
 import 'package:paws_connect/features/notifications/models/notification_model.dart'
     as _i36;

@@ -66,7 +66,7 @@ class ForumRepository extends ChangeNotifier {
     }
   }
 
-  Future<void> setForums(String userId) async {
+  Future<void> fetchForums(String userId) async {
     _isLoadingForums = true;
     _errorMessage = '';
     notifyListeners();
@@ -85,7 +85,7 @@ class ForumRepository extends ChangeNotifier {
     }
   }
 
-  void setForumById(int forumId, String userId) async {
+  void fetchForumById(int forumId, String userId) async {
     debugPrint('calling setForumById with forumId: $forumId');
     _isLoadingForum = true;
     _forum = null;

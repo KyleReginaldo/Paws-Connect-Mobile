@@ -305,15 +305,7 @@ class _FundraisingDetailScreenState extends State<FundraisingDetailScreen> {
     return SafeArea(
       top: false,
       child: Scaffold(
-        appBar: AppBar(
-          title: const PawsText(
-            'Fundraising',
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: PawsColors.textPrimary,
-          ),
-          centerTitle: true,
-        ),
+        appBar: AppBar(title: const Text('Fundraising'), centerTitle: true),
         body: bodyContent,
         bottomNavigationBar: Padding(
           padding: EdgeInsets.all(16),

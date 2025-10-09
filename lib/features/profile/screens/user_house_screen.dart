@@ -260,7 +260,7 @@ class _UserHouseScreenState extends State<UserHouseScreen> {
     return SafeArea(
       top: false,
       child: Scaffold(
-        appBar: AppBar(title: PawsText('House Details'), centerTitle: true),
+        appBar: AppBar(title: Text('House Details'), centerTitle: true),
         body: SizedBox(
           height: MediaQuery.sizeOf(context).height,
           width: MediaQuery.sizeOf(context).width,

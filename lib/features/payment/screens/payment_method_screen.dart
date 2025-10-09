@@ -16,7 +16,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: PawsText('Payment Method')),
+      appBar: AppBar(title: Text('Payment Method')),
       body: Column(children: [PawsText(widget.paymongoId)]),
     );
   }

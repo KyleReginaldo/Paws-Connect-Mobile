@@ -1,4 +1,3 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
 
 import 'package:auto_route/auto_route.dart';
@@ -15,10 +14,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/router/app_route.gr.dart';
 import '../../../core/theme/paws_theme.dart';
 
-// Global flag to ensure OneSignal listener is only added once
 bool _oneSignalListenerInitialized = false;
 
-// Debouncing to prevent rapid-fire navigation
 DateTime? _lastNavigationTime;
 String? _lastNavigatedRoute;
 
@@ -66,7 +63,6 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _initForumChatsRealtime() {
-    // Subscribe to all changes in forum_chats to keep unread count updated.
     _forumChatsChannel = supabase.channel('public:forum_chats_all');
     _forumChatsChannel!
         .onPostgresChanges(
@@ -78,7 +74,7 @@ class _MainScreenState extends State<MainScreen> {
             final userId = USER_ID;
             if (userId == null || userId.isEmpty) return;
             final now = DateTime.now();
-            // Throttle to avoid excessive HTTP calls when many messages arrive.
+
             if (now.difference(_lastRealtimeRefresh).inMilliseconds < 300) {
               return;
             }
@@ -90,7 +86,6 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _initNotificationsRealtime() {
-    // Subscribe to all changes in forum_chats to keep unread count updated.
     _notificationsChannel = supabase.channel(
       'public:notifications:user=eq.$USER_ID',
     );
@@ -109,7 +104,7 @@ class _MainScreenState extends State<MainScreen> {
             final userId = USER_ID;
             if (userId == null || userId.isEmpty) return;
             final now = DateTime.now();
-            // Throttle to avoid excessive HTTP calls when many messages arrive.
+
             if (now.difference(_lastRealtimeRefresh).inMilliseconds < 300) {
               return;
             }
@@ -123,14 +118,7 @@ class _MainScreenState extends State<MainScreen> {
   void handleOneSignalLogin() async {
     final id = USER_ID;
     if (id != null && id.isNotEmpty) {
-      try {
-        await OneSignal.login(id);
-        debugPrint('🔔 OneSignal login ok for user: $id');
-      } catch (e) {
-        debugPrint('❌ OneSignal login failed: $e');
-      }
-    } else {
-      debugPrint('⚠️ OneSignal login skipped: USER_ID is null/empty');
+      await OneSignal.login(id);
     }
   }
 
@@ -138,9 +126,6 @@ class _MainScreenState extends State<MainScreen> {
     OneSignal.Notifications.addClickListener((event) {
       try {
         final json = event.notification.jsonRepresentation();
-        debugPrint('🔔 Notification clicked: $json');
-
-        // Simple route extraction
         String? route;
         try {
           final data = jsonDecode(json) as Map<String, dynamic>;
@@ -153,43 +138,35 @@ class _MainScreenState extends State<MainScreen> {
             route = custom['a']?['route'];
           }
         } catch (e) {
-          // Fallback: extract route using regex
           final routeMatch = RegExp(r'"route":"([^"]*)"').firstMatch(json);
           route = routeMatch?.group(1);
         }
-
-        // Simple navigation - just navigate to the route once
         if (route != null) {
           debugPrint('📱 Navigating to: $route');
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            // Check if widget is still mounted before navigation
             if (mounted) {
               _navigateToRoute(route!);
             } else {
-              debugPrint('🚫 Widget unmounted, skipping navigation to $route');
+              debugPrint('Widget not mounted');
             }
           });
         }
       } catch (e) {
-        debugPrint('❌ Error handling notification: $e');
+        debugPrint('$e');
       }
     });
   }
 
   void _navigateToRoute(String route) {
-    // Additional mounted check before any navigation operations
     if (!mounted) {
-      debugPrint('🚫 Widget unmounted, cannot navigate to $route');
       return;
     }
 
     final now = DateTime.now();
 
-    // Debouncing: Prevent navigation if same route was navigated within last 2 seconds
     if (_lastNavigationTime != null &&
         _lastNavigatedRoute == route &&
         now.difference(_lastNavigationTime!).inSeconds < 2) {
-      debugPrint('🚫 Ignoring duplicate navigation to $route');
       return;
     }
 
@@ -198,34 +175,24 @@ class _MainScreenState extends State<MainScreen> {
 
     final segments = route.split('/');
 
-    // Handle forum-chat routes: /forum-chat/123
     if (route.contains('forum-chat') && segments.length > 2) {
       final forumId = int.tryParse(segments[2]);
       if (forumId != null && mounted) {
-        debugPrint('📱 Navigating to forum chat: $forumId');
-        // Use navigate instead of push to replace current navigation
         context.router.navigate(ForumChatRoute(forumId: forumId));
         return;
       }
     }
 
-    // Handle fundraising routes: /fundraising/123
     if (route.contains('fundraising') && segments.length > 2) {
       final fundraisingId = int.tryParse(segments[2]);
       if (fundraisingId != null && mounted) {
-        debugPrint('📱 Navigating to fundraising detail: $fundraisingId');
-        // Use navigate instead of push to replace current navigation
         context.router.navigate(FundraisingDetailRoute(id: fundraisingId));
         return;
       }
     }
 
-    // Fallback
     if (mounted) {
-      debugPrint('📱 Fallback navigation to: $route');
       context.router.pushPath(route);
-    } else {
-      debugPrint('🚫 Widget unmounted, skipping fallback navigation to $route');
     }
   }
 
@@ -239,7 +206,6 @@ class _MainScreenState extends State<MainScreen> {
       routes: [HomeRoute(), FundraisingRoute(), PetRoute(), ForumRoute()],
 
       bottomNavigationBuilder: (_, tabsRouter) {
-        // Set initial index only once when the widget is first built
         if (widget.initialIndex != null && !_hasSetInitialIndex) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (widget.initialIndex != tabsRouter.activeIndex) {
@@ -322,9 +288,7 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   void dispose() {
-    try {
-      _forumChatsChannel?.unsubscribe();
-    } catch (_) {}
+    _forumChatsChannel?.unsubscribe();
     super.dispose();
   }
 }

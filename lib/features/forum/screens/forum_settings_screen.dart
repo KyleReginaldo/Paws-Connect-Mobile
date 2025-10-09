@@ -58,7 +58,7 @@ class _ForumSettingsScreenState extends State<ForumSettingsScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(result.value)));
-      context.read<ForumRepository>().setForumById(
+      context.read<ForumRepository>().fetchForumById(
         widget.forumId,
         USER_ID ?? "",
       );
@@ -108,7 +108,7 @@ class _ForumSettingsScreenState extends State<ForumSettingsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       debugPrint('🔄 Loading initial forum data...');
-      context.read<ForumRepository>().setForumById(
+      context.read<ForumRepository>().fetchForumById(
         widget.forumId,
         USER_ID ?? "",
       );
@@ -137,7 +137,7 @@ class _ForumSettingsScreenState extends State<ForumSettingsScreen> {
         context,
       ).showSnackBar(SnackBar(content: Text(result.error)));
     } else {
-      context.read<ForumRepository>().setForumById(
+      context.read<ForumRepository>().fetchForumById(
         widget.forumId,
         USER_ID ?? "",
       );
@@ -155,17 +155,21 @@ class _ForumSettingsScreenState extends State<ForumSettingsScreen> {
       status: 'REJECTED',
     );
     if (result.isError) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(result.error)));
-    } else {
-      context.read<ForumRepository>().setForumById(
-        widget.forumId,
-        USER_ID ?? "",
+      EasyLoading.showToast(
+        result.error,
+        toastPosition: EasyLoadingToastPosition.top,
       );
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(result.value)));
+    } else {
+      if (mounted) {
+        context.read<ForumRepository>().fetchForumById(
+          widget.forumId,
+          USER_ID ?? "",
+        );
+      }
+      EasyLoading.showToast(
+        result.value,
+        toastPosition: EasyLoadingToastPosition.top,
+      );
     }
   }
 
@@ -176,12 +180,16 @@ class _ForumSettingsScreenState extends State<ForumSettingsScreen> {
     );
     if (result.isError) {
       if (!mounted) return;
-      EasyLoading.showError(result.error);
+      EasyLoading.showToast(
+        result.error,
+        toastPosition: EasyLoadingToastPosition.top,
+      );
     } else {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(result.value)));
+      EasyLoading.showToast(
+        result.value,
+        toastPosition: EasyLoadingToastPosition.top,
+      );
       context.router.popUntilRoot();
     }
   }
@@ -194,13 +202,17 @@ class _ForumSettingsScreenState extends State<ForumSettingsScreen> {
     );
     if (result.isError) {
       if (!mounted) return;
-      EasyLoading.showError(result.error);
+      EasyLoading.showToast(
+        result.error,
+        toastPosition: EasyLoadingToastPosition.top,
+      );
     } else {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(result.value)));
-      context.read<ForumRepository>().setForumById(
+      EasyLoading.showToast(
+        result.value,
+        toastPosition: EasyLoadingToastPosition.top,
+      );
+      context.read<ForumRepository>().fetchForumById(
         widget.forumId,
         USER_ID ?? "",
       );
@@ -211,7 +223,6 @@ class _ForumSettingsScreenState extends State<ForumSettingsScreen> {
   Widget build(BuildContext context) {
     final forum = context.watch<ForumRepository>().forum;
     final isLoading = context.watch<ForumRepository>().isLoadingForums;
-    // Safe lookup: avoid singleWhere which throws if no match
     Member? myProfile;
     final members = forum?.members;
     if (USER_ID != null && members != null && members.isNotEmpty) {
@@ -255,7 +266,7 @@ class _ForumSettingsScreenState extends State<ForumSettingsScreen> {
             ? LinearProgressIndicator()
             : RefreshIndicator(
                 onRefresh: () async {
-                  context.read<ForumRepository>().setForumById(
+                  context.read<ForumRepository>().fetchForumById(
                     widget.forumId,
                     USER_ID ?? "",
                   );
@@ -353,10 +364,12 @@ class _ForumSettingsScreenState extends State<ForumSettingsScreen> {
                                   '🔄 Returned from add member screen with result: $result',
                                 );
                                 if (result == true) {
-                                  context.read<ForumRepository>().setForumById(
-                                    widget.forumId,
-                                    USER_ID ?? "",
-                                  );
+                                  context
+                                      .read<ForumRepository>()
+                                      .fetchForumById(
+                                        widget.forumId,
+                                        USER_ID ?? "",
+                                      );
                                 }
                               },
                               style: ButtonStyle().copyWith(

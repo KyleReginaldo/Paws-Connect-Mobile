@@ -224,10 +224,9 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
         extendBodyBehindAppBar: true,
         appBar: AppBar(
           foregroundColor: Colors.white,
-          title: PawsText(
+          title: Text(
             'Pet Details',
-            color: Colors.white,
-            fontWeight: FontWeight.w500,
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
           ),
           centerTitle: true,
           backgroundColor: Colors.transparent,
