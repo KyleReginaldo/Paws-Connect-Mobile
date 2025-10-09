@@ -1,11 +1,16 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'dart:io';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:glow_container/glow_container.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 import 'package:paws_connect/core/components/components.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/core/theme/paws_theme.dart';
@@ -15,6 +20,7 @@ import 'package:paws_connect/features/events/provider/event_provider.dart';
 import 'package:paws_connect/features/events/repository/event_repository.dart';
 import 'package:paws_connect/features/events/widgets/comment_input_field.dart';
 import 'package:provider/provider.dart';
+import 'package:social_sharing_plus/social_sharing_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/services/supabase_service.dart';
@@ -39,6 +45,31 @@ class EventDetailScreen extends StatefulWidget implements AutoRouteWrapper {
 
 class _EventDetailScreenState extends State<EventDetailScreen> {
   late RealtimeChannel commentChannel;
+
+  // Helper method to download image from URL and save as local file
+  Future<File?> downloadImageToFile(String imageUrl) async {
+    try {
+      // Get the temporary directory
+      final tempDir = await getTemporaryDirectory();
+
+      // Download the image
+      final response = await http.get(Uri.parse(imageUrl));
+      if (response.statusCode == 200) {
+        // Create a unique filename
+        final fileName =
+            'event_image_${DateTime.now().millisecondsSinceEpoch}${path.extension(imageUrl)}';
+        final file = File(path.join(tempDir.path, fileName));
+
+        // Write the image bytes to file
+        await file.writeAsBytes(response.bodyBytes);
+        return file;
+      }
+    } catch (e) {
+      debugPrint('Error downloading image: $e');
+    }
+    return null;
+  }
+
   // Helper method to format date
   String _formatDate(DateTime date) {
     final now = DateTime.now();
@@ -231,15 +262,89 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     Positioned(
                       top: MediaQuery.of(context).padding.top + 8,
                       left: 8,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.5),
-                          shape: BoxShape.circle,
-                        ),
-                        child: IconButton(
-                          icon: Icon(Icons.arrow_back, color: Colors.white),
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
+                      right: 8,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.5),
+                              shape: BoxShape.circle,
+                            ),
+                            child: IconButton(
+                              icon: Icon(Icons.arrow_back, color: Colors.white),
+                              onPressed: () => Navigator.of(context).pop(),
+                            ),
+                          ),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.blueAccent.withValues(alpha: 0.9),
+                              shape: BoxShape.circle,
+                            ),
+                            child: IconButton(
+                              icon: Icon(
+                                LucideIcons.facebook,
+                                color: Colors.white,
+                              ),
+                              onPressed: () async {
+                                try {
+                                  File? imageFile;
+
+                                  // Download image if available
+                                  if (event.images != null &&
+                                      event.images!.isNotEmpty &&
+                                      event.images!.first.isNotEmpty) {
+                                    debugPrint(
+                                      'Downloading image: ${event.images!.first}',
+                                    );
+                                    EasyLoading.show(
+                                      status: 'Preparing to share...',
+                                    );
+
+                                    imageFile = await downloadImageToFile(
+                                      event.images!.first,
+                                    );
+
+                                    if (imageFile != null) {
+                                      debugPrint(
+                                        'Image downloaded to: ${imageFile.path}',
+                                      );
+                                    } else {
+                                      debugPrint(
+                                        'Failed to download image, sharing without media',
+                                      );
+                                    }
+                                  }
+
+                                  EasyLoading.dismiss();
+
+                                  await SocialSharingPlus.shareToSocialMedia(
+                                    SocialPlatform.facebook,
+                                    '${event.title}\n\n${event.description}',
+                                    media: imageFile?.path,
+                                    isOpenBrowser: true,
+                                  );
+                                } catch (e) {
+                                  EasyLoading.dismiss();
+                                  debugPrint('Error sharing to Facebook: $e');
+
+                                  // Fallback to sharing without media if there's an error
+                                  try {
+                                    await SocialSharingPlus.shareToSocialMedia(
+                                      SocialPlatform.facebook,
+                                      event.title,
+                                      isOpenBrowser: true,
+                                    );
+                                  } catch (fallbackError) {
+                                    debugPrint(
+                                      'Fallback sharing also failed: $fallbackError',
+                                    );
+                                  }
+                                }
+                              },
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     // Title overlay
@@ -275,36 +380,41 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(height: 16),
                   PawsText(
-                    'About this Event',
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
+                    'About this event',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    color: PawsColors.textPrimary,
                   ),
-                  SizedBox(height: 12),
-                  PawsText(event.description, fontSize: 16),
-                  SizedBox(height: 24),
-
+                  SizedBox(height: 8),
+                  PawsText(
+                    event.description,
+                    fontSize: 14,
+                    color: PawsColors.textSecondary,
+                  ),
+                  SizedBox(height: 16),
                   // Enhanced Event Members Section
                   Container(
                     padding: EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          PawsColors.primary.withValues(alpha: 0.05),
-                          PawsColors.primary.withValues(alpha: 0.02),
+                          PawsColors.textSecondary.withValues(alpha: 0.05),
+                          PawsColors.textSecondary.withValues(alpha: 0.02),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: PawsColors.primary.withValues(alpha: 0.15),
+                        color: PawsColors.textSecondary.withValues(alpha: 0.15),
                         width: 1.5,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: PawsColors.primary.withValues(alpha: 0.08),
+                          color: PawsColors.textSecondary.withValues(
+                            alpha: 0.08,
+                          ),
                           blurRadius: 10,
                           offset: Offset(0, 4),
                         ),
@@ -326,24 +436,24 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                               ),
                               child: Icon(
                                 LucideIcons.users,
-                                size: 24,
+                                size: 16,
                                 color: PawsColors.primary,
                               ),
                             ),
-                            SizedBox(width: 12),
+                            SizedBox(width: 8),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 PawsText(
-                                  'Event Members',
-                                  fontSize: 18,
+                                  'Members',
+                                  fontSize: 15,
                                   fontWeight: FontWeight.w700,
                                   color: PawsColors.primary,
                                 ),
                                 SizedBox(height: 2),
                                 PawsText(
                                   '${event.memberCount} ${event.memberCount == 1 ? 'person has' : 'people have'} joined',
-                                  fontSize: 13,
+                                  fontSize: 12,
                                   color: PawsColors.textSecondary,
                                 ),
                               ],
@@ -391,14 +501,14 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                         // Members Display Section
                         if (event.members != null &&
                             event.members!.isNotEmpty) ...[
-                          SizedBox(height: 20),
+                          SizedBox(height: 10),
                           PawsText(
                             'Members',
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: PawsColors.textPrimary,
                           ),
-                          SizedBox(height: 12),
+                          SizedBox(height: 8),
 
                           // Members List
                           Container(

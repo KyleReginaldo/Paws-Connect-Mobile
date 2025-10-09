@@ -24,6 +24,8 @@ class EventPostList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      spacing: 5,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           spacing: 5,

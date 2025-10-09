@@ -81,6 +81,7 @@ dependencies:
   carousel_slider: ^5.1.1
   shared_preferences: ^2.2.2
   avatar_stack: ^3.0.0
+  social_sharing_plus: ^1.2.3
 
 dev_dependencies:
   flutter_test:

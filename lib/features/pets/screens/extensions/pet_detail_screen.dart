@@ -576,7 +576,14 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
             spacing: 8,
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (!(user != null && user.status == UserStatus.FULLY_VERIFIED))
+              if (user == null)
+                PawsText(
+                  'You need to be signed in to adopt a pet.',
+                  fontSize: 12,
+                  color: PawsColors.error,
+                ),
+              if (user?.status == UserStatus.PENDING ||
+                  user?.status == UserStatus.INDEFINITE)
                 PawsText(
                   'You need to be a fully verified user to adopt a pet.',
                   fontSize: 12,
