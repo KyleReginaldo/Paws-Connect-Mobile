@@ -36,7 +36,7 @@ class MainScreen extends StatefulWidget implements AutoRouteWrapper {
   }
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   bool _hasSetInitialIndex = false;
   RealtimeChannel? _forumChatsChannel;
   RealtimeChannel? _notificationsChannel;
@@ -59,6 +59,8 @@ class _MainScreenState extends State<MainScreen> {
         sl<CommonRepository>().getNotificationCount(userId);
       }
     });
+    WidgetsBinding.instance.addObserver(this); // Add this line
+
     super.initState();
   }
 
@@ -197,12 +199,63 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    switch (state) {
+      case AppLifecycleState.resumed:
+        setToActive();
+        print('🟢 MainScreen: User is ACTIVE - App in foreground');
+        break;
+
+      case AppLifecycleState.paused:
+        setToInactive();
+        print('🟡 MainScreen: User is INACTIVE - App in background');
+        break;
+
+      case AppLifecycleState.inactive:
+        setToInactive();
+        print(
+          '🟠 MainScreen: User is INACTIVE - App inactive (call/switching)',
+        );
+        break;
+
+      case AppLifecycleState.detached:
+        setToInactive();
+        print('🔴 MainScreen: User is INACTIVE - App detached');
+        break;
+
+      case AppLifecycleState.hidden:
+        setToInactive();
+        print('⚫ MainScreen: User is INACTIVE - App hidden');
+        break;
+    }
+  }
+
+  void setToActive() async {
+    if (USER_ID == null) return;
+    await supabase
+        .from('users')
+        .update({'is_active': true, 'last_active_at': null})
+        .eq('id', USER_ID!);
+  }
+
+  void setToInactive() async {
+    if (USER_ID == null) return;
+    await supabase
+        .from('users')
+        .update({
+          'is_active': false,
+          'last_active_at': DateTime.now().toIso8601String(),
+        })
+        .eq('id', USER_ID!);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final mesCount = context.watch<CommonRepository>().messageCount;
-
     return AutoTabsScaffold(
       homeIndex: 4,
-
       routes: [HomeRoute(), FundraisingRoute(), PetRoute(), ForumRoute()],
 
       bottomNavigationBuilder: (_, tabsRouter) {
@@ -214,10 +267,8 @@ class _MainScreenState extends State<MainScreen> {
           });
           _hasSetInitialIndex = true;
         }
-
         final badgeCount = mesCount ?? 0;
         String displayCount = badgeCount > 99 ? '99+' : badgeCount.toString();
-
         return BottomNavigationBar(
           currentIndex: tabsRouter.activeIndex,
           selectedItemColor: PawsColors.primary,

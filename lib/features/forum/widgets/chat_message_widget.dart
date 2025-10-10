@@ -70,10 +70,28 @@ class ChatMessageWidget extends StatelessWidget {
             children: [
               if (!isCurrentUser) ...[
                 showAvatar
-                    ? UserAvatar(
-                        imageUrl: chat.users?.profileImageLink,
-                        initials: chat.users?.username,
-                        size: 32,
+                    ? Stack(
+                        children: [
+                          UserAvatar(
+                            imageUrl: chat.users?.profileImageLink,
+                            initials: chat.users?.username,
+                            size: 32,
+                            borderColor: chat.users?.isActive ?? false
+                                ? Colors.green
+                                : Colors.grey,
+                            borderWidth: 2,
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: CircleAvatar(
+                              radius: 4,
+                              backgroundColor: chat.users?.isActive ?? false
+                                  ? Colors.green
+                                  : Colors.grey,
+                            ),
+                          ),
+                        ],
                       )
                     : const SizedBox(width: 32),
                 const SizedBox(width: 8),

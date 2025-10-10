@@ -21,6 +21,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../core/provider/common_provider.dart';
+import '../../../core/repository/common_repository.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/session/session_manager.dart';
 import '../../../core/theme/paws_theme.dart';
@@ -56,6 +57,7 @@ class HomeScreen extends StatefulWidget implements AutoRouteWrapper {
         ChangeNotifierProvider.value(value: sl<NotificationRepository>()),
         ChangeNotifierProvider.value(value: sl<AdoptionRepository>()),
         ChangeNotifierProvider.value(value: sl<EventRepository>()),
+        ChangeNotifierProvider.value(value: sl<CommonRepository>()),
       ],
       child: this,
     );
@@ -310,7 +312,6 @@ class _HomeScreenState extends State<HomeScreen> {
         context.read<EventRepository>().fetchEvents();
       }
     });
-
     super.initState();
   }
 

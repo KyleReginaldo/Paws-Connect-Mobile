@@ -14,23 +14,26 @@ class AppRouter extends RootStackRouter {
     CustomRoute(
       page: MainRoute.page,
       transitionsBuilder: TransitionsBuilders.fadeIn,
-      // guards: [UserGuard()],
+      path: '/',
       initial: true,
       children: [
         CustomRoute(
           page: HomeRoute.page,
+          path: 'home',
           transitionsBuilder: TransitionsBuilders.fadeIn,
         ),
         CustomRoute(
+          path: 'fundraising',
           page: FundraisingRoute.page,
           transitionsBuilder: TransitionsBuilders.fadeIn,
         ),
         CustomRoute(
+          path: 'pet',
           page: PetRoute.page,
           transitionsBuilder: TransitionsBuilders.fadeIn,
         ),
-
         CustomRoute(
+          path: 'forum',
           page: ForumRoute.page,
           transitionsBuilder: TransitionsBuilders.fadeIn,
         ),

@@ -26,10 +26,7 @@ class DefaultFirebaseOptions {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.macOS:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for macos - '
@@ -59,4 +56,14 @@ class DefaultFirebaseOptions {
     projectId: 'paws-connect-d9a16',
     storageBucket: 'paws-connect-d9a16.firebasestorage.app',
   );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyAHwrL3ZtzK8s3gp7CbM-cyt8h9JAtJ8P8',
+    appId: '1:88746411646:ios:54375cd783ae2c48c27a2f',
+    messagingSenderId: '88746411646',
+    projectId: 'paws-connect-d9a16',
+    storageBucket: 'paws-connect-d9a16.firebasestorage.app',
+    iosBundleId: 'com.example.pawsConnect',
+  );
+
 }

@@ -39,12 +39,14 @@ class UserAvatar extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: hasImage
-          ? NetworkImageView(
-              imageUrl!,
-              height: size,
-              width: size,
-              fit: BoxFit.cover,
-              enableTapToView: false,
+          ? ClipOval(
+              child: NetworkImageView(
+                imageUrl!,
+                height: size,
+                width: size,
+                fit: BoxFit.cover,
+                enableTapToView: false,
+              ),
             )
           : Center(
               child: Text(

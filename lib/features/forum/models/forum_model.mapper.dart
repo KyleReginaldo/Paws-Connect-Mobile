@@ -595,12 +595,20 @@ class UsersMapper extends ClassMapperBase<Users> {
     key: r'profile_image_link',
     opt: true,
   );
+  static bool? _$isActive(Users v) => v.isActive;
+  static const Field<Users, bool> _f$isActive = Field(
+    'isActive',
+    _$isActive,
+    key: r'is_active',
+    opt: true,
+  );
 
   @override
   final MappableFields<Users> fields = const {
     #id: _f$id,
     #username: _f$username,
     #profileImageLink: _f$profileImageLink,
+    #isActive: _f$isActive,
   };
 
   static Users _instantiate(DecodingData data) {
@@ -608,6 +616,7 @@ class UsersMapper extends ClassMapperBase<Users> {
       id: data.dec(_f$id),
       username: data.dec(_f$username),
       profileImageLink: data.dec(_f$profileImageLink),
+      isActive: data.dec(_f$isActive),
     );
   }
 
@@ -657,7 +666,12 @@ extension UsersValueCopy<$R, $Out> on ObjectCopyWith<$R, Users, $Out> {
 
 abstract class UsersCopyWith<$R, $In extends Users, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({String? id, String? username, String? profileImageLink});
+  $R call({
+    String? id,
+    String? username,
+    String? profileImageLink,
+    bool? isActive,
+  });
   UsersCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -668,19 +682,25 @@ class _UsersCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Users, $Out>
   @override
   late final ClassMapperBase<Users> $mapper = UsersMapper.ensureInitialized();
   @override
-  $R call({String? id, String? username, Object? profileImageLink = $none}) =>
-      $apply(
-        FieldCopyWithData({
-          if (id != null) #id: id,
-          if (username != null) #username: username,
-          if (profileImageLink != $none) #profileImageLink: profileImageLink,
-        }),
-      );
+  $R call({
+    String? id,
+    String? username,
+    Object? profileImageLink = $none,
+    Object? isActive = $none,
+  }) => $apply(
+    FieldCopyWithData({
+      if (id != null) #id: id,
+      if (username != null) #username: username,
+      if (profileImageLink != $none) #profileImageLink: profileImageLink,
+      if (isActive != $none) #isActive: isActive,
+    }),
+  );
   @override
   Users $make(CopyWithData data) => Users(
     id: data.get(#id, or: $value.id),
     username: data.get(#username, or: $value.username),
     profileImageLink: data.get(#profileImageLink, or: $value.profileImageLink),
+    isActive: data.get(#isActive, or: $value.isActive),
   );
 
   @override

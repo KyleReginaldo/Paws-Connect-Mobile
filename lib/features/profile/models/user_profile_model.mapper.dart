@@ -102,6 +102,20 @@ class UserProfileMapper extends ClassMapperBase<UserProfile> {
         key: r'user_identification',
         opt: true,
       );
+  static bool? _$isActive(UserProfile v) => v.isActive;
+  static const Field<UserProfile, bool> _f$isActive = Field(
+    'isActive',
+    _$isActive,
+    key: r'is_active',
+    opt: true,
+  );
+  static DateTime? _$lastActiveAt(UserProfile v) => v.lastActiveAt;
+  static const Field<UserProfile, DateTime> _f$lastActiveAt = Field(
+    'lastActiveAt',
+    _$lastActiveAt,
+    key: r'last_active_at',
+    opt: true,
+  );
 
   @override
   final MappableFields<UserProfile> fields = const {
@@ -119,6 +133,8 @@ class UserProfileMapper extends ClassMapperBase<UserProfile> {
     #createdBy: _f$createdBy,
     #passwordChanged: _f$passwordChanged,
     #userIdentification: _f$userIdentification,
+    #isActive: _f$isActive,
+    #lastActiveAt: _f$lastActiveAt,
   };
 
   static UserProfile _instantiate(DecodingData data) {
@@ -137,6 +153,8 @@ class UserProfileMapper extends ClassMapperBase<UserProfile> {
       createdBy: data.dec(_f$createdBy),
       passwordChanged: data.dec(_f$passwordChanged),
       userIdentification: data.dec(_f$userIdentification),
+      isActive: data.dec(_f$isActive),
+      lastActiveAt: data.dec(_f$lastActiveAt),
     );
   }
 
@@ -218,6 +236,8 @@ abstract class UserProfileCopyWith<$R, $In extends UserProfile, $Out>
     String? createdBy,
     bool? passwordChanged,
     UserIdentification? userIdentification,
+    bool? isActive,
+    DateTime? lastActiveAt,
   });
   UserProfileCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -260,6 +280,8 @@ class _UserProfileCopyWithImpl<$R, $Out>
     Object? createdBy = $none,
     Object? passwordChanged = $none,
     Object? userIdentification = $none,
+    Object? isActive = $none,
+    Object? lastActiveAt = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -276,6 +298,8 @@ class _UserProfileCopyWithImpl<$R, $Out>
       if (createdBy != $none) #createdBy: createdBy,
       if (passwordChanged != $none) #passwordChanged: passwordChanged,
       if (userIdentification != $none) #userIdentification: userIdentification,
+      if (isActive != $none) #isActive: isActive,
+      if (lastActiveAt != $none) #lastActiveAt: lastActiveAt,
     }),
   );
   @override
@@ -297,6 +321,8 @@ class _UserProfileCopyWithImpl<$R, $Out>
       #userIdentification,
       or: $value.userIdentification,
     ),
+    isActive: data.get(#isActive, or: $value.isActive),
+    lastActiveAt: data.get(#lastActiveAt, or: $value.lastActiveAt),
   );
 
   @override

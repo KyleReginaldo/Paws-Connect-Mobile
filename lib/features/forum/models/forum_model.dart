@@ -79,8 +79,14 @@ class Users with UsersMappable {
   final String id;
   final String username;
   final String? profileImageLink;
+  final bool? isActive;
 
-  Users({required this.id, required this.username, this.profileImageLink});
+  Users({
+    required this.id,
+    required this.username,
+    this.profileImageLink,
+    this.isActive,
+  });
 }
 
 @MappableClass(caseStyle: CaseStyle.snakeCase)

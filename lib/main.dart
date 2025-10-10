@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:flutter_gemini/flutter_gemini.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:paws_connect/core/router/app_route.dart';
 import 'package:paws_connect/core/router/app_route.gr.dart';
@@ -30,8 +31,9 @@ void main() async {
       logLevel: RealtimeLogLevel.info,
       eventsPerSecond: 10,
     ),
-    debug: true, // Enable debug mode for development
+    debug: true,
   );
+  Gemini.init(apiKey: 'AIzaSyCBPr2uSM7S9oC9ld2eWHytiJHOrTUc2Jg');
   OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
   OneSignal.initialize('323cc2fb-7bab-418b-954e-a578788499bd');
   debugPrint(

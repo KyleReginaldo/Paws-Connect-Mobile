@@ -20,6 +20,8 @@ class UserProfile with UserProfileMappable {
   final String? createdBy;
   final bool? passwordChanged;
   final UserIdentification? userIdentification;
+  final bool? isActive; // New field to track active status
+  final DateTime? lastActiveAt; // New field to track last active timestamp
 
   UserProfile({
     required this.id,
@@ -36,6 +38,8 @@ class UserProfile with UserProfileMappable {
     this.createdBy,
     this.passwordChanged,
     this.userIdentification,
+    this.isActive,
+    this.lastActiveAt,
   });
 }
 
