@@ -101,6 +101,20 @@ class FundraisingMapper extends ClassMapperBase<Fundraising> {
     key: r'facebook_link',
     opt: true,
   );
+  static String? _$qrCode(Fundraising v) => v.qrCode;
+  static const Field<Fundraising, String> _f$qrCode = Field(
+    'qrCode',
+    _$qrCode,
+    key: r'qr_code',
+    opt: true,
+  );
+  static String? _$gcashNumber(Fundraising v) => v.gcashNumber;
+  static const Field<Fundraising, String> _f$gcashNumber = Field(
+    'gcashNumber',
+    _$gcashNumber,
+    key: r'gcash_number',
+    opt: true,
+  );
 
   @override
   final MappableFields<Fundraising> fields = const {
@@ -118,6 +132,8 @@ class FundraisingMapper extends ClassMapperBase<Fundraising> {
     #donations: _f$donations,
     #endDate: _f$endDate,
     #facebookLink: _f$facebookLink,
+    #qrCode: _f$qrCode,
+    #gcashNumber: _f$gcashNumber,
   };
 
   static Fundraising _instantiate(DecodingData data) {
@@ -136,6 +152,8 @@ class FundraisingMapper extends ClassMapperBase<Fundraising> {
       donations: data.dec(_f$donations),
       endDate: data.dec(_f$endDate),
       facebookLink: data.dec(_f$facebookLink),
+      qrCode: data.dec(_f$qrCode),
+      gcashNumber: data.dec(_f$gcashNumber),
     );
   }
 
@@ -224,6 +242,8 @@ abstract class FundraisingCopyWith<$R, $In extends Fundraising, $Out>
     List<Donation>? donations,
     DateTime? endDate,
     String? facebookLink,
+    String? qrCode,
+    String? gcashNumber,
   });
   FundraisingCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -286,6 +306,8 @@ class _FundraisingCopyWithImpl<$R, $Out>
     Object? donations = $none,
     DateTime? endDate,
     Object? facebookLink = $none,
+    Object? qrCode = $none,
+    Object? gcashNumber = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -302,6 +324,8 @@ class _FundraisingCopyWithImpl<$R, $Out>
       if (donations != $none) #donations: donations,
       if (endDate != null) #endDate: endDate,
       if (facebookLink != $none) #facebookLink: facebookLink,
+      if (qrCode != $none) #qrCode: qrCode,
+      if (gcashNumber != $none) #gcashNumber: gcashNumber,
     }),
   );
   @override
@@ -320,6 +344,8 @@ class _FundraisingCopyWithImpl<$R, $Out>
     donations: data.get(#donations, or: $value.donations),
     endDate: data.get(#endDate, or: $value.endDate),
     facebookLink: data.get(#facebookLink, or: $value.facebookLink),
+    qrCode: data.get(#qrCode, or: $value.qrCode),
+    gcashNumber: data.get(#gcashNumber, or: $value.gcashNumber),
   );
 
   @override

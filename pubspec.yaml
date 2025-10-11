@@ -64,6 +64,7 @@ dependencies:
     git:
       url: https://github.com/KyleReginaldo/paymongo_sdk.git
   image_picker: ^1.2.0
+  google_mlkit_text_recognition: ^0.13.0
   path: ^1.9.1
   cross_file: ^0.3.4+2
   html: ^0.15.6
@@ -83,6 +84,7 @@ dependencies:
   avatar_stack: ^3.0.0
   social_sharing_plus: ^1.2.3
   flutter_gemini: ^3.0.0
+  # shadcn_flutter: ^0.0.44
 
 dev_dependencies:
   flutter_test:

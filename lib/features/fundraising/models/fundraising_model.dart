@@ -23,6 +23,8 @@ class Fundraising with FundraisingMappable {
   final List<Donation>? donations;
   final DateTime endDate;
   final String? facebookLink;
+  final String? qrCode;
+  final String? gcashNumber;
 
   Fundraising({
     required this.id,
@@ -39,6 +41,8 @@ class Fundraising with FundraisingMappable {
     this.donations,
     required this.endDate,
     this.facebookLink,
+    this.qrCode,
+    this.gcashNumber,
   });
 }
 

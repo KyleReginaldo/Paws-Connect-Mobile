@@ -60,12 +60,11 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       }
     });
     WidgetsBinding.instance.addObserver(this); // Add this line
-
     super.initState();
   }
 
   void _initForumChatsRealtime() {
-    _forumChatsChannel = supabase.channel('public:forum_chats_all');
+    _forumChatsChannel = supabase.channel('public:forum_chats');
     _forumChatsChannel!
         .onPostgresChanges(
           event: PostgresChangeEvent.all,
@@ -257,7 +256,6 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     return AutoTabsScaffold(
       homeIndex: 4,
       routes: [HomeRoute(), FundraisingRoute(), PetRoute(), ForumRoute()],
-
       bottomNavigationBuilder: (_, tabsRouter) {
         if (widget.initialIndex != null && !_hasSetInitialIndex) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -339,6 +337,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _forumChatsChannel?.unsubscribe();
     super.dispose();
   }

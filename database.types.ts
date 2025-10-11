@@ -67,6 +67,7 @@ export type Database = {
       adoption: {
         Row: {
           created_at: string
+          happiness_image: string | null
           has_children_in_home: boolean | null
           has_other_pets_in_home: boolean | null
           have_outdoor_space: boolean | null
@@ -81,6 +82,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          happiness_image?: string | null
           has_children_in_home?: boolean | null
           has_other_pets_in_home?: boolean | null
           have_outdoor_space?: boolean | null
@@ -95,6 +97,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          happiness_image?: string | null
           has_children_in_home?: boolean | null
           has_other_pets_in_home?: boolean | null
           have_outdoor_space?: boolean | null
@@ -124,6 +127,39 @@ export type Database = {
           },
         ]
       }
+      ai_responses: {
+        Row: {
+          about: string | null
+          cache_key: string | null
+          content: string | null
+          created_at: string
+          id: number
+          last_used_at: string | null
+          response: string | null
+          usage_count: number | null
+        }
+        Insert: {
+          about?: string | null
+          cache_key?: string | null
+          content?: string | null
+          created_at?: string
+          id?: number
+          last_used_at?: string | null
+          response?: string | null
+          usage_count?: number | null
+        }
+        Update: {
+          about?: string | null
+          cache_key?: string | null
+          content?: string | null
+          created_at?: string
+          id?: number
+          last_used_at?: string | null
+          response?: string | null
+          usage_count?: number | null
+        }
+        Relationships: []
+      }
       donations: {
         Row: {
           amount: number | null
@@ -132,6 +168,8 @@ export type Database = {
           fundraising: number | null
           id: number
           message: string | null
+          reference_number: string | null
+          screenshot: string | null
         }
         Insert: {
           amount?: number | null
@@ -140,6 +178,8 @@ export type Database = {
           fundraising?: number | null
           id?: number
           message?: string | null
+          reference_number?: string | null
+          screenshot?: string | null
         }
         Update: {
           amount?: number | null
@@ -148,6 +188,8 @@ export type Database = {
           fundraising?: number | null
           id?: number
           message?: string | null
+          reference_number?: string | null
+          screenshot?: string | null
         }
         Relationships: [
           {
@@ -166,29 +208,116 @@ export type Database = {
           },
         ]
       }
+      event_comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          event: number
+          id: number
+          likes: string[] | null
+          user: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          event: number
+          id?: number
+          likes?: string[] | null
+          user: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          event?: number
+          id?: number
+          likes?: string[] | null
+          user?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_comments_event_fkey"
+            columns: ["event"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_comments_user_fkey"
+            columns: ["user"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_members: {
+        Row: {
+          event: number
+          id: number
+          joined_at: string
+          user: string
+        }
+        Insert: {
+          event: number
+          id?: number
+          joined_at?: string
+          user: string
+        }
+        Update: {
+          event?: number
+          id?: number
+          joined_at?: string
+          user?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_members_event_fkey"
+            columns: ["event"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_members_user_fkey"
+            columns: ["user"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           created_at: string
           created_by: string | null
           description: string | null
+          ended_at: string | null
           id: number
-          images: string[]
+          images: string[] | null
+          starting_date: string | null
+          suggestions: string[] | null
           title: string
         }
         Insert: {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          ended_at?: string | null
           id?: number
-          images: string[]
+          images?: string[] | null
+          starting_date?: string | null
+          suggestions?: string[] | null
           title: string
         }
         Update: {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          ended_at?: string | null
           id?: number
-          images?: string[]
+          images?: string[] | null
+          starting_date?: string | null
+          suggestions?: string[] | null
           title?: string
         }
         Relationships: [
@@ -278,6 +407,8 @@ export type Database = {
           id: number
           image_url: string | null
           message: string | null
+          reactions: Json[] | null
+          replied_to: number | null
           sender: string | null
           sent_at: string
           viewers: string[] | null
@@ -287,6 +418,8 @@ export type Database = {
           id?: number
           image_url?: string | null
           message?: string | null
+          reactions?: Json[] | null
+          replied_to?: number | null
           sender?: string | null
           sent_at?: string
           viewers?: string[] | null
@@ -296,6 +429,8 @@ export type Database = {
           id?: number
           image_url?: string | null
           message?: string | null
+          reactions?: Json[] | null
+          replied_to?: number | null
           sender?: string | null
           sent_at?: string
           viewers?: string[] | null
@@ -306,6 +441,13 @@ export type Database = {
             columns: ["forum"]
             isOneToOne: false
             referencedRelation: "forum"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forum_chats_replied_to_fkey"
+            columns: ["replied_to"]
+            isOneToOne: false
+            referencedRelation: "forum_chats"
             referencedColumns: ["id"]
           },
           {
@@ -372,8 +514,10 @@ export type Database = {
           description: string | null
           end_date: string | null
           facebook_link: string | null
+          gcash_number: string | null
           id: number
           images: string[] | null
+          qr_code: string | null
           raised_amount: number | null
           status: Database["public"]["Enums"]["fundraising_status"] | null
           target_amount: number | null
@@ -385,8 +529,10 @@ export type Database = {
           description?: string | null
           end_date?: string | null
           facebook_link?: string | null
+          gcash_number?: string | null
           id?: number
           images?: string[] | null
+          qr_code?: string | null
           raised_amount?: number | null
           status?: Database["public"]["Enums"]["fundraising_status"] | null
           target_amount?: number | null
@@ -398,8 +544,10 @@ export type Database = {
           description?: string | null
           end_date?: string | null
           facebook_link?: string | null
+          gcash_number?: string | null
           id?: number
           images?: string[] | null
+          qr_code?: string | null
           raised_amount?: number | null
           status?: Database["public"]["Enums"]["fundraising_status"] | null
           target_amount?: number | null
@@ -409,6 +557,42 @@ export type Database = {
           {
             foreignKeyName: "fundraising_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mentions: {
+        Row: {
+          created_at: string
+          forum_chat: number | null
+          id: number
+          user: string | null
+        }
+        Insert: {
+          created_at?: string
+          forum_chat?: number | null
+          id?: number
+          user?: string | null
+        }
+        Update: {
+          created_at?: string
+          forum_chat?: number | null
+          id?: number
+          user?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentions_forum_chat_fkey"
+            columns: ["forum_chat"]
+            isOneToOne: false
+            referencedRelation: "forum_chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mentions_user_fkey"
+            columns: ["user"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -470,7 +654,7 @@ export type Database = {
           is_trained: boolean | null
           is_vaccinated: boolean | null
           name: string
-          photo: string | null
+          photos: string[] | null
           request_status: string | null
           rescue_address: string | null
           size: string | null
@@ -494,7 +678,7 @@ export type Database = {
           is_trained?: boolean | null
           is_vaccinated?: boolean | null
           name: string
-          photo?: string | null
+          photos?: string[] | null
           request_status?: string | null
           rescue_address?: string | null
           size?: string | null
@@ -518,7 +702,7 @@ export type Database = {
           is_trained?: boolean | null
           is_vaccinated?: boolean | null
           name?: string
-          photo?: string | null
+          photos?: string[] | null
           request_status?: string | null
           rescue_address?: string | null
           size?: string | null
@@ -554,6 +738,47 @@ export type Database = {
         }
         Relationships: []
       }
+      user_identification: {
+        Row: {
+          address: string | null
+          created_at: string
+          date_of_birth: string | null
+          id: number
+          id_attachment_url: string
+          id_name: string
+          status: Database["public"]["Enums"]["id_status"] | null
+          user: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          id?: number
+          id_attachment_url: string
+          id_name: string
+          status?: Database["public"]["Enums"]["id_status"] | null
+          user?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          id?: number
+          id_attachment_url?: string
+          id_name?: string
+          status?: Database["public"]["Enums"]["id_status"] | null
+          user?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_identification_user_fkey"
+            columns: ["user"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           created_at: string
@@ -561,13 +786,15 @@ export type Database = {
           email: string | null
           house_images: string[] | null
           id: string
+          is_active: boolean | null
+          last_active_at: string | null
           password_changed: boolean | null
           payment_method: string | null
           paymongo_id: string | null
           phone_number: string
           profile_image_link: string | null
           role: number
-          status: string | null
+          status: Database["public"]["Enums"]["user_status"] | null
           username: string | null
         }
         Insert: {
@@ -576,13 +803,15 @@ export type Database = {
           email?: string | null
           house_images?: string[] | null
           id: string
+          is_active?: boolean | null
+          last_active_at?: string | null
           password_changed?: boolean | null
           payment_method?: string | null
           paymongo_id?: string | null
           phone_number: string
           profile_image_link?: string | null
           role: number
-          status?: string | null
+          status?: Database["public"]["Enums"]["user_status"] | null
           username?: string | null
         }
         Update: {
@@ -591,13 +820,15 @@ export type Database = {
           email?: string | null
           house_images?: string[] | null
           id?: string
+          is_active?: boolean | null
+          last_active_at?: string | null
           password_changed?: boolean | null
           payment_method?: string | null
           paymongo_id?: string | null
           phone_number?: string
           profile_image_link?: string | null
           role?: number
-          status?: string | null
+          status?: Database["public"]["Enums"]["user_status"] | null
           username?: string | null
         }
         Relationships: [
@@ -622,7 +853,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      toggle_comment_like: {
+        Args: { comment_id: number; user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       adoption_status:
@@ -637,8 +871,34 @@ export type Database = {
         | "COMPLETE"
         | "REJECTED"
         | "CANCELLED"
+      id_status: "PENDING" | "ACCEPTED" | "REJECTED"
+      id_types:
+        | "PHILSYS_ID"
+        | "PASSPORT"
+        | "DRIVER_LICENSE"
+        | "SSS_ID"
+        | "UMID_CARD"
+        | "GSIS_ID"
+        | "PRC_ID"
+        | "TIN_ID"
+        | "POSTAL_ID"
+        | "VOTER_ID"
+        | "PHILHEALTH_ID"
+        | "PAGIBIG_ID"
+        | "SENIOR_CITIZEN_ID"
+        | "PWD_ID"
+        | "STUDENT_ID"
+        | "OFW_ID"
+        | "NBI_CLEARANCE"
+        | "POLICE_CLEARANCE"
+        | "BARANGAY_ID"
+        | "FIREARMS_LICENSE_ID"
+        | "IBP_ID"
+        | "SEAMAN_BOOK"
+        | "ACR_I_CARD"
       invitation_status: "PENDING" | "APPROVED" | "REJECTED"
       user_role: "CUSTOMER" | "ADMIN" | "STAFF"
+      user_status: "SEMI_VERIFIED" | "FULLY_VERIFIED" | "INDEFINITE" | "PENDING"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -780,8 +1040,35 @@ export const Constants = {
         "REJECTED",
         "CANCELLED",
       ],
+      id_status: ["PENDING", "ACCEPTED", "REJECTED"],
+      id_types: [
+        "PHILSYS_ID",
+        "PASSPORT",
+        "DRIVER_LICENSE",
+        "SSS_ID",
+        "UMID_CARD",
+        "GSIS_ID",
+        "PRC_ID",
+        "TIN_ID",
+        "POSTAL_ID",
+        "VOTER_ID",
+        "PHILHEALTH_ID",
+        "PAGIBIG_ID",
+        "SENIOR_CITIZEN_ID",
+        "PWD_ID",
+        "STUDENT_ID",
+        "OFW_ID",
+        "NBI_CLEARANCE",
+        "POLICE_CLEARANCE",
+        "BARANGAY_ID",
+        "FIREARMS_LICENSE_ID",
+        "IBP_ID",
+        "SEAMAN_BOOK",
+        "ACR_I_CARD",
+      ],
       invitation_status: ["PENDING", "APPROVED", "REJECTED"],
       user_role: ["CUSTOMER", "ADMIN", "STAFF"],
+      user_status: ["SEMI_VERIFIED", "FULLY_VERIFIED", "INDEFINITE", "PENDING"],
     },
   },
 } as const
