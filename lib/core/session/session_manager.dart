@@ -39,8 +39,9 @@ class SessionManager {
 
     // Clear repository caches
     if (sl.isRegistered<PetRepository>()) sl<PetRepository>().reset();
-    if (sl.isRegistered<FundraisingRepository>())
+    if (sl.isRegistered<FundraisingRepository>()) {
       sl<FundraisingRepository>().reset();
+    }
     if (sl.isRegistered<AddressRepository>()) sl<AddressRepository>().reset();
     if (sl.isRegistered<ProfileRepository>()) sl<ProfileRepository>().reset();
     if (sl.isRegistered<ForumRepository>()) sl<ForumRepository>().reset();

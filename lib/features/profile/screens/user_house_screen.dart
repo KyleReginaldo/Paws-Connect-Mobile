@@ -319,8 +319,9 @@ class _UserHouseScreenState extends State<UserHouseScreen> {
                                         fit: BoxFit.contain,
                                         loadingBuilder:
                                             (context, child, loadingProgress) {
-                                              if (loadingProgress == null)
+                                              if (loadingProgress == null) {
                                                 return child;
+                                              }
                                               return Container(
                                                 width: 200,
                                                 height: 200,

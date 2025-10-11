@@ -46,7 +46,9 @@ class DirectDonationProvider {
           'Donation submitted successfully! It will be reviewed and processed.',
         );
       } else {
-        final errorMessage = data['error'] ?? 'Failed to create donation';
+        debugPrint('Donation creation failed: $data');
+        final errorMessage =
+            'Failed to upload donation, please try again later.';
         return Result.error(errorMessage);
       }
     } catch (e) {

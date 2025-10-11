@@ -41,19 +41,25 @@ class PetProvider {
       if (size != null && size.isNotEmpty) queryParams['size'] = size;
       if (ageMin != null) queryParams['age_min'] = ageMin.toString();
       if (ageMax != null) queryParams['age_max'] = ageMax.toString();
-      if (isVaccinated != null)
+      if (isVaccinated != null) {
         queryParams['is_vaccinated'] = isVaccinated.toString();
-      if (isSpayedOrNeutered != null)
+      }
+      if (isSpayedOrNeutered != null) {
         queryParams['is_spayed_or_neutured'] = isSpayedOrNeutered.toString();
+      }
       if (isTrained != null) queryParams['is_trained'] = isTrained.toString();
-      if (healthStatus != null && healthStatus.isNotEmpty)
+      if (healthStatus != null && healthStatus.isNotEmpty) {
         queryParams['health_status'] = healthStatus;
-      if (requestStatus != null && requestStatus.isNotEmpty)
+      }
+      if (requestStatus != null && requestStatus.isNotEmpty) {
         queryParams['request_status'] = requestStatus;
-      if (goodWith != null && goodWith.isNotEmpty)
+      }
+      if (goodWith != null && goodWith.isNotEmpty) {
         queryParams['good_with'] = goodWith;
-      if (location != null && location.isNotEmpty)
+      }
+      if (location != null && location.isNotEmpty) {
         queryParams['location'] = location;
+      }
       if (userId != null && userId.isNotEmpty) queryParams['user'] = userId;
 
       final uri = Uri.parse(

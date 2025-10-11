@@ -300,7 +300,7 @@ class _CreateAdoptionScreenState extends State<CreateAdoptionScreen> {
               const SizedBox(height: 8),
               PawsText('Type of Residence', fontWeight: FontWeight.w500),
               DropdownButtonFormField<String>(
-                value: typeOfResidence,
+                initialValue: typeOfResidence,
                 decoration: InputDecoration(
                   border: OutlineInputBorder(),
                   contentPadding: EdgeInsets.symmetric(

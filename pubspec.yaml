@@ -84,7 +84,8 @@ dependencies:
   avatar_stack: ^3.0.0
   social_sharing_plus: ^1.2.3
   flutter_gemini: ^3.0.0
-  # shadcn_flutter: ^0.0.44
+  shadcn_flutter: ^0.0.44
+  installed_apps: ^1.6.0
 
 dev_dependencies:
   flutter_test:

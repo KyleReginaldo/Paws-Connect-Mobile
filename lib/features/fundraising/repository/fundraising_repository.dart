@@ -46,6 +46,19 @@ class FundraisingRepository extends ChangeNotifier {
     }
   }
 
+  Future<void> refreshFundraisingById(int id) async {
+    // Refresh without showing loading state for real-time updates
+    final result = await _provider.fetchFundraisingById(id);
+    if (result.isSuccess) {
+      _fundraising = result.value;
+      _errorMessage = null;
+      notifyListeners();
+    } else {
+      _errorMessage = result.error;
+      notifyListeners();
+    }
+  }
+
   void reset() {
     _fundraisings = null;
     _fundraising = null;

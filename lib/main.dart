@@ -11,6 +11,7 @@ import 'package:paws_connect/dependency.dart';
 import 'package:paws_connect/features/forum/provider/forum_provider.dart';
 import 'package:paws_connect/features/internet/internet.dart';
 import 'package:provider/provider.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart' as shadcn;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/session/session_manager.dart';
@@ -65,13 +66,48 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => InternetProvider(),
-      child: MaterialApp.router(
+      child: shadcn.ShadcnApp.router(
         title: 'Paws Connect',
         debugShowCheckedModeBanner: false,
         // debugShowMaterialGrid: true,
-        theme: PawsTheme.lightTheme,
+        theme: shadcn.ThemeData(
+          colorScheme: shadcn.ColorScheme(
+            brightness: Brightness.light,
+            primary: PawsColors.primary,
+            foreground: PawsColors.textPrimary,
+            card: PawsColors.surface,
+            cardForeground: PawsColors.textPrimary,
+            popover: PawsColors.surface,
+            popoverForeground: PawsColors.textPrimary,
+            secondary: PawsColors.secondary,
+            primaryForeground: PawsColors.textLight,
+            secondaryForeground: PawsColors.textLight,
+            muted: PawsColors.disabled,
+            mutedForeground: PawsColors.textSecondary,
+            accent: PawsColors.accent,
+            accentForeground: PawsColors.textPrimary,
+            destructive: PawsColors.error,
+            border: PawsColors.border,
+            input: PawsColors.border,
+            ring: PawsColors.primary,
+            background: PawsColors.background,
+            chart1: PawsColors.primary,
+            chart2: PawsColors.secondary,
+            chart3: PawsColors.accent,
+            chart4: PawsColors.info,
+            chart5: PawsColors.success,
+            sidebar: PawsColors.surface,
+            sidebarForeground: PawsColors.textPrimary,
+            sidebarPrimary: PawsColors.primary,
+            sidebarPrimaryForeground: PawsColors.textLight,
+            sidebarAccent: PawsColors.accent,
+            sidebarAccentForeground: PawsColors.textPrimary,
+            sidebarBorder: PawsColors.border,
+            sidebarRing: PawsColors.primary,
+          ),
+        ),
         // darkTheme: PawsTheme.darkTheme,
-        themeMode: ThemeMode.system,
+        themeMode: shadcn.ThemeMode.light,
         builder: EasyLoading.init(),
         routerConfig: appRouter.config(
           deepLinkBuilder: (deepLink) async {
