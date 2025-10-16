@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 import 'package:paws_connect/core/provider/common_provider.dart';
+import 'package:paws_connect/core/provider/image_provider.dart';
 import 'package:paws_connect/core/repository/common_repository.dart';
 import 'package:paws_connect/features/adoption/repository/adoption_repository.dart';
 import 'package:paws_connect/features/auth/provider/auth_provider.dart';
@@ -54,4 +55,5 @@ Future<void> init() async {
   sl.registerLazySingleton(() => CommonRepository(sl()));
   sl.registerLazySingleton(() => EventProvider());
   sl.registerLazySingleton(() => EventRepository(sl()));
+  sl.registerLazySingleton(() => ImageProvider());
 }

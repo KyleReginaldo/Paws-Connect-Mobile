@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:paws_connect/features/notifications/provider/notification_provider.dart';
 import 'package:paws_connect/features/notifications/repository/notification_repository.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart' show RefreshTrigger;
 
 class NotificationPaginationExample extends StatefulWidget {
   const NotificationPaginationExample({super.key});
@@ -64,7 +65,10 @@ class _NotificationPaginationExampleState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications with Pagination'),
+        title: const Text(
+          'Notifications with Pagination',
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+        ),
         actions: [
           // Show pagination info
           IconButton(
@@ -119,7 +123,7 @@ class _NotificationPaginationExampleState
           }
 
           // Show notifications with pagination
-          return RefreshIndicator(
+          return RefreshTrigger(
             onRefresh: () async {
               notificationRepo.refreshNotifications("user123");
             },

@@ -19,6 +19,8 @@ Future<bool?> showGlobalConfirmDialog(
     context: context,
     builder: (context) {
       return AlertDialog(
+        surfaceTintColor: Colors.white,
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         title: PawsText(title, fontSize: 18, fontWeight: FontWeight.w600),
         content: message != null ? PawsText(message) : null,

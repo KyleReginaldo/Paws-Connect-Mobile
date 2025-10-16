@@ -17,6 +17,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:paws_connect/core/components/components.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/core/theme/paws_theme.dart';
+import 'package:paws_connect/core/widgets/button.dart';
 import 'package:paws_connect/core/widgets/text.dart';
 import 'package:paws_connect/features/events/models/event_model.dart';
 import 'package:paws_connect/features/events/provider/event_provider.dart';
@@ -224,14 +225,15 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       body: CustomScrollView(
         slivers: [
           // Fixed image section (not in app bar)
-          if (event.images != null && event.images!.isNotEmpty)
+          if (event.transformedImages != null &&
+              event.transformedImages!.isNotEmpty)
             SliverToBoxAdapter(
               child: SizedBox(
                 height: 250,
                 child: Stack(
                   children: [
                     CarouselSlider(
-                      items: event.images!.map((image) {
+                      items: event.transformedImages!.map((image) {
                         return NetworkImageView(
                           image,
                           fit: BoxFit.cover,
@@ -244,7 +246,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                         viewportFraction: 1,
                         autoPlay: true,
                         autoPlayInterval: Duration(seconds: 4),
-                        enableInfiniteScroll: event.images!.length > 1,
+                        enableInfiniteScroll:
+                            event.transformedImages!.length > 1,
                       ),
                     ),
                     // Gradient overlay
@@ -294,18 +297,21 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                   File? imageFile;
 
                                   // Download image if available
-                                  if (event.images != null &&
-                                      event.images!.isNotEmpty &&
-                                      event.images!.first.isNotEmpty) {
+                                  if (event.transformedImages != null &&
+                                      event.transformedImages!.isNotEmpty &&
+                                      event
+                                          .transformedImages!
+                                          .first
+                                          .isNotEmpty) {
                                     debugPrint(
-                                      'Downloading image: ${event.images!.first}',
+                                      'Downloading image: ${event.transformedImages!.first}',
                                     );
                                     EasyLoading.show(
                                       status: 'Preparing to share...',
                                     );
 
                                     imageFile = await downloadImageToFile(
-                                      event.images!.first,
+                                      event.transformedImages!.first,
                                     );
 
                                     if (imageFile != null) {
@@ -370,7 +376,13 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           // Simple app bar for when there are no images
           if (event.images == null || event.images!.isEmpty)
             SliverAppBar(
-              title: Text(event.title),
+              title: Text(
+                event.title,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
               pinned: true,
               backgroundColor: PawsColors.primary,
               foregroundColor: Colors.white,
@@ -558,47 +570,22 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                             width: double.infinity,
                             height: 50,
                             child: event.isUserMember(USER_ID!)
-                                ? ElevatedButton.icon(
+                                ? PawsElevatedButton(
+                                    label: 'Leave Event',
                                     onPressed: leaveEvent,
-                                    icon: Icon(LucideIcons.userMinus, size: 20),
-                                    label: Text(
-                                      'Leave Event',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red.shade600,
-                                      foregroundColor: Colors.white,
-                                      elevation: 2,
-                                      shadowColor: Colors.red.shade600
-                                          .withValues(alpha: 0.3),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
+                                    icon: LucideIcons.userMinus,
+                                    backgroundColor: Colors.red,
+                                    borderRadius: 25,
+                                    size: 14,
+                                    padding: EdgeInsets.symmetric(vertical: 0),
                                   )
-                                : ElevatedButton.icon(
+                                : PawsElevatedButton(
+                                    label: 'Join Event',
                                     onPressed: joinEvent,
-                                    icon: Icon(LucideIcons.userPlus, size: 20),
-                                    label: Text(
-                                      'Join Event',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: PawsColors.primary,
-                                      foregroundColor: Colors.white,
-                                      elevation: 2,
-                                      shadowColor: PawsColors.primary
-                                          .withValues(alpha: 0.3),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
+                                    icon: LucideIcons.userPlus,
+                                    borderRadius: 25,
+                                    size: 14,
+                                    padding: EdgeInsets.symmetric(vertical: 0),
                                   ),
                           ),
                         ] else ...[
@@ -809,9 +796,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                           children: [
                             CircleAvatar(
                               radius: 20,
-                              backgroundImage: NetworkImage(
-                                e.user.profileImageLink,
-                              ),
+                              backgroundImage: e.user.profileImageLink != null
+                                  ? NetworkImage(e.user.profileImageLink!)
+                                  : AssetImage('assets/images/user.png'),
                             ),
                             Expanded(
                               child: Column(
@@ -944,12 +931,19 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   ),
                 ),
                 child: ClipOval(
-                  child: NetworkImageView(
-                    member.user.profileImageLink,
-                    fit: BoxFit.cover,
-                    width: 45,
-                    height: 45,
-                  ),
+                  child: member.user.profileImageLink != null
+                      ? NetworkImageView(
+                          member.user.profileImageLink!,
+                          fit: BoxFit.cover,
+                          width: 45,
+                          height: 45,
+                        )
+                      : Image.asset(
+                          'assets/images/user.png',
+                          fit: BoxFit.cover,
+                          width: 45,
+                          height: 45,
+                        ),
                 ),
               ),
               // Online indicator (current user gets a green dot)
@@ -1216,10 +1210,7 @@ class _SuggestionModalState extends State<SuggestionModal> {
                   SizedBox(
                     width: 16,
                     height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation(Colors.blue.shade600),
-                    ),
+                    child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                 ],
               ),

@@ -32,14 +32,19 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
 
   // Form controllers
   final _formKey = GlobalKey<FormState>();
-  final _idNameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _middleInitialController = TextEditingController();
+
   final _addressController = TextEditingController();
   final _dateOfBirthController = TextEditingController();
   DateTime? _selectedDateOfBirth;
 
   @override
   void dispose() {
-    _idNameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _middleInitialController.dispose();
     _addressController.dispose();
     _dateOfBirthController.dispose();
     super.dispose();
@@ -143,7 +148,11 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
         idNumber:
             '', // No longer using ID number - keeping empty for API compatibility
         idAttachment: _frontIdPhoto!,
-        idName: _idNameController.text.trim(),
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        middleInitial: _middleInitialController.text.isNotEmpty
+            ? _middleInitialController.text.trim()
+            : null,
         address: _addressController.text.trim(),
         dateOfBirth: _selectedDateOfBirth!,
       );
@@ -313,25 +322,52 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
           ),
           const SizedBox(height: 12),
           PawsTextField(
-            label: 'Full Name',
-            controller: _idNameController,
+            label: 'First Name',
+            controller: _firstNameController,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Please enter full name';
+                return 'Please enter first name';
               }
               if (value.trim().length < 2) {
-                return 'Full name must be at least 2 characters';
+                return 'First name must be at least 2 characters';
               }
               // Check if name contains at least one letter
               if (!RegExp(r'[a-zA-Z]').hasMatch(value)) {
-                return 'Full name must contain at least one letter';
+                return 'First name must contain at least one letter';
               }
               // Check for reasonable name format (letters, spaces, periods, hyphens, apostrophes)
               if (!RegExp(r"^[a-zA-Z\s\.\-']+$").hasMatch(value.trim())) {
-                return 'Full name contains invalid characters';
+                return 'First name contains invalid characters';
               }
               return null;
             },
+          ),
+          const SizedBox(height: 12),
+          PawsTextField(
+            label: 'Last Name',
+            controller: _lastNameController,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Please enter last name';
+              }
+              if (value.trim().length < 2) {
+                return 'Last name must be at least 2 characters';
+              }
+              // Check if name contains at least one letter
+              if (!RegExp(r'[a-zA-Z]').hasMatch(value)) {
+                return 'Last name must contain at least one letter';
+              }
+              // Check for reasonable name format (letters, spaces, periods, hyphens, apostrophes)
+              if (!RegExp(r"^[a-zA-Z\s\.\-']+$").hasMatch(value.trim())) {
+                return 'Last name contains invalid characters';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 12),
+          PawsTextField(
+            label: 'Middle Initial',
+            controller: _middleInitialController,
           ),
           const SizedBox(height: 12),
           PawsTextField(
@@ -390,7 +426,10 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
       child: Scaffold(
         backgroundColor: PawsColors.background,
         appBar: AppBar(
-          title: const Text('ID Verification'),
+          title: const Text(
+            'ID Verification',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+          ),
           backgroundColor: PawsColors.primary,
           foregroundColor: Colors.white,
           leading: IconButton(
@@ -403,7 +442,9 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
                 tooltip: 'Clear Photo',
                 onPressed: () => setState(() {
                   _frontIdPhoto = null;
-                  _idNameController.clear();
+                  _firstNameController.clear();
+                  _lastNameController.clear();
+                  _middleInitialController.clear();
                   _addressController.clear();
                   _dateOfBirthController.clear();
                   _selectedDateOfBirth = null;

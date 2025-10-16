@@ -10,6 +10,7 @@ import 'package:paws_connect/core/widgets/global_confirm_dialog.dart';
 import 'package:paws_connect/core/widgets/text.dart';
 import 'package:paws_connect/dependency.dart';
 import 'package:provider/provider.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart' show RefreshTrigger;
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -264,7 +265,7 @@ class _ForumSettingsScreenState extends State<ForumSettingsScreen> {
         ),
         body: isLoading
             ? LinearProgressIndicator()
-            : RefreshIndicator(
+            : RefreshTrigger(
                 onRefresh: () async {
                   context.read<ForumRepository>().fetchForumById(
                     widget.forumId,
@@ -331,7 +332,7 @@ class _ForumSettingsScreenState extends State<ForumSettingsScreen> {
                                 await SharePlus.instance.share(
                                   ShareParams(
                                     text:
-                                        'Join ${forum.forumName} forum\nhttps://paws-connect-sable.vercel.app/forum-invite/${forum.id}?invitedBy=$USER_ID',
+                                        'Join ${forum.forumName} forum\nhttps://paws-connect-rho.vercel.app/forum-invite/${forum.id}?invitedBy=$USER_ID',
                                   ),
                                 );
                               },

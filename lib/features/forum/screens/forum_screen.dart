@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/services/supabase_service.dart';
 import 'package:paws_connect/core/supabase/client.dart';
+import 'package:paws_connect/core/theme/paws_theme.dart';
 import 'package:paws_connect/features/forum/widgets/forum_tile.dart';
 import 'package:provider/provider.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart' show RefreshTrigger;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/router/app_route.gr.dart';
@@ -104,8 +106,14 @@ class _ForumScreenState extends State<ForumScreen> {
     final isLoadingForums = repo.isLoadingForums;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Forum'), centerTitle: true),
-      body: RefreshIndicator(
+      appBar: AppBar(
+        title: const Text(
+          'Forum',
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+        ),
+        centerTitle: true,
+      ),
+      body: RefreshTrigger(
         onRefresh: () async {
           final repo = context.read<ForumRepository>();
           repo.fetchForums(USER_ID ?? '');
@@ -139,13 +147,14 @@ class _ForumScreenState extends State<ForumScreen> {
               ),
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: PawsColors.primary,
         onPressed: () async {
           bool? reload = await context.router.push(const AddForumRoute());
           if (reload == true && mounted) {
             context.read<ForumRepository>().fetchForums(USER_ID ?? '');
           }
         },
-        child: Icon(LucideIcons.messageCirclePlus),
+        child: Icon(LucideIcons.messageCirclePlus, color: Colors.white),
       ),
     );
   }

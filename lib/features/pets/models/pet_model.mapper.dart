@@ -135,6 +135,21 @@ class PetMapper extends ClassMapperBase<Pet> {
     key: r'happiness_image',
     opt: true,
   );
+  static List<String> _$transformedPhotos(Pet v) => v.transformedPhotos;
+  static const Field<Pet, List<String>> _f$transformedPhotos = Field(
+    'transformedPhotos',
+    _$transformedPhotos,
+    key: r'transformed_photos',
+    mode: FieldMode.member,
+  );
+  static String? _$transformedHappinessImage(Pet v) =>
+      v.transformedHappinessImage;
+  static const Field<Pet, String> _f$transformedHappinessImage = Field(
+    'transformedHappinessImage',
+    _$transformedHappinessImage,
+    key: r'transformed_happiness_image',
+    mode: FieldMode.member,
+  );
 
   @override
   final MappableFields<Pet> fields = const {
@@ -164,6 +179,8 @@ class PetMapper extends ClassMapperBase<Pet> {
     #adoption: _f$adoption,
     #adopted: _f$adopted,
     #happinessImage: _f$happinessImage,
+    #transformedPhotos: _f$transformedPhotos,
+    #transformedHappinessImage: _f$transformedHappinessImage,
   };
 
   static Pet _instantiate(DecodingData data) {

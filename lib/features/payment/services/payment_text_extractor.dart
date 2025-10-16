@@ -7,7 +7,7 @@ class PaymentTextExtractor {
     script: TextRecognitionScript.latin,
   );
 
-  /// Extract text from image and parse GCash payment details
+  /// Extract text from image and parse payment details from multiple platforms
   static Future<PaymentData> extractPaymentData(XFile imageFile) async {
     try {
       final inputImage = InputImage.fromFilePath(imageFile.path);
@@ -42,7 +42,7 @@ class PaymentTextExtractor {
     return buffer.toString();
   }
 
-  /// Parse GCash payment data from extracted text
+  /// Parse payment data from extracted text (supports GCash, GoTyme, PayMaya)
   static PaymentData _parsePaymentData(String text) {
     String referenceNumber = '';
     String amount = '';
@@ -138,12 +138,16 @@ class PaymentTextExtractor {
 
       final contextLine = lines[i].toLowerCase();
 
-      // Positive context indicators
+      // Positive context indicators for multiple platforms
       if (contextLine.contains('gcash') ||
+          contextLine.contains('gotyme') ||
+          contextLine.contains('paymaya') ||
           contextLine.contains('sent') ||
           contextLine.contains('transfer') ||
           contextLine.contains('payment') ||
-          contextLine.contains('successful')) {
+          contextLine.contains('successful') ||
+          contextLine.contains('bill amount') ||
+          contextLine.contains('transfer amount')) {
         score += 3;
       }
 
@@ -167,7 +171,7 @@ class PaymentTextExtractor {
     if (extractedRef.length >= 13) score += 5;
     if (extractedRef.length >= 15) score += 3;
 
-    // Higher score for specific reference patterns
+    // Higher score for specific reference patterns (GCash)
     if (lowerLine.contains('ref no.') || lowerLine.contains('ref no:')) {
       score += 10; // "Ref No." is typically the main transaction reference
     } else if (lowerLine.contains('reference no') ||
@@ -179,8 +183,21 @@ class PaymentTextExtractor {
       score += 6;
     }
 
-    // GCash specific scoring
-    if (lowerLine.contains('gcash')) {
+    // GoTyme specific patterns
+    if (lowerLine.contains('reference no.') &&
+        (lowerLine.contains('ito') || extractedRef.startsWith('ITO'))) {
+      score += 12; // GoTyme reference pattern "Reference No. ITO13213312"
+    }
+
+    // PayMaya specific patterns
+    if (lowerLine.contains('bill reference number')) {
+      score += 11; // PayMaya "Bill reference number"
+    }
+
+    // Platform specific scoring
+    if (lowerLine.contains('gcash') ||
+        lowerLine.contains('gotyme') ||
+        lowerLine.contains('paymaya')) {
       score += 4;
     }
 
@@ -203,12 +220,12 @@ class PaymentTextExtractor {
     // Must have at least 8 digits to be considered a reference (to catch shorter refs like "033343431")
     if (numbersOnly.length < 8) return false;
 
-    // Common patterns for GCash reference numbers
+    // Common patterns for multiple payment platforms
     final referencePatterns = [
       // Direct number patterns
       RegExp(r'^\s*\d{10,15}\s*$'), // Pure 10-15 digit numbers
       RegExp(r'^\s*\d{13}\s*$'), // 13-digit numbers are very common for GCash
-      // Specific GCash reference patterns based on your examples
+      // GCash reference patterns
       RegExp(
         r'reference\s+number\s+([\d\s]{8,})',
         caseSensitive: false,
@@ -217,6 +234,16 @@ class PaymentTextExtractor {
         r'ref\s+no\.?\s+([\d\s]{10,})',
         caseSensitive: false,
       ), // "Ref No. 0033 415 944973" (with spaces)
+      // GoTyme reference patterns
+      RegExp(
+        r'reference\s+no\.?\s+ITO[\d\s]{8,}',
+        caseSensitive: false,
+      ), // "Reference No. ITO13213312"
+      // PayMaya reference patterns
+      RegExp(
+        r'bill\s+reference\s+number\s+([\d\s]{8,})',
+        caseSensitive: false,
+      ), // "Bill reference number 323131"
       // More flexible labeled reference patterns (handle spaces in numbers)
       RegExp(
         r'ref(?:erence)?[\s\.:]*(?:no\.?|number)?[\s\.:]*[\d\s]{8,}',
@@ -231,9 +258,17 @@ class PaymentTextExtractor {
         caseSensitive: false,
       ),
 
-      // GCash specific patterns
+      // Platform specific patterns
       RegExp(
         r'gcash[\s\.:]*(?:ref|reference|id|number)?[\s\.:]*[\d\s]{8,}',
+        caseSensitive: false,
+      ),
+      RegExp(
+        r'gotyme[\s\.:]*(?:ref|reference|id|number)?[\s\.:]*[\d\s]{8,}',
+        caseSensitive: false,
+      ),
+      RegExp(
+        r'paymaya[\s\.:]*(?:ref|reference|id|number)?[\s\.:]*[\d\s]{8,}',
         caseSensitive: false,
       ),
 
@@ -302,7 +337,7 @@ class PaymentTextExtractor {
 
   /// Extract amount from a line
   static String _extractAmount(String line) {
-    // More comprehensive patterns for GCash amounts
+    // More comprehensive patterns for multiple payment platforms
     final amountPatterns = [
       // Direct peso symbol patterns (highest priority)
       RegExp(r'₱\s*([\d,]+\.?\d*)', caseSensitive: false),
@@ -316,7 +351,7 @@ class PaymentTextExtractor {
       // Handle negative amounts (like "-600.00")
       RegExp(r'amount.*?-?\s*([\d,]+\.?\d*)', caseSensitive: false),
 
-      // Amount/Total patterns with various formats
+      // GCash Amount/Total patterns with various formats
       RegExp(
         r'total\s+amount\s+sent[\s:]*₱?\s*([\d,]+\.?\d*)',
         caseSensitive: false,
@@ -326,7 +361,21 @@ class PaymentTextExtractor {
       RegExp(r'paid[\s:]*₱?\s*([\d,]+\.?\d*)', caseSensitive: false),
       RegExp(r'sent[\s:]*₱?\s*([\d,]+\.?\d*)', caseSensitive: false),
 
-      // GCash specific transaction patterns
+      // GoTyme specific patterns
+      RegExp(
+        r'transfer\s+amount[\s:]*₱?\s*([\d,]+\.?\d*)',
+        caseSensitive: false,
+      ), // "Transfer amount ₱32321.00"
+      // PayMaya specific patterns
+      RegExp(
+        r'bill\s+amount[\s:]*₱?\s*([\d,]+\.?\d*)',
+        caseSensitive: false,
+      ), // "Bill amount ₱3232,30.00"
+      RegExp(
+        r'₱\s*([\d,]+,\d+\.\d{2})',
+        caseSensitive: false,
+      ), // Handle PayMaya format like "₱3232,30.00" with comma before decimal
+      // Generic transaction patterns
       RegExp(r'you\s+sent[\s:]*₱?\s*([\d,]+\.?\d*)', caseSensitive: false),
       RegExp(r'transferred[\s:]*₱?\s*([\d,]+\.?\d*)', caseSensitive: false),
       RegExp(r'payment[\s:]*₱?\s*([\d,]+\.?\d*)', caseSensitive: false),
@@ -388,11 +437,22 @@ class PaymentTextExtractor {
     final patternString = pattern.pattern.toLowerCase();
     final lowerLine = line.toLowerCase();
 
-    // Highest priority: "Total Amount Sent ₱600.00" - this is the final amount
+    // Highest priority: "Total Amount Sent ₱600.00" - this is the final amount (GCash)
     if (patternString.contains('total') &&
         patternString.contains('amount') &&
         patternString.contains('sent')) {
       return 15;
+    }
+
+    // GoTyme specific patterns
+    if (patternString.contains('transfer') &&
+        patternString.contains('amount')) {
+      return 14; // "Transfer amount ₱32321.00"
+    }
+
+    // PayMaya specific patterns
+    if (patternString.contains('bill') && patternString.contains('amount')) {
+      return 13; // "Bill amount ₱3232,30.00"
     }
 
     // Higher scores for more specific patterns
@@ -403,6 +463,14 @@ class PaymentTextExtractor {
     // Prioritize "Total Amount Sent" even without peso sign
     if (lowerLine.contains('total amount sent')) {
       return 12;
+    }
+
+    // Platform-specific context scoring
+    if (lowerLine.contains('transfer amount')) {
+      return 11; // GoTyme
+    }
+    if (lowerLine.contains('bill amount')) {
+      return 10; // PayMaya
     }
 
     if (patternString.contains('amount') || patternString.contains('total')) {
@@ -425,12 +493,21 @@ class PaymentTextExtractor {
     return text.replaceAll(RegExp(r'[^\d]'), '');
   }
 
-  /// Extract reference number from a line, handling spaced numbers
+  /// Extract reference number from a line, handling spaced numbers and platform-specific formats
   static String _extractReferenceNumber(String line) {
     // Try to extract reference number with specific patterns first
     final specificPatterns = [
+      // GCash patterns
       RegExp(r'reference\s+number\s+([\d\s]+)', caseSensitive: false),
       RegExp(r'ref\s+no\.?\s+([\d\s]+)', caseSensitive: false),
+
+      // GoTyme patterns (includes alphanumeric like "ITO13213312")
+      RegExp(r'reference\s+no\.?\s+(ITO[\d\s]+)', caseSensitive: false),
+
+      // PayMaya patterns
+      RegExp(r'bill\s+reference\s+number\s+([\d\s]+)', caseSensitive: false),
+
+      // Generic patterns
       RegExp(
         r'ref(?:erence)?[\s\.:]*(?:no\.?|number)?[\s\.:]*([\d\s]+)',
         caseSensitive: false,
@@ -440,13 +517,26 @@ class PaymentTextExtractor {
     for (final pattern in specificPatterns) {
       final match = pattern.firstMatch(line);
       if (match != null) {
-        final extracted =
-            match.group(1)?.replaceAll(RegExp(r'[^\d]'), '') ?? '';
-        if (extracted.length >= 8) {
-          debugPrint(
-            'Extracted reference with pattern: $extracted from "$line"',
-          );
-          return extracted;
+        final extractedText = match.group(1) ?? '';
+
+        // For GoTyme ITO references, keep the ITO prefix
+        if (extractedText.toUpperCase().startsWith('ITO')) {
+          final cleaned = extractedText.replaceAll(RegExp(r'[^\w]'), '');
+          if (cleaned.length >= 8) {
+            debugPrint(
+              'Extracted GoTyme reference with pattern: $cleaned from "$line"',
+            );
+            return cleaned;
+          }
+        } else {
+          // For numeric references, extract only numbers
+          final extracted = extractedText.replaceAll(RegExp(r'[^\d]'), '');
+          if (extracted.length >= 8) {
+            debugPrint(
+              'Extracted reference with pattern: $extracted from "$line"',
+            );
+            return extracted;
+          }
         }
       }
     }
@@ -492,25 +582,44 @@ class PaymentTextExtractor {
 
   /// Test with specific example text (for debugging)
   static void testWithExamples() {
-    final example1 = '''
+    final gcashExample1 = '''
 Amount                                  -600.00
 Reference Number                00334459323121
 ''';
 
-    final example2 = '''
+    final gcashExample2 = '''
 Amount                                   600.00
 -------------------------------------
 Total Amount Sent                ₱600.00
                   Ref No. 0033 415 944973
 ''';
 
-    debugPrint('=== Testing Example 1 ===');
-    final result1 = _parsePaymentData(example1);
+    final gotymeExample = '''
+Transfer amount ₱32321.00
+Reference No. ITO13213312
+''';
+
+    final paymayaExample = '''
+Bill amount  pesos value 
+₱3232,30.00
+Bill reference number 323131
+''';
+
+    debugPrint('=== Testing GCash Example 1 ===');
+    final result1 = _parsePaymentData(gcashExample1);
     debugPrint('Result 1: $result1');
 
-    debugPrint('=== Testing Example 2 ===');
-    final result2 = _parsePaymentData(example2);
+    debugPrint('=== Testing GCash Example 2 ===');
+    final result2 = _parsePaymentData(gcashExample2);
     debugPrint('Result 2: $result2');
+
+    debugPrint('=== Testing GoTyme Example ===');
+    final result3 = _parsePaymentData(gotymeExample);
+    debugPrint('Result 3: $result3');
+
+    debugPrint('=== Testing PayMaya Example ===');
+    final result4 = _parsePaymentData(paymayaExample);
+    debugPrint('Result 4: $result4');
   }
 
   /// Clean up resources

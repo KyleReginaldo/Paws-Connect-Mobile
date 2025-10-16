@@ -115,6 +115,21 @@ class FundraisingMapper extends ClassMapperBase<Fundraising> {
     key: r'gcash_number',
     opt: true,
   );
+  static String? _$transformedQrCode(Fundraising v) => v.transformedQrCode;
+  static const Field<Fundraising, String> _f$transformedQrCode = Field(
+    'transformedQrCode',
+    _$transformedQrCode,
+    key: r'transformed_qr_code',
+    mode: FieldMode.member,
+  );
+  static List<String>? _$transformedImages(Fundraising v) =>
+      v.transformedImages;
+  static const Field<Fundraising, List<String>> _f$transformedImages = Field(
+    'transformedImages',
+    _$transformedImages,
+    key: r'transformed_images',
+    mode: FieldMode.member,
+  );
 
   @override
   final MappableFields<Fundraising> fields = const {
@@ -134,6 +149,8 @@ class FundraisingMapper extends ClassMapperBase<Fundraising> {
     #facebookLink: _f$facebookLink,
     #qrCode: _f$qrCode,
     #gcashNumber: _f$gcashNumber,
+    #transformedQrCode: _f$transformedQrCode,
+    #transformedImages: _f$transformedImages,
   };
 
   static Fundraising _instantiate(DecodingData data) {
@@ -624,6 +641,12 @@ class DonationMapper extends ClassMapperBase<Donation> {
     _$donatedAt,
     key: r'donated_at',
   );
+  static bool _$isAnonymous(Donation v) => v.isAnonymous;
+  static const Field<Donation, bool> _f$isAnonymous = Field(
+    'isAnonymous',
+    _$isAnonymous,
+    key: r'is_anonymous',
+  );
 
   @override
   final MappableFields<Donation> fields = const {
@@ -632,6 +655,7 @@ class DonationMapper extends ClassMapperBase<Donation> {
     #amount: _f$amount,
     #message: _f$message,
     #donatedAt: _f$donatedAt,
+    #isAnonymous: _f$isAnonymous,
   };
 
   static Donation _instantiate(DecodingData data) {
@@ -641,6 +665,7 @@ class DonationMapper extends ClassMapperBase<Donation> {
       amount: data.dec(_f$amount),
       message: data.dec(_f$message),
       donatedAt: data.dec(_f$donatedAt),
+      isAnonymous: data.dec(_f$isAnonymous),
     );
   }
 
@@ -708,6 +733,7 @@ abstract class DonationCopyWith<$R, $In extends Donation, $Out>
     int? amount,
     String? message,
     DateTime? donatedAt,
+    bool? isAnonymous,
   });
   DonationCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -730,6 +756,7 @@ class _DonationCopyWithImpl<$R, $Out>
     int? amount,
     String? message,
     DateTime? donatedAt,
+    bool? isAnonymous,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -737,6 +764,7 @@ class _DonationCopyWithImpl<$R, $Out>
       if (amount != null) #amount: amount,
       if (message != null) #message: message,
       if (donatedAt != null) #donatedAt: donatedAt,
+      if (isAnonymous != null) #isAnonymous: isAnonymous,
     }),
   );
   @override
@@ -746,6 +774,7 @@ class _DonationCopyWithImpl<$R, $Out>
     amount: data.get(#amount, or: $value.amount),
     message: data.get(#message, or: $value.message),
     donatedAt: data.get(#donatedAt, or: $value.donatedAt),
+    isAnonymous: data.get(#isAnonymous, or: $value.isAnonymous),
   );
 
   @override

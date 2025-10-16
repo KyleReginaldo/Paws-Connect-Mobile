@@ -75,7 +75,10 @@ class _AddForumMemberScreenState extends State<AddForumMemberScreen> {
     final isLoading = context.watch<ForumRepository>().usersLoading;
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add Forum Members'),
+        title: const Text(
+          'Add Forum Members',
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+        ),
         actions: [
           if (selectedUsers.isNotEmpty)
             PawsTextButton(
@@ -110,7 +113,7 @@ class _AddForumMemberScreenState extends State<AddForumMemberScreen> {
                 ),
               ),
             isLoading
-                ? Center(child: CircularProgressIndicator.adaptive())
+                ? Center(child: CircularProgressIndicator())
                 : Column(
                     spacing: 8,
                     children: users

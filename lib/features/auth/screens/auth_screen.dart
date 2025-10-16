@@ -8,10 +8,12 @@ import 'package:paws_connect/core/widgets/text_field.dart';
 import 'package:paws_connect/dependency.dart';
 import 'package:paws_connect/features/auth/provider/auth_provider.dart';
 import 'package:paws_connect/features/auth/repository/auth_repository.dart';
+import 'package:paws_connect/features/main/screens/extension/terms_and_condition.dart'
+    show TermsContent;
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/result.dart';
+import '../../../core/router/app_route.gr.dart';
 import '../../../core/session/session_manager.dart';
 import '../../../core/theme/paws_theme.dart';
 
@@ -37,148 +39,38 @@ class SignInScreen extends StatefulWidget implements AutoRouteWrapper {
 
 class _SignInScreenState extends State<SignInScreen>
     with SingleTickerProviderStateMixin {
+  // Controllers
+  final formKey = GlobalKey<FormState>();
   final email = TextEditingController();
   final password = TextEditingController();
   final username = TextEditingController();
   final phoneNumber = TextEditingController();
-  final formKey = GlobalKey<FormState>();
-  final List<String> tabs = ['Sign In', 'Sign Up'];
-  int selectedTab = 0;
+
+  // UI / State
   late final AnimationController _entranceController;
   late final Animation<Offset> _slideAnimation;
   late final Animation<double> _fadeAnimation;
-  bool rememberMe = false;
+
   bool isLoading = false;
+  bool rememberMe = false;
   bool agreedToTerms = false;
+  bool _viewedTermsAndScrolled =
+      false; // must view dialog & scroll to bottom before agreeing
   bool _didSignalResult = false;
-  void _handleSignIn({String? initEmail, String? initPassword}) async {
-    if (!mounted) return;
-    if (formKey.currentState?.validate() ?? false) {
-      setState(() => isLoading = true);
-      try {
-        final result = await AuthProvider().signIn(
-          email: initEmail ?? email.text,
-          password: initPassword ?? password.text,
-        );
 
-        if (result.isError) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(result.error)));
-        } else {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Sign in successful')));
-          // Preload user data after successful sign in
-          await SessionManager.bootstrapAfterSignIn(eager: false);
-          if (!_didSignalResult) {
-            _didSignalResult = true;
-            widget.onResult?.call(true);
-          }
-          if (mounted) {
-            context.router.maybePop(true);
-          }
-        }
-      } finally {
-        if (mounted) setState(() => isLoading = false);
-      }
-    }
-  }
+  int selectedTab = 0;
+  final List<String> tabs = const ['Sign In', 'Sign Up'];
 
-  void _handleSignUp() async {
-    if (!mounted) return;
-    if (formKey.currentState?.validate() ?? false) {
-      setState(() => isLoading = true);
-      try {
-        final result = await AuthProvider().signUp(
-          email: email.text.trim(),
-          password: password.text.trim(),
-          username: username.text.trim(),
-          phoneNumber: '+63${phoneNumber.text.trim()}',
-        );
-
-        if (result.isError) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(result.error)));
-        } else {
-          // Try automatic sign in after successful registration
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Account created! Signing you in...')),
-          );
-
-          Result<String>? lastError;
-          for (var attempt = 0; attempt < 3; attempt++) {
-            // Small backoff to allow backend propagation
-            await Future.delayed(Duration(milliseconds: 500 * (attempt + 1)));
-            final signInResult = await AuthProvider().signIn(
-              email: email.text.trim(),
-              password: password.text.trim(),
-            );
-            if (!signInResult.isError) {
-              if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Welcome! You are now signed in.'),
-                ),
-              );
-              await SessionManager.bootstrapAfterSignIn(eager: false);
-              if (!_didSignalResult) {
-                _didSignalResult = true;
-                widget.onResult?.call(true);
-              }
-              if (mounted) {
-                context.router.maybePop(true);
-              }
-              return;
-            }
-            lastError = signInResult;
-          }
-
-          if (!mounted) return;
-          // If automatic sign-in failed after retries, fall back to manual login
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Account created, but automatic sign-in failed. Please sign in manually.\nReason: ${lastError?.error ?? 'Unknown error'}',
-              ),
-            ),
-          );
-          setState(() => selectedTab = 0);
-        }
-      } finally {
-        if (mounted) setState(() => isLoading = false);
-      }
-    }
-  }
-
-  void initCredentials() {
-    Future.delayed(Duration(seconds: 2), () {
-      print(
-        'initCredentials called - widget.email: ${widget.email}, widget.password: ${widget.password}',
-      );
-      print('Email is null: ${widget.email == null}');
-      print('Password is null: ${widget.password == null}');
-
-      if (mounted) {
-        setState(() {
-          email.text = widget.email ?? '';
-          password.text = widget.password ?? '';
-        });
-        print(
-          'Form fields updated - email.text: "${email.text}", password.text: "${password.text}"',
-        );
-      }
-    });
-  }
+  // Password rules state
+  bool hasMinLength = false;
+  bool hasUpperCase = false;
+  bool hasLowerCase = false;
+  bool hasNumber = false;
+  bool hasSpecialChar = false;
 
   @override
   void initState() {
     super.initState();
-
-    print(
-      'initState called - widget.email: ${widget.email}, widget.password: ${widget.password}',
-    );
 
     _entranceController = AnimationController(
       vsync: this,
@@ -196,26 +88,154 @@ class _SignInScreenState extends State<SignInScreen>
       curve: Curves.easeIn,
     );
 
-    // Initialize credentials immediately
+    // Add password validation listener
+    password.addListener(() {
+      _validatePassword(password.text);
+    });
+
+    // Initialize credentials from widget
     initCredentials();
 
-    // Start animation after credentials are set
     _entranceController.forward();
+  }
+
+  Future<bool> _showTermsDialog() async {
+    final controller = ScrollController();
+    bool scrolledToBottom = false;
+    bool accepted = false;
+
+    if (!mounted) return false;
+    await showDialog<void>(
+      context: context,
+
+      barrierDismissible: false,
+      builder: (ctx) {
+        // use StatefulBuilder to reflect scroll state in the dialog UI
+        return StatefulBuilder(
+          builder: (ctx, setState) {
+            return Dialog(
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 24,
+              ),
+              surfaceTintColor: Colors.white,
+              backgroundColor: Colors.white,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 560),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: PawsColors.border),
+                        ),
+                      ),
+                      child: const Text(
+                        'Terms & Conditions',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: PawsColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Scrollbar(
+                        controller: controller,
+                        child: NotificationListener<ScrollNotification>(
+                          onNotification: (notification) {
+                            final m = notification.metrics;
+                            final canScroll = m.maxScrollExtent > 0;
+                            final atBottom =
+                                m.pixels >= (m.maxScrollExtent - 8);
+                            final next = canScroll
+                                ? atBottom
+                                : true; // if content fits, treat as read
+                            if (next != scrolledToBottom) {
+                              setState(() => scrolledToBottom = next);
+                            }
+                            return false;
+                          },
+                          child: SingleChildScrollView(
+                            controller: controller,
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                            child: const TermsContent(),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () {
+                                accepted = false;
+                                Navigator.of(ctx).pop();
+                              },
+                              child: const Text('Cancel'),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: scrolledToBottom
+                                  ? () {
+                                      accepted = true;
+                                      Navigator.of(ctx).pop();
+                                    }
+                                  : null,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: scrolledToBottom
+                                    ? PawsColors.primary
+                                    : PawsColors.disabled,
+                              ),
+                              child: Text(
+                                scrolledToBottom
+                                    ? 'I Agree'
+                                    : 'Scroll to the end',
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+    controller.dispose();
+    return accepted;
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    print(
-      'didChangeDependencies called - widget.email: ${widget.email}, widget.password: ${widget.password}',
-    );
-
-    // Try initializing credentials again in case they weren't available in initState
+    // Retry initializing if they weren't ready in initState
     if ((widget.email != null || widget.password != null) &&
         (email.text.isEmpty || password.text.isEmpty)) {
-      print('Re-initializing credentials in didChangeDependencies');
       initCredentials();
     }
+  }
+
+  void initCredentials() {
+    // Delay slightly to allow route args to propagate
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (!mounted) return;
+      setState(() {
+        email.text = widget.email ?? '';
+        password.text = widget.password ?? '';
+      });
+    });
   }
 
   @override
@@ -226,6 +246,167 @@ class _SignInScreenState extends State<SignInScreen>
     phoneNumber.dispose();
     _entranceController.dispose();
     super.dispose();
+  }
+
+  String? _validatePasswordField(String? value) {
+    if (selectedTab == 0) {
+      // Sign-in: basic non-empty check
+      if (value == null || value.isEmpty) return 'Enter your password';
+      return null;
+    }
+    // Sign-up: enforce rules (compute without setState during build)
+    final v = value ?? '';
+    final okMin = v.length >= 8;
+    final okUpper = RegExp(r'[A-Z]').hasMatch(v);
+    final okLower = RegExp(r'[a-z]').hasMatch(v);
+    final okNum = RegExp(r'[0-9]').hasMatch(v);
+    final okSpec = RegExp(r'[!@#\$%^&*]').hasMatch(v);
+    if (!(okMin && okUpper && okLower && okNum && okSpec)) {
+      return 'Password does not meet all requirements';
+    }
+    return null;
+  }
+
+  void _validatePassword(String value) {
+    final min = value.length >= 8;
+    final upper = RegExp(r'[A-Z]').hasMatch(value);
+    final lower = RegExp(r'[a-z]').hasMatch(value);
+    final number = RegExp(r'[0-9]').hasMatch(value);
+    final special = RegExp(r'[!@#\$%^&*]').hasMatch(value);
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() {
+        hasMinLength = min;
+        hasUpperCase = upper;
+        hasLowerCase = lower;
+        hasNumber = number;
+        hasSpecialChar = special;
+      });
+    });
+  }
+
+  Widget _buildPasswordRequirement(String text, bool ok) {
+    return Row(
+      children: [
+        Icon(
+          ok ? Icons.check_circle : Icons.cancel,
+          size: 16,
+          color: ok ? Colors.green : Colors.redAccent,
+        ),
+        const SizedBox(width: 8),
+        PawsText(
+          text,
+          color: ok ? PawsColors.textSecondary : Colors.redAccent,
+          fontSize: 13,
+        ),
+      ],
+    );
+  }
+
+  Future<void> _handleSignIn() async {
+    if (!mounted) return;
+    if (formKey.currentState?.validate() != true) return;
+    setState(() => isLoading = true);
+    try {
+      final result = await AuthProvider().signIn(
+        email: email.text.trim(),
+        password: password.text.trim(),
+      );
+
+      if (result.isError) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(result.error)));
+        return;
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Sign in successful')));
+      await SessionManager.bootstrapAfterSignIn(eager: false);
+      if (!_didSignalResult) {
+        _didSignalResult = true;
+        widget.onResult?.call(true);
+      }
+      if (mounted) {
+        context.router.maybePop(true);
+      }
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _handleSignUp() async {
+    if (!mounted) return;
+    if (formKey.currentState?.validate() != true) return;
+    setState(() => isLoading = true);
+    try {
+      final result = await AuthProvider().signUp(
+        email: email.text.trim(),
+        password: password.text.trim(),
+        username: username.text.trim(),
+        phoneNumber: '+63${phoneNumber.text.trim()}',
+      );
+
+      if (result.isError) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(result.error)));
+        return;
+      }
+
+      // Account created, attempt automatic sign-in
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Account created! Signing you in...')),
+      );
+
+      // TutorialService removed; proceed with normal sign-in attempts
+
+      Result<String>? lastError;
+      for (var attempt = 0; attempt < 3; attempt++) {
+        await Future.delayed(Duration(milliseconds: 500 * (attempt + 1)));
+        final signInResult = await AuthProvider().signIn(
+          email: email.text.trim(),
+          password: password.text.trim(),
+        );
+        if (!signInResult.isError) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Welcome! You are now signed in. Let\'s show you around!',
+              ),
+            ),
+          );
+          await SessionManager.bootstrapAfterSignIn(eager: false);
+          if (!_didSignalResult) {
+            _didSignalResult = true;
+            widget.onResult?.call(true);
+          }
+          if (mounted) {
+            print('🎯 AUTH: Navigating to MainRoute');
+            context.router.replaceAll([MainRoute()]);
+          }
+          return;
+        }
+        lastError = signInResult;
+      }
+
+      if (!mounted) return;
+      // Fallback: navigate to root anyway
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Account created, but automatic sign-in failed. Please sign in manually.\nReason: ${lastError?.error ?? 'Unknown error'}',
+          ),
+        ),
+      );
+      print('🎯 AUTH: Auto sign-in failed; navigating to MainRoute');
+      context.router.replaceAll([MainRoute()]);
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
   }
 
   @override
@@ -277,13 +458,13 @@ class _SignInScreenState extends State<SignInScreen>
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.only(
+                          borderRadius: const BorderRadius.only(
                             topLeft: Radius.circular(20),
                             topRight: Radius.circular(20),
                           ),
                         ),
                         child: SingleChildScrollView(
-                          padding: EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(16),
                           child: Form(
                             key: formKey,
                             child: Column(
@@ -292,10 +473,10 @@ class _SignInScreenState extends State<SignInScreen>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 AnimatedContainer(
-                                  duration: Duration(milliseconds: 300),
+                                  duration: const Duration(milliseconds: 300),
                                   padding: const EdgeInsets.all(6),
                                   decoration: BoxDecoration(
-                                    color: Color(0xFFEFEFEF),
+                                    color: const Color(0xFFEFEFEF),
                                     borderRadius: BorderRadius.circular(25),
                                   ),
                                   child: Row(
@@ -342,20 +523,18 @@ class _SignInScreenState extends State<SignInScreen>
                                 ),
                                 AnimatedSwitcher(
                                   duration: const Duration(milliseconds: 350),
-                                  transitionBuilder: (child, animation) {
-                                    return SizeTransition(
-                                      sizeFactor: animation,
-                                      axisAlignment: -1,
-                                      child: FadeTransition(
-                                        opacity: animation,
-                                        child: child,
+                                  transitionBuilder: (child, animation) =>
+                                      SizeTransition(
+                                        sizeFactor: animation,
+                                        axisAlignment: -1,
+                                        child: FadeTransition(
+                                          opacity: animation,
+                                          child: child,
+                                        ),
                                       ),
-                                    );
-                                  },
                                   child: selectedTab == 1
                                       ? Column(
                                           spacing: 10,
-
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           key: const ValueKey('signup-fields'),
@@ -368,13 +547,13 @@ class _SignInScreenState extends State<SignInScreen>
                                                   value != null &&
                                                       value.isNotEmpty
                                                   ? null
-                                                  : "Enter a valid username",
+                                                  : 'Enter a valid username',
                                             ),
                                             PawsText('Phone Number'),
                                             PawsTextField(
                                               controller: phoneNumber,
                                               keyboardType: TextInputType.phone,
-                                              prefixIcon: PawsTextButton(
+                                              prefixIcon: const PawsTextButton(
                                                 label: '+63',
                                                 padding: EdgeInsets.zero,
                                                 foregroundColor:
@@ -385,7 +564,7 @@ class _SignInScreenState extends State<SignInScreen>
                                                   value != null &&
                                                       value.isNotEmpty
                                                   ? null
-                                                  : "Enter a valid phone number",
+                                                  : 'Enter a valid phone number',
                                             ),
                                           ],
                                         )
@@ -398,9 +577,9 @@ class _SignInScreenState extends State<SignInScreen>
                                   controller: email,
                                   hint: 'juan@example.com',
                                   validator: (value) =>
-                                      value != null && value.contains("@")
+                                      value != null && value.contains('@')
                                       ? null
-                                      : "Enter a valid email",
+                                      : 'Enter a valid email',
                                   keyboardType: TextInputType.emailAddress,
                                 ),
                                 PawsText('Password'),
@@ -408,7 +587,57 @@ class _SignInScreenState extends State<SignInScreen>
                                   controller: password,
                                   hint: '********',
                                   obscureText: true,
+                                  validator: _validatePasswordField,
                                 ),
+                                if (selectedTab == 1 &&
+                                    password.text.isNotEmpty)
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade50,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: PawsColors.border,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        PawsText(
+                                          'Password Requirements:',
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                          color: PawsColors.textPrimary,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        _buildPasswordRequirement(
+                                          'At least 8 characters',
+                                          hasMinLength,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        _buildPasswordRequirement(
+                                          'One uppercase letter (A-Z)',
+                                          hasUpperCase,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        _buildPasswordRequirement(
+                                          'One lowercase letter (a-z)',
+                                          hasLowerCase,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        _buildPasswordRequirement(
+                                          'One number (0-9)',
+                                          hasNumber,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        _buildPasswordRequirement(
+                                          'One special character (!@#\$%^&*)',
+                                          hasSpecialChar,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 if (selectedTab == 0)
                                   Row(
                                     children: [
@@ -417,53 +646,65 @@ class _SignInScreenState extends State<SignInScreen>
                                           children: [
                                             Checkbox(
                                               value: rememberMe,
-                                              onChanged: (value) =>
-                                                  setState(() {
-                                                    rememberMe = value ?? false;
-                                                  }),
+                                              onChanged: (value) => setState(
+                                                () =>
+                                                    rememberMe = value ?? false,
+                                              ),
                                               visualDensity:
                                                   VisualDensity.compact,
                                             ),
-                                            PawsText('Remember me'),
+                                            const PawsText('Remember me'),
                                           ],
                                         ),
                                       ),
-                                      PawsTextButton(label: 'Forgot password?'),
+                                      const PawsTextButton(
+                                        label: 'Forgot password?',
+                                      ),
                                     ],
                                   ),
                                 if (selectedTab == 1)
                                   Row(
                                     children: [
                                       Checkbox(
-                                        value: agreedToTerms,
-                                        onChanged: (value) => setState(() {
-                                          agreedToTerms = value ?? false;
-                                        }),
+                                        value:
+                                            agreedToTerms &&
+                                            _viewedTermsAndScrolled,
+                                        onChanged: (value) async {
+                                          // Always show dialog before accepting
+                                          final accepted =
+                                              await _showTermsDialog();
+                                          if (!mounted) return;
+                                          setState(() {
+                                            _viewedTermsAndScrolled = accepted;
+                                            agreedToTerms = accepted;
+                                          });
+                                        },
                                         visualDensity: VisualDensity.compact,
                                       ),
                                       RichText(
                                         text: TextSpan(
                                           text: 'I agree to the ',
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             color: PawsColors.textSecondary,
                                           ),
                                           children: [
                                             TextSpan(
                                               text: 'Terms and Conditions',
-                                              style: TextStyle(
+                                              style: const TextStyle(
                                                 color: PawsColors.primary,
                                                 decoration:
                                                     TextDecoration.underline,
                                               ),
                                               recognizer: TapGestureRecognizer()
-                                                ..onTap = () {
-                                                  launchUrl(
-                                                    Uri.parse(
-                                                      'https://paws-connect-sable.vercel.app/terms-and-condition',
-                                                    ),
-                                                  );
-                                                  // Add your navigation or action here
-                                                  // Example: context.router.push(TermsRoute());
+                                                ..onTap = () async {
+                                                  final accepted =
+                                                      await _showTermsDialog();
+                                                  if (!mounted) return;
+                                                  setState(() {
+                                                    _viewedTermsAndScrolled =
+                                                        accepted;
+                                                    agreedToTerms = accepted;
+                                                  });
                                                 },
                                             ),
                                           ],
@@ -476,13 +717,17 @@ class _SignInScreenState extends State<SignInScreen>
                                       ? 'Sign In'
                                       : 'Sign Up',
                                   backgroundColor:
-                                      (selectedTab == 1 && !agreedToTerms)
+                                      (selectedTab == 1 &&
+                                          (!agreedToTerms ||
+                                              !_viewedTermsAndScrolled))
                                       ? PawsColors.disabled
                                       : PawsColors.primary,
                                   borderRadius: 25,
                                   onPressed:
-                                      (isLoading) ||
-                                          (selectedTab == 1 && !agreedToTerms)
+                                      isLoading ||
+                                          (selectedTab == 1 &&
+                                              (!agreedToTerms ||
+                                                  !_viewedTermsAndScrolled))
                                       ? null
                                       : () {
                                           if (selectedTab == 0) {

@@ -260,7 +260,13 @@ class _UserHouseScreenState extends State<UserHouseScreen> {
     return SafeArea(
       top: false,
       child: Scaffold(
-        appBar: AppBar(title: Text('House Details'), centerTitle: true),
+        appBar: AppBar(
+          title: const Text(
+            'House Details',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+          ),
+          centerTitle: true,
+        ),
         body: SizedBox(
           height: MediaQuery.sizeOf(context).height,
           width: MediaQuery.sizeOf(context).width,
@@ -319,8 +325,9 @@ class _UserHouseScreenState extends State<UserHouseScreen> {
                                         fit: BoxFit.contain,
                                         loadingBuilder:
                                             (context, child, loadingProgress) {
-                                              if (loadingProgress == null)
+                                              if (loadingProgress == null) {
                                                 return child;
+                                              }
                                               return Container(
                                                 width: 200,
                                                 height: 200,

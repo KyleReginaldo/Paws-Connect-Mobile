@@ -1,15 +1,15 @@
 import 'dart:convert';
 
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../core/config/result.dart';
+import '../../../flavors/flavor_config.dart';
 import '../models/favorite_model.dart';
 
 class FavoriteProvider {
   Future<Result<List<Favorite>>> fetchFavorites(String userId) async {
     final response = await http.get(
-      Uri.parse('${dotenv.get('BASE_URL')}/favorites/user/$userId'),
+      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/favorites/user/$userId'),
     ); // Replace with actual API endpoint
 
     if (response.statusCode == 200) {
@@ -26,7 +26,7 @@ class FavoriteProvider {
 
   Future<Result<void>> addFavorite(int pet, String user) async {
     final response = await http.post(
-      Uri.parse('${dotenv.get('BASE_URL')}/favorites'),
+      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/favorites'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'user': user, 'pet': pet}),
     ); // Replace with actual API endpoint
@@ -40,7 +40,7 @@ class FavoriteProvider {
 
   Future<Result<void>> removeFavorite(int favoriteId) async {
     final response = await http.delete(
-      Uri.parse('${dotenv.get('BASE_URL')}/favorites/$favoriteId'),
+      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/favorites/$favoriteId'),
     ); // Replace with actual API endpoint
 
     if (response.statusCode == 200) {

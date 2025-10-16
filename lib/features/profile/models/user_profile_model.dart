@@ -1,6 +1,9 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:paws_connect/core/enum/user.enum.dart';
+import 'package:paws_connect/core/extension/int.ext.dart';
+
+import '../../../flavors/flavor_config.dart';
 
 part 'user_profile_model.mapper.dart';
 
@@ -20,8 +23,10 @@ class UserProfile with UserProfileMappable {
   final String? createdBy;
   final bool? passwordChanged;
   final UserIdentification? userIdentification;
-  final bool? isActive; // New field to track active status
-  final DateTime? lastActiveAt; // New field to track last active timestamp
+  final bool? isActive;
+  final DateTime? lastActiveAt;
+  final List<String>? violations;
+  final bool onboarded;
 
   UserProfile({
     required this.id,
@@ -40,7 +45,24 @@ class UserProfile with UserProfileMappable {
     this.userIdentification,
     this.isActive,
     this.lastActiveAt,
+    this.violations,
+    required this.onboarded,
   });
+  String? get transformedIdAttachmentUrl {
+    if (FlavorConfig.isDevelopment()) {
+      return profileImageLink?.transformedUrl;
+    } else {
+      return profileImageLink;
+    }
+  }
+
+  List<String>? get transformedHouseImages {
+    if (FlavorConfig.isDevelopment()) {
+      return houseImages?.map((image) => image.transformedUrl).toList();
+    } else {
+      return houseImages;
+    }
+  }
 }
 
 @MappableClass(caseStyle: CaseStyle.snakeCase)
@@ -48,7 +70,9 @@ class UserIdentification with UserIdentificationMappable {
   final int id;
   final DateTime createdAt;
   final String idAttachmentUrl;
-  final String idName;
+  final String firstName;
+  final String lastName;
+  final String? middleInitial;
   final String? address;
   final String? dateOfBirth;
   final String status;
@@ -57,9 +81,18 @@ class UserIdentification with UserIdentificationMappable {
     this.id,
     this.createdAt,
     this.idAttachmentUrl,
-    this.idName,
+    this.firstName,
+    this.lastName,
+    this.middleInitial,
     this.address,
     this.dateOfBirth,
     this.status,
   );
+  String get transformedIdAttachmentUrl {
+    if (FlavorConfig.isDevelopment()) {
+      return idAttachmentUrl.transformedUrl;
+    } else {
+      return idAttachmentUrl;
+    }
+  }
 }

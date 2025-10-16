@@ -91,7 +91,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       child: Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false, // hides back button
-          title: const Text('Change Password'),
+          title: const Text(
+            'Change Password',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+          ),
         ),
         body: Padding(
           padding: const EdgeInsets.all(16),

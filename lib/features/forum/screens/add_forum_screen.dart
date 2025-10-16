@@ -1,25 +1,40 @@
+import 'dart:io';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/core/widgets/text_field.dart';
+import 'package:paws_connect/dependency.dart';
 import 'package:paws_connect/features/forum/provider/forum_provider.dart';
+import 'package:paws_connect/features/profile/repository/image_repository.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/theme/paws_theme.dart';
 import '../../../core/widgets/text.dart';
 
 @RoutePage()
-class AddForumScreen extends StatefulWidget {
+class AddForumScreen extends StatefulWidget implements AutoRouteWrapper {
   const AddForumScreen({super.key});
 
   @override
   State<AddForumScreen> createState() => _AddForumScreenState();
+
+  @override
+  Widget wrappedRoute(BuildContext context) {
+    return ChangeNotifierProvider.value(
+      value: sl<ImageRepository>(),
+      child: this,
+    );
+  }
 }
 
 class _AddForumScreenState extends State<AddForumScreen> {
   final forumName = TextEditingController();
   bool _isLoading = false;
   bool private = false;
+  XFile? forumImageFile;
   List<(String, bool, IconData)> forumTypes = [
     ('Public', false, LucideIcons.globe),
     ('Private', true, LucideIcons.globeLock),
@@ -54,7 +69,7 @@ class _AddForumScreenState extends State<AddForumScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        context.router.maybePop(true); // Navigate back
+        context.router.maybePop(true);
       }
     } catch (e) {
       if (mounted) {
@@ -82,12 +97,18 @@ class _AddForumScreenState extends State<AddForumScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final imageFile = context.select(
+      (ImageRepository bloc) => bloc.selectedImage,
+    );
     return SafeArea(
       top: false,
       child: Scaffold(
         backgroundColor: Colors.grey[50],
         appBar: AppBar(
-          title: const Text('Create Forum'),
+          title: const Text(
+            'Create Forum',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+          ),
           centerTitle: true,
           leading: IconButton(
             icon: const Icon(
@@ -102,7 +123,36 @@ class _AddForumScreenState extends State<AddForumScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header Section
+              Stack(
+                children: [
+                  Container(
+                    height: 48,
+                    width: 48,
+                    decoration: BoxDecoration(
+                      color: PawsColors.primary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                      border: Border.all(width: 2, color: PawsColors.primary),
+                      image: imageFile != null
+                          ? DecorationImage(
+                              image: FileImage(File(imageFile.path)),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
+                    ),
+                  ),
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: Icon(
+                      LucideIcons.pencil,
+                      size: 18,
+                      color: PawsColors.primary,
+                    ),
+                  ),
+                ],
+              ),
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -161,7 +211,6 @@ class _AddForumScreenState extends State<AddForumScreen> {
 
               const SizedBox(height: 16),
 
-              // Form Section
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -303,10 +352,7 @@ class _AddForumScreenState extends State<AddForumScreen> {
                 ? const SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
+                    child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const PawsText(
                     'Create Forum',
