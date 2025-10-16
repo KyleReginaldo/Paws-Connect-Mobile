@@ -51,11 +51,11 @@ jobs:
       # 7. Build APK (Debug for PRs, Release for pushes)
       - name: Build APK (Debug)
         if: github.event_name == 'pull_request'
-        run: flutter build apk --debug
+        run: flutter build apk --debug --flavor dev -t lib/main_dev.dart
 
       - name: Build APK (Release)
         if: github.event_name == 'push'
-        run: flutter build apk --release
+        run: flutter build apk --release --flavor prod -t lib/main_prod.dart
 
       # 8. Build App Bundle (Only for release builds)
       # - name: Build App Bundle
