@@ -112,13 +112,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       top: false,
       child: Scaffold(
         backgroundColor: Colors.grey[50],
-        appBar: AppBar(title: const Text('Profile'), centerTitle: true),
+        appBar: AppBar(
+          title: const Text(
+            'Profile',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+          ),
+          centerTitle: true,
+        ),
         body: isLoading
-            ? const Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(PawsColors.primary),
-                ),
-              )
+            ? const Center(child: CircularProgressIndicator())
             : Column(
                 children: [
                   Expanded(
@@ -158,12 +160,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           height: 100,
 
                                           placeholder: (context, url) =>
-                                              CircularProgressIndicator(
-                                                valueColor:
-                                                    AlwaysStoppedAnimation<
-                                                      Color
-                                                    >(PawsColors.primary),
-                                              ),
+                                              CircularProgressIndicator(),
                                           errorWidget: (context, url, error) =>
                                               Icon(
                                                 Icons.person,

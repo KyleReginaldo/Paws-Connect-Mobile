@@ -45,7 +45,10 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notification'),
+        title: const Text(
+          'Notification',
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.router.maybePop(),

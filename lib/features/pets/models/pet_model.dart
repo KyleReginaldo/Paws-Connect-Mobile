@@ -1,6 +1,9 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:paws_connect/core/extension/int.ext.dart';
 import 'package:paws_connect/features/profile/models/user_profile_model.dart';
+
+import '../../../flavors/flavor_config.dart';
 
 part 'pet_model.mapper.dart';
 
@@ -61,6 +64,22 @@ class Pet with PetMappable {
     required this.adopted,
     this.happinessImage,
   });
+
+  List<String> get transformedPhotos {
+    if (FlavorConfig.isDevelopment()) {
+      return photos.map((photo) => photo.transformedUrl).toList();
+    } else {
+      return photos;
+    }
+  }
+
+  String? get transformedHappinessImage {
+    if (FlavorConfig.isDevelopment()) {
+      return happinessImage?.transformedUrl;
+    } else {
+      return happinessImage;
+    }
+  }
 }
 
 @MappableClass(caseStyle: CaseStyle.snakeCase)

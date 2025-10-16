@@ -16,6 +16,8 @@ class EventMapper extends ClassMapperBase<Event> {
       MapperContainer.globals.use(_instance = EventMapper._());
       CommentMapper.ensureInitialized();
       EventMemberMapper.ensureInitialized();
+      FundraisingMapper.ensureInitialized();
+      PetMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -73,11 +75,25 @@ class EventMapper extends ClassMapperBase<Event> {
     'members',
     _$members,
   );
+  static Fundraising? _$fundraising(Event v) => v.fundraising;
+  static const Field<Event, Fundraising> _f$fundraising = Field(
+    'fundraising',
+    _$fundraising,
+  );
+  static Pet? _$pet(Event v) => v.pet;
+  static const Field<Event, Pet> _f$pet = Field('pet', _$pet);
   static int _$memberCount(Event v) => v.memberCount;
   static const Field<Event, int> _f$memberCount = Field(
     'memberCount',
     _$memberCount,
     key: r'member_count',
+    mode: FieldMode.member,
+  );
+  static List<String>? _$transformedImages(Event v) => v.transformedImages;
+  static const Field<Event, List<String>> _f$transformedImages = Field(
+    'transformedImages',
+    _$transformedImages,
+    key: r'transformed_images',
     mode: FieldMode.member,
   );
 
@@ -94,7 +110,10 @@ class EventMapper extends ClassMapperBase<Event> {
     #startingDate: _f$startingDate,
     #endedAt: _f$endedAt,
     #members: _f$members,
+    #fundraising: _f$fundraising,
+    #pet: _f$pet,
     #memberCount: _f$memberCount,
+    #transformedImages: _f$transformedImages,
   };
 
   static Event _instantiate(DecodingData data) {
@@ -110,6 +129,8 @@ class EventMapper extends ClassMapperBase<Event> {
       data.dec(_f$startingDate),
       data.dec(_f$endedAt),
       data.dec(_f$members),
+      data.dec(_f$fundraising),
+      data.dec(_f$pet),
     );
   }
 
@@ -169,6 +190,8 @@ abstract class EventCopyWith<$R, $In extends Event, $Out>
     EventMemberCopyWith<$R, EventMember, EventMember>
   >?
   get members;
+  FundraisingCopyWith<$R, Fundraising, Fundraising>? get fundraising;
+  PetCopyWith<$R, Pet, Pet>? get pet;
   $R call({
     int? id,
     String? title,
@@ -181,6 +204,8 @@ abstract class EventCopyWith<$R, $In extends Event, $Out>
     DateTime? startingDate,
     DateTime? endedAt,
     List<EventMember>? members,
+    Fundraising? fundraising,
+    Pet? pet,
   });
   EventCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -232,6 +257,12 @@ class _EventCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Event, $Out>
         )
       : null;
   @override
+  FundraisingCopyWith<$R, Fundraising, Fundraising>? get fundraising =>
+      $value.fundraising?.copyWith.$chain((v) => call(fundraising: v));
+  @override
+  PetCopyWith<$R, Pet, Pet>? get pet =>
+      $value.pet?.copyWith.$chain((v) => call(pet: v));
+  @override
   $R call({
     int? id,
     String? title,
@@ -244,6 +275,8 @@ class _EventCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Event, $Out>
     Object? startingDate = $none,
     Object? endedAt = $none,
     Object? members = $none,
+    Object? fundraising = $none,
+    Object? pet = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -257,6 +290,8 @@ class _EventCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Event, $Out>
       if (startingDate != $none) #startingDate: startingDate,
       if (endedAt != $none) #endedAt: endedAt,
       if (members != $none) #members: members,
+      if (fundraising != $none) #fundraising: fundraising,
+      if (pet != $none) #pet: pet,
     }),
   );
   @override
@@ -272,6 +307,8 @@ class _EventCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Event, $Out>
     data.get(#startingDate, or: $value.startingDate),
     data.get(#endedAt, or: $value.endedAt),
     data.get(#members, or: $value.members),
+    data.get(#fundraising, or: $value.fundraising),
+    data.get(#pet, or: $value.pet),
   );
 
   @override
@@ -466,7 +503,7 @@ class CommentUserMapper extends ClassMapperBase<CommentUser> {
     'username',
     _$username,
   );
-  static String _$profileImageLink(CommentUser v) => v.profileImageLink;
+  static String? _$profileImageLink(CommentUser v) => v.profileImageLink;
   static const Field<CommentUser, String> _f$profileImageLink = Field(
     'profileImageLink',
     _$profileImageLink,
@@ -563,13 +600,14 @@ class _CommentUserCopyWithImpl<$R, $Out>
   late final ClassMapperBase<CommentUser> $mapper =
       CommentUserMapper.ensureInitialized();
   @override
-  $R call({String? username, String? profileImageLink, String? id}) => $apply(
-    FieldCopyWithData({
-      if (username != null) #username: username,
-      if (profileImageLink != null) #profileImageLink: profileImageLink,
-      if (id != null) #id: id,
-    }),
-  );
+  $R call({String? username, Object? profileImageLink = $none, String? id}) =>
+      $apply(
+        FieldCopyWithData({
+          if (username != null) #username: username,
+          if (profileImageLink != $none) #profileImageLink: profileImageLink,
+          if (id != null) #id: id,
+        }),
+      );
   @override
   CommentUser $make(CopyWithData data) => CommentUser(
     data.get(#username, or: $value.username),
@@ -740,7 +778,7 @@ class MemberMapper extends ClassMapperBase<Member> {
     'username',
     _$username,
   );
-  static String _$profileImageLink(Member v) => v.profileImageLink;
+  static String? _$profileImageLink(Member v) => v.profileImageLink;
   static const Field<Member, String> _f$profileImageLink = Field(
     'profileImageLink',
     _$profileImageLink,
@@ -821,13 +859,14 @@ class _MemberCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Member, $Out>
   @override
   late final ClassMapperBase<Member> $mapper = MemberMapper.ensureInitialized();
   @override
-  $R call({String? username, String? profileImageLink, String? id}) => $apply(
-    FieldCopyWithData({
-      if (username != null) #username: username,
-      if (profileImageLink != null) #profileImageLink: profileImageLink,
-      if (id != null) #id: id,
-    }),
-  );
+  $R call({String? username, Object? profileImageLink = $none, String? id}) =>
+      $apply(
+        FieldCopyWithData({
+          if (username != null) #username: username,
+          if (profileImageLink != $none) #profileImageLink: profileImageLink,
+          if (id != null) #id: id,
+        }),
+      );
   @override
   Member $make(CopyWithData data) => Member(
     data.get(#username, or: $value.username),

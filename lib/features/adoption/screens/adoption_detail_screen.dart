@@ -57,9 +57,7 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(PawsColors.primary),
-          ),
+          CircularProgressIndicator(),
           SizedBox(height: 16),
           PawsText(
             'Loading adoption details...',
@@ -130,7 +128,7 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
           Stack(
             children: [
               CarouselSlider(
-                items: adoption.pets.photos.map((e) {
+                items: adoption.pets.transformedPhotos.map((e) {
                   return NetworkImageView(
                     width: MediaQuery.sizeOf(context).width,
                     e,
@@ -142,7 +140,7 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
                   height: 280,
                   viewportFraction: 1.0,
                   enableInfiniteScroll: false,
-                  autoPlay: adoption.pets.photos.length > 1,
+                  autoPlay: adoption.pets.transformedPhotos.length > 1,
                 ),
               ),
               Positioned(

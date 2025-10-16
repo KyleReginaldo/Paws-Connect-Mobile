@@ -33,7 +33,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.paws_connect"
-        minSdk = 23
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -57,6 +57,23 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+    }
+    flavorDimensions += "app"
+    productFlavors {
+        create("dev") {
+            dimension = "app"
+            versionNameSuffix = "-dev"
+            resValue("string", "app_name", "[DEV]Paws Connect")
+        }
+        create("staging") {
+            dimension = "app"
+            versionNameSuffix = "-staging"
+            resValue("string", "app_name", "[STAGING]Paws Connect")
+        }
+        create("prod") {
+            dimension = "app"
+            resValue("string", "app_name", "Paws Connect")
         }
     }
 }

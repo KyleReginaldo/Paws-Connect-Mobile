@@ -24,6 +24,8 @@ class ForumRepository extends ChangeNotifier {
   List<AvailableUser> _availableUsers = [];
   List<AvailableUser> get availableUsers => _availableUsers;
   Forum? get forum => _forum;
+  String _forumName = '';
+  String get forumName => _forumName;
   List<ForumChat> get forumChats => _forumChats;
   String get errorMessage => _errorMessage;
   bool get isLoadingForums => _isLoadingForums;
@@ -114,14 +116,17 @@ class ForumRepository extends ChangeNotifier {
     );
     _isLoadingChats = false;
     if (result.isError) {
-      _forumChats.clear();
-      _pendingChats.clear();
+      _errorMessage = result.error;
+      debugPrint('Error getting real chats: ${result.error}');
+      // Don't clear existing chats to maintain UI state
       notifyListeners();
     } else {
-      notifyListeners();
       _pendingChats.clear();
-      _forumChats = result.value;
-      _hasMoreChats = result.value.length == _pageLimit;
+      _forumChats = result.value.chats;
+      _hasMoreChats = result.value.chats.length == _pageLimit;
+      _forumName = result.value.forumName;
+      _errorMessage = ''; // Clear any previous errors
+      notifyListeners();
     }
   }
 
@@ -133,13 +138,16 @@ class ForumRepository extends ChangeNotifier {
     );
     _isLoadingChats = false;
     if (result.isError) {
-      _forumChats.clear();
-      _pendingChats.clear();
+      _errorMessage = result.error;
+      // Don't clear existing chats on error to maintain UI state
+      debugPrint('Error fetching forum chats: ${result.error}');
     } else {
-      _forumChats = result.value;
+      _forumChats = result.value.chats;
       _pendingChats.clear();
       _currentPage = 1;
-      _hasMoreChats = result.value.length == _pageLimit;
+      _forumName = result.value.forumName;
+      _hasMoreChats = result.value.chats.length == _pageLimit;
+      _errorMessage = ''; // Clear any previous errors
     }
     notifyListeners();
   }
@@ -159,12 +167,17 @@ class ForumRepository extends ChangeNotifier {
 
     _isLoadingMoreChats = false;
 
-    if (!result.isError && result.value.isNotEmpty) {
+    if (result.isError) {
+      debugPrint('Error loading more chats: ${result.error}');
+      // Don't update hasMoreChats on error, allow retry
+    } else if (result.value.chats.isNotEmpty) {
       // Insert older messages at the beginning of the list
       // Since the list is ordered with newest first, older messages go at the start
-      _forumChats.insertAll(0, result.value);
+      _forumChats.insertAll(0, result.value.chats);
       _currentPage = nextPage;
-      _hasMoreChats = result.value.length == _pageLimit;
+      _forumName = result.value.forumName;
+
+      _hasMoreChats = result.value.chats.length == _pageLimit;
     } else {
       _hasMoreChats = false;
     }
@@ -187,6 +200,11 @@ class ForumRepository extends ChangeNotifier {
     _isLoadingMoreChats = false;
     _hasMoreChats = true;
     _currentPage = 1;
+    notifyListeners();
+  }
+
+  void clearErrorMessage() {
+    _errorMessage = '';
     notifyListeners();
   }
 }

@@ -214,7 +214,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('Edit Profile'),
+        title: const Text(
+          'Edit Profile',
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+        ),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: PawsColors.textPrimary),
@@ -228,12 +231,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ? const SizedBox(
                       width: 16,
                       height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          PawsColors.primary,
-                        ),
-                      ),
+                      child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const PawsText(
                       'Save',
@@ -245,11 +243,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ],
       ),
       body: user == null
-          ? const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(PawsColors.primary),
-              ),
-            )
+          ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Form(
@@ -300,10 +294,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                       child: imageRepo.isLoading
                                           ? const CircularProgressIndicator(
                                               strokeWidth: 2,
-                                              valueColor:
-                                                  AlwaysStoppedAnimation<Color>(
-                                                    PawsColors.primary,
-                                                  ),
                                             )
                                           : imageRepo.selectedImage != null
                                           ? ClipOval(
@@ -330,12 +320,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                                 width: 100,
                                                 height: 100,
                                                 placeholder: (context, url) =>
-                                                    const CircularProgressIndicator(
-                                                      valueColor:
-                                                          AlwaysStoppedAnimation<
-                                                            Color
-                                                          >(PawsColors.primary),
-                                                    ),
+                                                    const CircularProgressIndicator(),
                                                 errorWidget:
                                                     (
                                                       context,

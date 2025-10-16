@@ -44,11 +44,12 @@ class ForumMapper extends ClassMapperBase<Forum> {
     key: r'updated_at',
     opt: true,
   );
-  static String _$createdBy(Forum v) => v.createdBy;
+  static String? _$createdBy(Forum v) => v.createdBy;
   static const Field<Forum, String> _f$createdBy = Field(
     'createdBy',
     _$createdBy,
     key: r'created_by',
+    opt: true,
   );
   static List<Member>? _$members(Forum v) => v.members;
   static const Field<Forum, List<Member>> _f$members = Field(
@@ -71,6 +72,21 @@ class ForumMapper extends ClassMapperBase<Forum> {
     key: r'last_chat',
     opt: true,
   );
+  static String? _$forumImageUrl(Forum v) => v.forumImageUrl;
+  static const Field<Forum, String> _f$forumImageUrl = Field(
+    'forumImageUrl',
+    _$forumImageUrl,
+    key: r'forum_image_url',
+    opt: true,
+  );
+  static String? _$transformedForumImageUrl(Forum v) =>
+      v.transformedForumImageUrl;
+  static const Field<Forum, String> _f$transformedForumImageUrl = Field(
+    'transformedForumImageUrl',
+    _$transformedForumImageUrl,
+    key: r'transformed_forum_image_url',
+    mode: FieldMode.member,
+  );
 
   @override
   final MappableFields<Forum> fields = const {
@@ -83,6 +99,8 @@ class ForumMapper extends ClassMapperBase<Forum> {
     #memberCount: _f$memberCount,
     #private: _f$private,
     #lastChat: _f$lastChat,
+    #forumImageUrl: _f$forumImageUrl,
+    #transformedForumImageUrl: _f$transformedForumImageUrl,
   };
 
   static Forum _instantiate(DecodingData data) {
@@ -96,6 +114,7 @@ class ForumMapper extends ClassMapperBase<Forum> {
       memberCount: data.dec(_f$memberCount),
       private: data.dec(_f$private),
       lastChat: data.dec(_f$lastChat),
+      forumImageUrl: data.dec(_f$forumImageUrl),
     );
   }
 
@@ -157,6 +176,7 @@ abstract class ForumCopyWith<$R, $In extends Forum, $Out>
     int? memberCount,
     bool? private,
     LastChat? lastChat,
+    String? forumImageUrl,
   });
   ForumCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -185,22 +205,24 @@ class _ForumCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Forum, $Out>
     DateTime? createdAt,
     String? forumName,
     Object? updatedAt = $none,
-    String? createdBy,
+    Object? createdBy = $none,
     Object? members = $none,
     int? memberCount,
     bool? private,
     Object? lastChat = $none,
+    Object? forumImageUrl = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
       if (createdAt != null) #createdAt: createdAt,
       if (forumName != null) #forumName: forumName,
       if (updatedAt != $none) #updatedAt: updatedAt,
-      if (createdBy != null) #createdBy: createdBy,
+      if (createdBy != $none) #createdBy: createdBy,
       if (members != $none) #members: members,
       if (memberCount != null) #memberCount: memberCount,
       if (private != null) #private: private,
       if (lastChat != $none) #lastChat: lastChat,
+      if (forumImageUrl != $none) #forumImageUrl: forumImageUrl,
     }),
   );
   @override
@@ -214,6 +236,7 @@ class _ForumCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Forum, $Out>
     memberCount: data.get(#memberCount, or: $value.memberCount),
     private: data.get(#private, or: $value.private),
     lastChat: data.get(#lastChat, or: $value.lastChat),
+    forumImageUrl: data.get(#forumImageUrl, or: $value.forumImageUrl),
   );
 
   @override
@@ -434,6 +457,13 @@ class LastChatMapper extends ClassMapperBase<LastChat> {
     key: r'is_viewed',
     opt: true,
   );
+  static String? _$transformedImageUrl(LastChat v) => v.transformedImageUrl;
+  static const Field<LastChat, String> _f$transformedImageUrl = Field(
+    'transformedImageUrl',
+    _$transformedImageUrl,
+    key: r'transformed_image_url',
+    mode: FieldMode.member,
+  );
 
   @override
   final MappableFields<LastChat> fields = const {
@@ -443,6 +473,7 @@ class LastChatMapper extends ClassMapperBase<LastChat> {
     #message: _f$message,
     #imageUrl: _f$imageUrl,
     #isViewed: _f$isViewed,
+    #transformedImageUrl: _f$transformedImageUrl,
   };
 
   static LastChat _instantiate(DecodingData data) {
@@ -708,6 +739,148 @@ class _UsersCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Users, $Out>
       _UsersCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
+class ForumMessageMapper extends ClassMapperBase<ForumMessage> {
+  ForumMessageMapper._();
+
+  static ForumMessageMapper? _instance;
+  static ForumMessageMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = ForumMessageMapper._());
+      ForumChatMapper.ensureInitialized();
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'ForumMessage';
+
+  static List<ForumChat> _$chats(ForumMessage v) => v.chats;
+  static const Field<ForumMessage, List<ForumChat>> _f$chats = Field(
+    'chats',
+    _$chats,
+  );
+  static String _$forumName(ForumMessage v) => v.forumName;
+  static const Field<ForumMessage, String> _f$forumName = Field(
+    'forumName',
+    _$forumName,
+    key: r'forum_name',
+  );
+
+  @override
+  final MappableFields<ForumMessage> fields = const {
+    #chats: _f$chats,
+    #forumName: _f$forumName,
+  };
+
+  static ForumMessage _instantiate(DecodingData data) {
+    return ForumMessage(
+      chats: data.dec(_f$chats),
+      forumName: data.dec(_f$forumName),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static ForumMessage fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<ForumMessage>(map);
+  }
+
+  static ForumMessage fromJson(String json) {
+    return ensureInitialized().decodeJson<ForumMessage>(json);
+  }
+}
+
+mixin ForumMessageMappable {
+  String toJson() {
+    return ForumMessageMapper.ensureInitialized().encodeJson<ForumMessage>(
+      this as ForumMessage,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return ForumMessageMapper.ensureInitialized().encodeMap<ForumMessage>(
+      this as ForumMessage,
+    );
+  }
+
+  ForumMessageCopyWith<ForumMessage, ForumMessage, ForumMessage> get copyWith =>
+      _ForumMessageCopyWithImpl<ForumMessage, ForumMessage>(
+        this as ForumMessage,
+        $identity,
+        $identity,
+      );
+  @override
+  String toString() {
+    return ForumMessageMapper.ensureInitialized().stringifyValue(
+      this as ForumMessage,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return ForumMessageMapper.ensureInitialized().equalsValue(
+      this as ForumMessage,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return ForumMessageMapper.ensureInitialized().hashValue(
+      this as ForumMessage,
+    );
+  }
+}
+
+extension ForumMessageValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, ForumMessage, $Out> {
+  ForumMessageCopyWith<$R, ForumMessage, $Out> get $asForumMessage =>
+      $base.as((v, t, t2) => _ForumMessageCopyWithImpl<$R, $Out>(v, t, t2));
+}
+
+abstract class ForumMessageCopyWith<$R, $In extends ForumMessage, $Out>
+    implements ClassCopyWith<$R, $In, $Out> {
+  ListCopyWith<$R, ForumChat, ForumChatCopyWith<$R, ForumChat, ForumChat>>
+  get chats;
+  $R call({List<ForumChat>? chats, String? forumName});
+  ForumMessageCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
+}
+
+class _ForumMessageCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, ForumMessage, $Out>
+    implements ForumMessageCopyWith<$R, ForumMessage, $Out> {
+  _ForumMessageCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<ForumMessage> $mapper =
+      ForumMessageMapper.ensureInitialized();
+  @override
+  ListCopyWith<$R, ForumChat, ForumChatCopyWith<$R, ForumChat, ForumChat>>
+  get chats => ListCopyWith(
+    $value.chats,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(chats: v),
+  );
+  @override
+  $R call({List<ForumChat>? chats, String? forumName}) => $apply(
+    FieldCopyWithData({
+      if (chats != null) #chats: chats,
+      if (forumName != null) #forumName: forumName,
+    }),
+  );
+  @override
+  ForumMessage $make(CopyWithData data) => ForumMessage(
+    chats: data.get(#chats, or: $value.chats),
+    forumName: data.get(#forumName, or: $value.forumName),
+  );
+
+  @override
+  ForumMessageCopyWith<$R2, ForumMessage, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  ) => _ForumMessageCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
 class ForumChatMapper extends ClassMapperBase<ForumChat> {
   ForumChatMapper._();
 
@@ -776,6 +949,20 @@ class ForumChatMapper extends ClassMapperBase<ForumChat> {
     _$mentions,
     opt: true,
   );
+  static String? _$messageWarning(ForumChat v) => v.messageWarning;
+  static const Field<ForumChat, String> _f$messageWarning = Field(
+    'messageWarning',
+    _$messageWarning,
+    key: r'message_warning',
+    opt: true,
+  );
+  static String? _$transformedImageUrl(ForumChat v) => v.transformedImageUrl;
+  static const Field<ForumChat, String> _f$transformedImageUrl = Field(
+    'transformedImageUrl',
+    _$transformedImageUrl,
+    key: r'transformed_image_url',
+    mode: FieldMode.member,
+  );
 
   @override
   final MappableFields<ForumChat> fields = const {
@@ -789,6 +976,8 @@ class ForumChatMapper extends ClassMapperBase<ForumChat> {
     #reactions: _f$reactions,
     #viewers: _f$viewers,
     #mentions: _f$mentions,
+    #messageWarning: _f$messageWarning,
+    #transformedImageUrl: _f$transformedImageUrl,
   };
 
   static ForumChat _instantiate(DecodingData data) {
@@ -803,6 +992,7 @@ class ForumChatMapper extends ClassMapperBase<ForumChat> {
       reactions: data.dec(_f$reactions),
       viewers: data.dec(_f$viewers),
       mentions: data.dec(_f$mentions),
+      messageWarning: data.dec(_f$messageWarning),
     );
   }
 
@@ -883,6 +1073,7 @@ abstract class ForumChatCopyWith<$R, $In extends ForumChat, $Out>
     List<Reaction>? reactions,
     List<Viewer>? viewers,
     List<Mention>? mentions,
+    String? messageWarning,
   });
   ForumChatCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -940,6 +1131,7 @@ class _ForumChatCopyWithImpl<$R, $Out>
     Object? reactions = $none,
     Object? viewers = $none,
     Object? mentions = $none,
+    Object? messageWarning = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -952,6 +1144,7 @@ class _ForumChatCopyWithImpl<$R, $Out>
       if (reactions != $none) #reactions: reactions,
       if (viewers != $none) #viewers: viewers,
       if (mentions != $none) #mentions: mentions,
+      if (messageWarning != $none) #messageWarning: messageWarning,
     }),
   );
   @override
@@ -966,6 +1159,7 @@ class _ForumChatCopyWithImpl<$R, $Out>
     reactions: data.get(#reactions, or: $value.reactions),
     viewers: data.get(#viewers, or: $value.viewers),
     mentions: data.get(#mentions, or: $value.mentions),
+    messageWarning: data.get(#messageWarning, or: $value.messageWarning),
   );
 
   @override

@@ -81,11 +81,12 @@ class EventContainer extends StatelessWidget {
               color: PawsColors.textSecondary,
               maxLines: 2,
             ),
-            if (event.images != null && event.images!.isNotEmpty) ...[
+            if (event.transformedImages != null &&
+                event.transformedImages!.isNotEmpty) ...[
               const SizedBox(height: 4),
 
               CarouselSlider(
-                items: event.images!.map((image) {
+                items: event.transformedImages!.map((image) {
                   return GlowContainer(
                     containerOptions: ContainerOptions(
                       padding: EdgeInsets.zero,

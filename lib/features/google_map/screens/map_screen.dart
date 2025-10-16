@@ -48,7 +48,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   MapType _currentMapType = MapType.normal;
 
   bool _isMapMoving = false;
-  bool _isLoading = false;
+  bool isLoading = false;
 
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
@@ -147,7 +147,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
   Future<void> initLocation() async {
     setState(() {
-      _isLoading = true;
+      isLoading = true;
       _errorMessage = null;
     });
 
@@ -157,7 +157,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         setState(() {
           _errorMessage =
               'Location services are disabled. Please enable them in settings.';
-          _isLoading = false;
+          isLoading = false;
         });
         return;
       }
@@ -170,7 +170,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
           setState(() {
             _errorMessage =
                 'Location permissions are denied. Please grant location access to use this feature.';
-            _isLoading = false;
+            isLoading = false;
           });
           return;
         }
@@ -180,7 +180,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         setState(() {
           _errorMessage =
               'Location permissions are permanently denied. Please enable them in app settings.';
-          _isLoading = false;
+          isLoading = false;
         });
         return;
       }
@@ -195,7 +195,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       setState(() {
         _currentLocation = LatLng(position.latitude, position.longitude);
         _errorMessage = null;
-        _isLoading = false;
+        isLoading = false;
       });
 
       // Set initial selected location
@@ -207,7 +207,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     } catch (e) {
       setState(() {
         _errorMessage = 'Failed to get location: ${e.toString()}';
-        _isLoading = false;
+        isLoading = false;
       });
       debugPrint('Failed to get location: ${e.toString()}');
     }
@@ -316,7 +316,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     if (query.trim().isEmpty) return;
 
     setState(() {
-      _isLoading = true;
+      isLoading = true;
       _showSearchResults = false;
     });
 
@@ -324,7 +324,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       final locations = await locationFromAddress(query);
 
       setState(() {
-        _isLoading = false;
+        isLoading = false;
       });
 
       if (locations.isNotEmpty) {
@@ -346,7 +346,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       }
     } catch (e) {
       setState(() {
-        _isLoading = false;
+        isLoading = false;
       });
 
       if (mounted) {

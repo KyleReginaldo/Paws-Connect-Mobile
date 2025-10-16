@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
@@ -10,6 +9,7 @@ import 'package:paws_connect/core/services/supabase_service.dart';
 import 'package:paws_connect/features/profile/models/user_profile_model.dart';
 
 import '../../../core/config/result.dart';
+import '../../../flavors/flavor_config.dart';
 
 class ProfileProvider {
   Future<Result<UserProfile>> getUserProfile(String userId) async {
@@ -22,7 +22,7 @@ class ProfileProvider {
     }
     try {
       final response = await http.get(
-        Uri.parse('${dotenv.get('BASE_URL')}/users/$userId'),
+        Uri.parse('${FlavorConfig.instance.apiBaseUrl}/users/$userId'),
       );
       final data = jsonDecode(response.body);
       debugPrint('user [data]: ${data['data']}');
@@ -50,7 +50,7 @@ class ProfileProvider {
     }
     try {
       final response = await http.get(
-        Uri.parse('${dotenv.get('BASE_URL')}/users'),
+        Uri.parse('${FlavorConfig.instance.apiBaseUrl}/users'),
       );
       final data = jsonDecode(response.body);
       // debugPrint('User Profile Data: ${data['data']}'); // Commented to reduce console spam
@@ -110,7 +110,7 @@ class ProfileProvider {
         }
       }
       final response = await http.put(
-        Uri.parse('${dotenv.get('BASE_URL')}/users/$userId'),
+        Uri.parse('${FlavorConfig.instance.apiBaseUrl}/users/$userId'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           if (username != null) 'username': username,
@@ -140,7 +140,9 @@ class ProfileProvider {
     required String userId,
     required String idNumber,
     required XFile idAttachment,
-    required String idName,
+    required String firstName,
+    required String lastName,
+    String? middleInitial,
     required String address,
     required DateTime dateOfBirth,
   }) async {
@@ -177,12 +179,16 @@ class ProfileProvider {
     }
     try {
       final response = await http.post(
-        Uri.parse('${dotenv.get('BASE_URL')}/users/$userId/id-verification'),
+        Uri.parse(
+          '${FlavorConfig.instance.apiBaseUrl}/users/$userId/id-verification',
+        ),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'id_number': idNumber,
           'id_attachment_url': idAttachmentUrl,
-          'id_name': idName,
+          'first_name': firstName,
+          'last_name': lastName,
+          if (middleInitial != null) 'middle_initial': middleInitial,
           'address': address,
           'date_of_birth': dateOfBirth.toIso8601String().split(
             'T',
@@ -249,7 +255,7 @@ class ProfileProvider {
       }
 
       final response = await http.put(
-        Uri.parse('${dotenv.get('BASE_URL')}/users/$userId'),
+        Uri.parse('${FlavorConfig.instance.apiBaseUrl}/users/$userId'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'house_images': imageUrls}),
       );

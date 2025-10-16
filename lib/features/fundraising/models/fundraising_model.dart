@@ -1,7 +1,9 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:paws_connect/core/extension/int.ext.dart';
 
 import '../../../core/hooks/mapping.hooks.dart';
+import '../../../flavors/flavor_config.dart';
 
 part 'fundraising_model.mapper.dart';
 
@@ -44,6 +46,21 @@ class Fundraising with FundraisingMappable {
     this.qrCode,
     this.gcashNumber,
   });
+  String? get transformedQrCode {
+    if (FlavorConfig.isDevelopment()) {
+      return qrCode?.transformedUrl;
+    } else {
+      return qrCode;
+    }
+  }
+
+  List<String>? get transformedImages {
+    if (FlavorConfig.isDevelopment()) {
+      return images?.map((image) => image.transformedUrl).toList();
+    } else {
+      return images;
+    }
+  }
 }
 
 @MappableClass(caseStyle: CaseStyle.snakeCase)
@@ -67,6 +84,7 @@ class Donation with DonationMappable {
   final int amount;
   final String message;
   final DateTime donatedAt;
+  final bool isAnonymous;
 
   Donation({
     required this.id,
@@ -74,6 +92,7 @@ class Donation with DonationMappable {
     required this.amount,
     required this.message,
     required this.donatedAt,
+    required this.isAnonymous,
   });
 }
 

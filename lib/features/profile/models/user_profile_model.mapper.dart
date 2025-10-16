@@ -116,6 +116,34 @@ class UserProfileMapper extends ClassMapperBase<UserProfile> {
     key: r'last_active_at',
     opt: true,
   );
+  static List<String>? _$violations(UserProfile v) => v.violations;
+  static const Field<UserProfile, List<String>> _f$violations = Field(
+    'violations',
+    _$violations,
+    opt: true,
+  );
+  static bool _$onboarded(UserProfile v) => v.onboarded;
+  static const Field<UserProfile, bool> _f$onboarded = Field(
+    'onboarded',
+    _$onboarded,
+  );
+  static String? _$transformedIdAttachmentUrl(UserProfile v) =>
+      v.transformedIdAttachmentUrl;
+  static const Field<UserProfile, String> _f$transformedIdAttachmentUrl = Field(
+    'transformedIdAttachmentUrl',
+    _$transformedIdAttachmentUrl,
+    key: r'transformed_id_attachment_url',
+    mode: FieldMode.member,
+  );
+  static List<String>? _$transformedHouseImages(UserProfile v) =>
+      v.transformedHouseImages;
+  static const Field<UserProfile, List<String>> _f$transformedHouseImages =
+      Field(
+        'transformedHouseImages',
+        _$transformedHouseImages,
+        key: r'transformed_house_images',
+        mode: FieldMode.member,
+      );
 
   @override
   final MappableFields<UserProfile> fields = const {
@@ -135,6 +163,10 @@ class UserProfileMapper extends ClassMapperBase<UserProfile> {
     #userIdentification: _f$userIdentification,
     #isActive: _f$isActive,
     #lastActiveAt: _f$lastActiveAt,
+    #violations: _f$violations,
+    #onboarded: _f$onboarded,
+    #transformedIdAttachmentUrl: _f$transformedIdAttachmentUrl,
+    #transformedHouseImages: _f$transformedHouseImages,
   };
 
   static UserProfile _instantiate(DecodingData data) {
@@ -155,6 +187,8 @@ class UserProfileMapper extends ClassMapperBase<UserProfile> {
       userIdentification: data.dec(_f$userIdentification),
       isActive: data.dec(_f$isActive),
       lastActiveAt: data.dec(_f$lastActiveAt),
+      violations: data.dec(_f$violations),
+      onboarded: data.dec(_f$onboarded),
     );
   }
 
@@ -221,6 +255,7 @@ abstract class UserProfileCopyWith<$R, $In extends UserProfile, $Out>
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get houseImages;
   UserIdentificationCopyWith<$R, UserIdentification, UserIdentification>?
   get userIdentification;
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get violations;
   $R call({
     String? id,
     String? createdAt,
@@ -238,6 +273,8 @@ abstract class UserProfileCopyWith<$R, $In extends UserProfile, $Out>
     UserIdentification? userIdentification,
     bool? isActive,
     DateTime? lastActiveAt,
+    List<String>? violations,
+    bool? onboarded,
   });
   UserProfileCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -265,6 +302,15 @@ class _UserProfileCopyWithImpl<$R, $Out>
     (v) => call(userIdentification: v),
   );
   @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>?
+  get violations => $value.violations != null
+      ? ListCopyWith(
+          $value.violations!,
+          (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(violations: v),
+        )
+      : null;
+  @override
   $R call({
     String? id,
     String? createdAt,
@@ -282,6 +328,8 @@ class _UserProfileCopyWithImpl<$R, $Out>
     Object? userIdentification = $none,
     Object? isActive = $none,
     Object? lastActiveAt = $none,
+    Object? violations = $none,
+    bool? onboarded,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -300,6 +348,8 @@ class _UserProfileCopyWithImpl<$R, $Out>
       if (userIdentification != $none) #userIdentification: userIdentification,
       if (isActive != $none) #isActive: isActive,
       if (lastActiveAt != $none) #lastActiveAt: lastActiveAt,
+      if (violations != $none) #violations: violations,
+      if (onboarded != null) #onboarded: onboarded,
     }),
   );
   @override
@@ -323,6 +373,8 @@ class _UserProfileCopyWithImpl<$R, $Out>
     ),
     isActive: data.get(#isActive, or: $value.isActive),
     lastActiveAt: data.get(#lastActiveAt, or: $value.lastActiveAt),
+    violations: data.get(#violations, or: $value.violations),
+    onboarded: data.get(#onboarded, or: $value.onboarded),
   );
 
   @override
@@ -359,11 +411,23 @@ class UserIdentificationMapper extends ClassMapperBase<UserIdentification> {
     _$idAttachmentUrl,
     key: r'id_attachment_url',
   );
-  static String _$idName(UserIdentification v) => v.idName;
-  static const Field<UserIdentification, String> _f$idName = Field(
-    'idName',
-    _$idName,
-    key: r'id_name',
+  static String _$firstName(UserIdentification v) => v.firstName;
+  static const Field<UserIdentification, String> _f$firstName = Field(
+    'firstName',
+    _$firstName,
+    key: r'first_name',
+  );
+  static String _$lastName(UserIdentification v) => v.lastName;
+  static const Field<UserIdentification, String> _f$lastName = Field(
+    'lastName',
+    _$lastName,
+    key: r'last_name',
+  );
+  static String? _$middleInitial(UserIdentification v) => v.middleInitial;
+  static const Field<UserIdentification, String> _f$middleInitial = Field(
+    'middleInitial',
+    _$middleInitial,
+    key: r'middle_initial',
   );
   static String? _$address(UserIdentification v) => v.address;
   static const Field<UserIdentification, String> _f$address = Field(
@@ -381,16 +445,28 @@ class UserIdentificationMapper extends ClassMapperBase<UserIdentification> {
     'status',
     _$status,
   );
+  static String _$transformedIdAttachmentUrl(UserIdentification v) =>
+      v.transformedIdAttachmentUrl;
+  static const Field<UserIdentification, String> _f$transformedIdAttachmentUrl =
+      Field(
+        'transformedIdAttachmentUrl',
+        _$transformedIdAttachmentUrl,
+        key: r'transformed_id_attachment_url',
+        mode: FieldMode.member,
+      );
 
   @override
   final MappableFields<UserIdentification> fields = const {
     #id: _f$id,
     #createdAt: _f$createdAt,
     #idAttachmentUrl: _f$idAttachmentUrl,
-    #idName: _f$idName,
+    #firstName: _f$firstName,
+    #lastName: _f$lastName,
+    #middleInitial: _f$middleInitial,
     #address: _f$address,
     #dateOfBirth: _f$dateOfBirth,
     #status: _f$status,
+    #transformedIdAttachmentUrl: _f$transformedIdAttachmentUrl,
   };
 
   static UserIdentification _instantiate(DecodingData data) {
@@ -398,7 +474,9 @@ class UserIdentificationMapper extends ClassMapperBase<UserIdentification> {
       data.dec(_f$id),
       data.dec(_f$createdAt),
       data.dec(_f$idAttachmentUrl),
-      data.dec(_f$idName),
+      data.dec(_f$firstName),
+      data.dec(_f$lastName),
+      data.dec(_f$middleInitial),
       data.dec(_f$address),
       data.dec(_f$dateOfBirth),
       data.dec(_f$status),
@@ -480,7 +558,9 @@ abstract class UserIdentificationCopyWith<
     int? id,
     DateTime? createdAt,
     String? idAttachmentUrl,
-    String? idName,
+    String? firstName,
+    String? lastName,
+    String? middleInitial,
     String? address,
     String? dateOfBirth,
     String? status,
@@ -503,7 +583,9 @@ class _UserIdentificationCopyWithImpl<$R, $Out>
     int? id,
     DateTime? createdAt,
     String? idAttachmentUrl,
-    String? idName,
+    String? firstName,
+    String? lastName,
+    Object? middleInitial = $none,
     Object? address = $none,
     Object? dateOfBirth = $none,
     String? status,
@@ -512,7 +594,9 @@ class _UserIdentificationCopyWithImpl<$R, $Out>
       if (id != null) #id: id,
       if (createdAt != null) #createdAt: createdAt,
       if (idAttachmentUrl != null) #idAttachmentUrl: idAttachmentUrl,
-      if (idName != null) #idName: idName,
+      if (firstName != null) #firstName: firstName,
+      if (lastName != null) #lastName: lastName,
+      if (middleInitial != $none) #middleInitial: middleInitial,
       if (address != $none) #address: address,
       if (dateOfBirth != $none) #dateOfBirth: dateOfBirth,
       if (status != null) #status: status,
@@ -523,7 +607,9 @@ class _UserIdentificationCopyWithImpl<$R, $Out>
     data.get(#id, or: $value.id),
     data.get(#createdAt, or: $value.createdAt),
     data.get(#idAttachmentUrl, or: $value.idAttachmentUrl),
-    data.get(#idName, or: $value.idName),
+    data.get(#firstName, or: $value.firstName),
+    data.get(#lastName, or: $value.lastName),
+    data.get(#middleInitial, or: $value.middleInitial),
     data.get(#address, or: $value.address),
     data.get(#dateOfBirth, or: $value.dateOfBirth),
     data.get(#status, or: $value.status),

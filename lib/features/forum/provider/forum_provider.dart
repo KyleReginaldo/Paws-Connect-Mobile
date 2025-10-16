@@ -1,17 +1,20 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:paws_connect/core/config/result.dart';
 import 'package:paws_connect/core/services/supabase_service.dart';
+import 'package:paws_connect/core/utils/network_utils.dart';
 import 'package:paws_connect/features/forum/models/forum_model.dart';
+
+import '../../../flavors/flavor_config.dart';
 
 class ForumProvider {
   Future<Result<List<Forum>>> fetchForums(String userId) async {
     final response = await http.get(
-      Uri.parse('${dotenv.get('BASE_URL')}/forum/user/$userId'),
+      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/forum/user/$userId'),
     );
 
     final data = jsonDecode(response.body);
@@ -28,7 +31,9 @@ class ForumProvider {
 
   Future<Result<Forum>> fetchForumById(int forumId, String userId) async {
     final response = await http.get(
-      Uri.parse('${dotenv.get('BASE_URL')}/forum/$forumId?userId=$userId'),
+      Uri.parse(
+        '${FlavorConfig.instance.apiBaseUrl}/forum/$forumId?userId=$userId',
+      ),
     );
 
     final data = jsonDecode(response.body);
@@ -39,26 +44,42 @@ class ForumProvider {
     }
   }
 
-  Future<Result<List<ForumChat>>> fetchForumChats(
+  Future<Result<ForumMessage>> fetchForumChats(
     int forumId, {
     int page = 1,
     int limit = 20,
   }) async {
-    final uri = Uri.parse('${dotenv.get('BASE_URL')}/forum/$forumId/chats')
-        .replace(
-          queryParameters: {'page': page.toString(), 'limit': limit.toString()},
-        );
+    try {
+      final uri =
+          Uri.parse(
+            '${FlavorConfig.instance.apiBaseUrl}/forum/$forumId/chats',
+          ).replace(
+            queryParameters: {
+              'page': page.toString(),
+              'limit': limit.toString(),
+            },
+          );
 
-    final response = await http.get(uri);
-    final data = jsonDecode(response.body);
-    if (response.statusCode == 200) {
-      List<ForumChat> chats = [];
-      data['data'].forEach((chat) {
-        chats.add(ForumChatMapper.fromMap(chat));
-      });
-      return Result.success(chats);
-    } else {
-      return Result.error(data['message'] ?? 'Failed to fetch forum chats');
+      final response = await NetworkUtils.makeRequestWithRetry(
+        request: () => http
+            .get(uri, headers: {'Connection': 'keep-alive'})
+            .timeout(
+              const Duration(seconds: 30),
+              onTimeout: () => throw Exception('Request timeout'),
+            ),
+        maxRetries: 3,
+        retryDelay: const Duration(seconds: 2),
+      );
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        return Result.success(ForumMessageMapper.fromMap(data['data']));
+      } else {
+        return Result.error(data['message'] ?? 'Failed to fetch forum chats');
+      }
+    } catch (e) {
+      debugPrint('Failed to fetch forum chats: $e');
+      return Result.error(NetworkUtils.getErrorMessage(e));
     }
   }
 
@@ -69,7 +90,7 @@ class ForumProvider {
     try {
       final uri =
           Uri.parse(
-            '${dotenv.get('BASE_URL')}/forum/$forumId/members/available',
+            '${FlavorConfig.instance.apiBaseUrl}/forum/$forumId/members/available',
           ).replace(
             queryParameters: {
               if (username != null && username.isNotEmpty) 'search': username,
@@ -149,7 +170,7 @@ class ForumProvider {
     }
     debugPrint('Image URL: $imageUrl');
     final response = await http.post(
-      Uri.parse('${dotenv.get('BASE_URL')}/forum/$forumId/chats'),
+      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/forum/$forumId/chats'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'sender': sender,
@@ -168,14 +189,26 @@ class ForumProvider {
     required String userId,
     required String forumName,
     required bool private,
+    XFile? forumImageFile,
   }) async {
+    String? forumImageUrl;
+    if (forumImageFile != null) {
+      final storagePath = await supabase.storage
+          .from('files')
+          .upload(
+            '${DateTime.now().microsecondsSinceEpoch.toString()}_${forumImageFile.name}',
+            File(forumImageFile.path),
+          );
+      forumImageUrl = supabase.storage.from('').getPublicUrl(storagePath);
+    }
     final response = await http.post(
-      Uri.parse('${dotenv.get('BASE_URL')}/forum'),
+      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/forum'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         "created_by": userId,
         "forum_name": forumName,
         "private": private,
+        if (forumImageUrl != null) 'forum_image_url': forumImageUrl,
       }),
     );
     if (response.statusCode != 201) {
@@ -189,7 +222,7 @@ class ForumProvider {
     required List<String> memberIds,
   }) async {
     final response = await http.post(
-      Uri.parse('${dotenv.get('BASE_URL')}/forum/$forumId/members'),
+      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/forum/$forumId/members'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({"added_by": userId, "members": memberIds}),
     );
@@ -208,7 +241,7 @@ class ForumProvider {
   }) async {
     final response = await http.put(
       Uri.parse(
-        '${dotenv.get('BASE_URL')}/forum/$forumId/members/$forumMemberId?status=$status',
+        '${FlavorConfig.instance.apiBaseUrl}/forum/$forumId/members/$forumMemberId?status=$status',
       ),
       headers: {'Content-Type': 'application/json'},
     );
@@ -226,7 +259,7 @@ class ForumProvider {
     required String memberId,
   }) async {
     final response = await http.post(
-      Uri.parse('${dotenv.get('BASE_URL')}/forum/$forumId/members'),
+      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/forum/$forumId/members'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         "added_by": invitedBy,
@@ -267,7 +300,7 @@ class ForumProvider {
     try {
       final response = await http.post(
         Uri.parse(
-          '${dotenv.get('BASE_URL')}/forum/$forumId/chats/$chatId/reactions',
+          '${FlavorConfig.instance.apiBaseUrl}/forum/$forumId/chats/$chatId/reactions',
         ),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'reaction': reaction, 'user_id': userId}),
@@ -292,7 +325,7 @@ class ForumProvider {
     try {
       final response = await http.delete(
         Uri.parse(
-          '${dotenv.get('BASE_URL')}/forum/$forumId/chats/$chatId/reactions?reaction=$reaction&user_id=$userId',
+          '${FlavorConfig.instance.apiBaseUrl}/forum/$forumId/chats/$chatId/reactions?reaction=$reaction&user_id=$userId',
         ),
         headers: {'Content-Type': 'application/json'},
       );
@@ -322,7 +355,7 @@ class ForumProvider {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('${dotenv.get('BASE_URL')}/forum/$forumId/quit'),
+        Uri.parse('${FlavorConfig.instance.apiBaseUrl}/forum/$forumId/quit'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'user_id': userId}),
       );
@@ -356,7 +389,7 @@ class ForumProvider {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('${dotenv.get('BASE_URL')}/forum/$forumId/kick'),
+        Uri.parse('${FlavorConfig.instance.apiBaseUrl}/forum/$forumId/kick'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'user_id': userId, 'kicked_by': kickedBy}),
       );
@@ -380,7 +413,7 @@ class ForumProvider {
     try {
       final response = await http.delete(
         Uri.parse(
-          '${dotenv.get('BASE_URL')}/forum/$forumId/chats/$chatId?sender=$sender',
+          '${FlavorConfig.instance.apiBaseUrl}/forum/$forumId/chats/$chatId?sender=$sender',
         ),
       );
 

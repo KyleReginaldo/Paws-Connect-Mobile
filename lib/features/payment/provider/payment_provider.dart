@@ -1,10 +1,10 @@
 import 'dart:convert';
 
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:paws_connect/core/extension/int.ext.dart';
 
 import '../../../core/config/result.dart';
+import '../../../flavors/flavor_config.dart';
 
 class PaymentProvider {
   Future<Result<String>> createPayment({
@@ -51,7 +51,7 @@ class PaymentProvider {
     required int fundraisingId,
   }) async {
     final response = await http.post(
-      Uri.parse('${dotenv.get('BASE_URL')}/donations'),
+      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/donations'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         "donor": donor,
@@ -155,7 +155,7 @@ Future<Result<String>> attachPaymentIntent({
         "attributes": {
           "payment_method": paymentMethod,
           "return_url":
-              "https://paws-connect-sable.vercel.app/payment-success/$fundraisingId?donor=$userId&amount=${amount.toRealAmount}",
+              "https://paws-connect-rho.vercel.app/payment-success/$fundraisingId?donor=$userId&amount=${amount.toRealAmount}",
         },
       },
     }),

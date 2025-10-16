@@ -1,10 +1,10 @@
 import 'dart:convert';
 
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:paws_connect/features/notifications/models/notification_model.dart';
 
 import '../../../core/config/result.dart';
+import '../../../flavors/flavor_config.dart';
 
 class NotificationProvider {
   // Default pagination configuration
@@ -29,7 +29,7 @@ class NotificationProvider {
       return Result.error('Limit must be between 1 and $maxPageSize');
     }
 
-    final baseUrl = dotenv.get('BASE_URL');
+    final baseUrl = FlavorConfig.instance.apiBaseUrl;
     final url = '$baseUrl/notifications/user/$userId?page=$page&limit=$limit';
     final uri = Uri.parse(url);
 
@@ -61,7 +61,9 @@ class NotificationProvider {
 
   Future<void> markAllViewed(String userId) async {
     await http.put(
-      Uri.parse('${dotenv.get('BASE_URL')}/notifications/user/$userId/view'),
+      Uri.parse(
+        '${FlavorConfig.instance.apiBaseUrl}/notifications/user/$userId/view',
+      ),
     );
   }
 
@@ -70,7 +72,9 @@ class NotificationProvider {
     required String userId,
   }) async {
     final response = await http.post(
-      Uri.parse('${dotenv.get('BASE_URL')}/notifications/user/$userId'),
+      Uri.parse(
+        '${FlavorConfig.instance.apiBaseUrl}/notifications/user/$userId',
+      ),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'notificationIds': ids}),
     );

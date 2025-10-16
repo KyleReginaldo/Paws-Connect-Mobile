@@ -23,10 +23,7 @@ class PendingChatBubble extends StatelessWidget {
               SizedBox(
                 width: 12,
                 height: 12,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
-                ),
+                child: CircularProgressIndicator(strokeWidth: 2),
               ),
               SizedBox(width: 8),
               Text(

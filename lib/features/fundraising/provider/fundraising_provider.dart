@@ -1,10 +1,11 @@
 import 'dart:convert';
 
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:http/http.dart' as http;
+import 'package:flutter/material.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 
 import '../../../core/config/result.dart';
+import '../../../core/utils/network_utils.dart';
+import '../../../flavors/flavor_config.dart';
 import '../models/fundraising_model.dart';
 
 class FundraisingProvider {
@@ -18,9 +19,16 @@ class FundraisingProvider {
     }
 
     try {
-      final response = await http.get(
-        Uri.parse('${dotenv.get('BASE_URL')}/fundraising?user_role=3'),
+      final uri = Uri.parse(
+        '${FlavorConfig.instance.apiBaseUrl}/fundraising?user_role=3',
       );
+
+      final response = await NetworkUtils.makeMobileOptimizedRequest(
+        uri: uri,
+        maxRetries: 2,
+        timeout: const Duration(seconds: 25),
+      );
+
       if (response.statusCode == 200) {
         List<Fundraising> fundraisings = [];
         final data = jsonDecode(response.body);
@@ -29,12 +37,15 @@ class FundraisingProvider {
         });
         return Result.success(fundraisings);
       } else {
+        final data = jsonDecode(response.body);
         return Result.error(
-          'Failed to fetch fundraisings. Server returned ${response.statusCode}',
+          data['message'] ??
+              'Failed to fetch fundraisings. Server returned ${response.statusCode}',
         );
       }
     } catch (e) {
-      return Result.error('Failed to fetch fundraisings: ${e.toString()}');
+      debugPrint('Failed to fetch fundraisings: $e');
+      return Result.error(NetworkUtils.getErrorMessage(e));
     }
   }
 
@@ -48,20 +59,30 @@ class FundraisingProvider {
     }
 
     try {
-      final response = await http.get(
-        Uri.parse('${dotenv.get('BASE_URL')}/fundraising/$id'),
+      final uri = Uri.parse(
+        '${FlavorConfig.instance.apiBaseUrl}/fundraising/$id',
       );
+
+      final response = await NetworkUtils.makeMobileOptimizedRequest(
+        uri: uri,
+        maxRetries: 2,
+        timeout: const Duration(seconds: 25),
+      );
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final fundraising = FundraisingMapper.fromMap(data['data']);
         return Result.success(fundraising);
       } else {
+        final data = jsonDecode(response.body);
         return Result.error(
-          'Failed to fetch fundraisings. Server returned ${response.statusCode}',
+          data['message'] ??
+              'Failed to fetch fundraising. Server returned ${response.statusCode}',
         );
       }
     } catch (e) {
-      return Result.error('Failed to fetch fundraisings: ${e.toString()}');
+      debugPrint('Failed to fetch fundraising by id: $e');
+      return Result.error(NetworkUtils.getErrorMessage(e));
     }
   }
 }

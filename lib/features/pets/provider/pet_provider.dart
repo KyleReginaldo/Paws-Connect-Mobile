@@ -1,10 +1,11 @@
 import 'dart:convert';
 
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:paws_connect/core/config/result.dart';
 import 'package:paws_connect/features/pets/models/pet_model.dart';
+
+import '../../../flavors/flavor_config.dart';
 
 class PetProvider {
   Future<Result<List<Pet>>> fetchPets({
@@ -41,23 +42,29 @@ class PetProvider {
       if (size != null && size.isNotEmpty) queryParams['size'] = size;
       if (ageMin != null) queryParams['age_min'] = ageMin.toString();
       if (ageMax != null) queryParams['age_max'] = ageMax.toString();
-      if (isVaccinated != null)
+      if (isVaccinated != null) {
         queryParams['is_vaccinated'] = isVaccinated.toString();
-      if (isSpayedOrNeutered != null)
+      }
+      if (isSpayedOrNeutered != null) {
         queryParams['is_spayed_or_neutured'] = isSpayedOrNeutered.toString();
+      }
       if (isTrained != null) queryParams['is_trained'] = isTrained.toString();
-      if (healthStatus != null && healthStatus.isNotEmpty)
+      if (healthStatus != null && healthStatus.isNotEmpty) {
         queryParams['health_status'] = healthStatus;
-      if (requestStatus != null && requestStatus.isNotEmpty)
+      }
+      if (requestStatus != null && requestStatus.isNotEmpty) {
         queryParams['request_status'] = requestStatus;
-      if (goodWith != null && goodWith.isNotEmpty)
+      }
+      if (goodWith != null && goodWith.isNotEmpty) {
         queryParams['good_with'] = goodWith;
-      if (location != null && location.isNotEmpty)
+      }
+      if (location != null && location.isNotEmpty) {
         queryParams['location'] = location;
+      }
       if (userId != null && userId.isNotEmpty) queryParams['user'] = userId;
 
       final uri = Uri.parse(
-        '${dotenv.get('BASE_URL')}/pets',
+        '${FlavorConfig.instance.apiBaseUrl}/pets',
       ).replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
 
       final response = await http.get(uri);
@@ -89,11 +96,12 @@ class PetProvider {
     }
 
     try {
-      final uri = Uri.parse('${dotenv.get('BASE_URL')}/pets/recent').replace(
-        queryParameters: userId != null && userId.isNotEmpty
-            ? {'user': userId}
-            : null,
-      );
+      final uri = Uri.parse('${FlavorConfig.instance.apiBaseUrl}/pets/recent')
+          .replace(
+            queryParameters: userId != null && userId.isNotEmpty
+                ? {'user': userId}
+                : null,
+          );
 
       final response = await http.get(uri);
 
@@ -128,11 +136,12 @@ class PetProvider {
     }
 
     try {
-      final uri = Uri.parse('${dotenv.get('BASE_URL')}/pets/$petId').replace(
-        queryParameters: userId != null && userId.isNotEmpty
-            ? {'user': userId}
-            : null,
-      );
+      final uri = Uri.parse('${FlavorConfig.instance.apiBaseUrl}/pets/$petId')
+          .replace(
+            queryParameters: userId != null && userId.isNotEmpty
+                ? {'user': userId}
+                : null,
+          );
 
       final response = await http.get(uri);
 
@@ -169,7 +178,7 @@ class PetProvider {
       if (userId != null && userId.isNotEmpty) params['user'] = userId;
 
       final uri = Uri.parse(
-        '${dotenv.get('BASE_URL')}/pets',
+        '${FlavorConfig.instance.apiBaseUrl}/pets',
       ).replace(queryParameters: params);
       final response = await http.get(uri);
       if (response.statusCode == 200) {
@@ -199,7 +208,7 @@ class PetProvider {
       );
     }
     try {
-      final uri = Uri.parse('${dotenv.get('BASE_URL')}/pets/$petId');
+      final uri = Uri.parse('${FlavorConfig.instance.apiBaseUrl}/pets/$petId');
       final response = await http.delete(uri);
       if (response.statusCode == 200 || response.statusCode == 204) {
         return Result.success(true);

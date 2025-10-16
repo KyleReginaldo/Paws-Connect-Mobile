@@ -125,12 +125,14 @@ class ChatMessageWidget extends StatelessWidget {
                             color: isCurrentUser
                                 ? PawsColors.primary
                                 : PawsColors.border,
+                            messageWarning: chat.messageWarning,
                             child: MessageContent(
                               chat: chat,
                               isCurrentUser: isCurrentUser,
                               showAvatar: showAvatar,
                             ),
                           ),
+
                           if (chat.reactions != null &&
                               chat.reactions!.isNotEmpty)
                             MessageReactions(

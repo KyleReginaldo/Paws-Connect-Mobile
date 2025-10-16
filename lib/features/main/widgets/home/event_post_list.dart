@@ -369,10 +369,7 @@ class _SuggestionModalState extends State<SuggestionModal> {
                   SizedBox(
                     width: 16,
                     height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation(Colors.blue.shade600),
-                    ),
+                    child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                 ],
               ),

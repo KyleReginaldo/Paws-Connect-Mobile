@@ -42,7 +42,12 @@ class _AdoptionHistoryScreenState extends State<AdoptionHistoryScreen> {
       (AdoptionRepository bloc) => bloc.adoptions,
     );
     return Scaffold(
-      appBar: AppBar(title: Text('Adoption History')),
+      appBar: AppBar(
+        title: const Text(
+          'Adoption History',
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+        ),
+      ),
       body: ListView.builder(
         padding: EdgeInsets.all(16),
         itemCount: adoptions?.length ?? 0,
@@ -56,7 +61,7 @@ class _AdoptionHistoryScreenState extends State<AdoptionHistoryScreen> {
               },
               tileColor: Colors.white,
               leading: UserAvatar(
-                imageUrl: adoption.pets.photos.first,
+                imageUrl: adoption.pets.transformedPhotos.first,
                 initials: adoption.pets.name,
                 size: 32,
               ),

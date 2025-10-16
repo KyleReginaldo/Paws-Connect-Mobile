@@ -13,6 +13,7 @@ import 'package:paws_connect/features/pets/models/pet_model.dart';
 import 'package:paws_connect/features/pets/repository/pet_repository.dart';
 import 'package:paws_connect/features/profile/repository/profile_repository.dart';
 import 'package:provider/provider.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart' show RefreshTrigger;
 
 import '../../../../core/router/app_route.gr.dart';
 import '../../../../core/supabase/client.dart';
@@ -132,7 +133,9 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
   }
 
   Widget _buildImageCarousel(Pet pet) {
-    final images = pet.photos.isNotEmpty ? pet.photos : [''];
+    final images = pet.transformedPhotos.isNotEmpty
+        ? pet.transformedPhotos
+        : [''];
 
     return Container(
       height: MediaQuery.sizeOf(context).height * 0.3,
@@ -224,15 +227,19 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
         extendBodyBehindAppBar: true,
         appBar: AppBar(
           foregroundColor: Colors.white,
-          title: Text(
+          title: const Text(
             'Pet Details',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+            ),
           ),
           centerTitle: true,
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
-        body: RefreshIndicator(
+        body: RefreshTrigger(
           onRefresh: () async {
             context.read<PetRepository>().fetchPetById(widget.pet.id);
           },
@@ -408,7 +415,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                                 PawsText('🎉'),
 
                                 PawsText(
-                                  'by ${pet.adopted!.user.userIdentification?.idName ?? pet.adopted!.user.username}',
+                                  'by ${pet.adopted!.user.userIdentification?.firstName} ${pet.adopted!.user.userIdentification?.lastName}',
                                   fontSize: 15,
                                   fontWeight: FontWeight.w500,
                                   color: PawsColors.success,
@@ -492,30 +499,28 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                                   SizedBox(width: 12),
 
                                   // User Info
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        PawsText(
-                                          adoption
-                                                  .user
-                                                  .userIdentification
-                                                  ?.idName ??
-                                              adoption.user.username,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          color: PawsColors.textPrimary,
-                                        ),
-                                        SizedBox(height: 2),
-                                        PawsText(
-                                          'Applied ${_formatDate(adoption.createdAt)}',
-                                          fontSize: 12,
-                                          color: PawsColors.textSecondary,
-                                        ),
-                                      ],
+                                  if (pet.adopted != null &&
+                                      pet.adopted!.user.id == adoption.user.id)
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          PawsText(
+                                            '${pet.adopted!.user.userIdentification?.firstName} ${pet.adopted!.user.userIdentification?.lastName}',
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: PawsColors.textPrimary,
+                                          ),
+                                          SizedBox(height: 2),
+                                          PawsText(
+                                            'Applied ${_formatDate(adoption.createdAt)}',
+                                            fontSize: 12,
+                                            color: PawsColors.textSecondary,
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
 
                                   // Status Badge
                                   Container(
