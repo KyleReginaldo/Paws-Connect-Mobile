@@ -1,0 +1,165 @@
+name: "Build & Release"
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build & Release
+    runs-on: macos-latest
+
+    steps:
+      # 1. Checkout Repository
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. Setup Java
+      - name: Set Up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # 3. Setup Flutter
+      - name: Set Up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.6'
+          channel: 'stable'
+          cache: true
+
+      # 4. Install Dependencies
+      - name: Install Dependencies
+        run: flutter pub get
+
+      # 5. Run Tests
+      - name: Run Tests
+        run: flutter test
+
+      # 6. Setup Keystore (Only for signed builds)
+      - name: Decode Keystore
+        if: github.event_name == 'push'
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
+
+      - name: Create key.properties
+        if: github.event_name == 'push'
+        run: |
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" > android/key.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
+          echo "storeFile=upload-keystore.jks" >> android/key.properties
+
+      # 7. Build APK (Debug for PRs, Release for pushes)
+      - name: Build APK (Debug)
+        if: github.event_name == 'pull_request'
+        run: flutter build apk --debug
+
+      - name: Build APK (Release)
+        if: github.event_name == 'push'
+        run: flutter build apk --release
+
+      # 8. Build App Bundle (Only for release builds)
+      # - name: Build App Bundle
+      #   if: github.event_name == 'push'
+      #   run: flutter build appbundle --release
+
+      # 9. Build iOS (Only for release builds)
+      # - name: Build iOS
+      #   if: github.event_name == 'push'
+      #   run: flutter build ios --release --no-codesign
+
+      # 10. Compress iOS Build
+      # - name: Compress iOS Build
+      #   if: github.event_name == 'push'
+      #   run: |
+      #     cd build
+      #     tar -czf ios_build.tar.gz ios
+
+      # 11. Upload Artifacts (Debug builds for PRs)
+      - name: Upload Debug Artifacts
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Debug-Build-${{ github.run_number }}
+          path: |
+            build/app/outputs/flutter-apk/app-debug.apk
+
+      # 12. Upload Artifacts (Release builds for pushes)
+      - name: Upload Release Artifacts
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Release-Build-${{ github.run_number }}
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
+            build/ios_build.tar.gz
+
+      # 13. Extract Version from pubspec.yaml
+      - name: Extract Version
+        if: github.event_name == 'push'
+        id: extract_version
+        run: |
+          version=$(grep '^version: ' pubspec.yaml | cut -d ' ' -f 2 | tr -d '\r')
+          echo "VERSION=$version" >> $GITHUB_ENV
+          echo "Extracted version: $version"
+
+      # 14. Check if Tag Exists
+      - name: Check if Tag Exists
+        if: github.event_name == 'push'
+        id: check_tag
+        run: |
+          git fetch --tags
+          if git rev-parse "v${{ env.VERSION }}" >/dev/null 2>&1; then
+            echo "TAG_EXISTS=true" >> $GITHUB_ENV
+            echo "Tag v${{ env.VERSION }} already exists"
+          else
+            echo "TAG_EXISTS=false" >> $GITHUB_ENV
+            echo "Tag v${{ env.VERSION }} does not exist"
+          fi
+
+      # 15. Modify Tag if it Exists
+      - name: Modify Tag
+        if: github.event_name == 'push' && env.TAG_EXISTS == 'true'
+        id: modify_tag
+        run: |
+          new_version="${{ env.VERSION }}-build-${{ github.run_number }}"
+          echo "VERSION=$new_version" >> $GITHUB_ENV
+          echo "Modified version to: $new_version"
+
+      # 16. Create Release (Only for pushes to main/master)
+      - name: Create Release
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "build/app/outputs/flutter-apk/app-release.apk,build/app/outputs/bundle/release/app-release.aab,build/ios_build.tar.gz"
+          tag: v${{ env.VERSION }}
+          name: Release v${{ env.VERSION }}
+          body: |
+            ## Changes in this Release
+            - Auto-generated release from commit: ${{ github.sha }}
+            - Build number: ${{ github.run_number }}
+            
+            ## Downloads
+            - **APK**: Direct install on Android devices
+            - **AAB**: For Google Play Store upload
+            - **iOS Build**: For App Store submission (requires code signing)
+          token: ${{ secrets.GH_TOKEN }}
+          draft: false
+          prerelease: false
+
+      # 17. Comment on PR with build info
+      - name: Comment PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ Build completed successfully! Debug APK is available in the artifacts section.'
+            })
