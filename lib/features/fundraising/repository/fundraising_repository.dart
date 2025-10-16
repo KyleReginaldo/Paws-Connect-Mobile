@@ -66,4 +66,9 @@ class FundraisingRepository extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
   }
+
+  void clearErrorMessage() {
+    _errorMessage = null;
+    notifyListeners();
+  }
 }

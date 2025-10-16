@@ -196,7 +196,7 @@ class ImageRepository extends ChangeNotifier {
       /*
       final request = http.MultipartRequest(
         'POST', 
-        Uri.parse('${dotenv.get('BASE_URL')}/users/$userId/profile-image')
+        Uri.parse('${FlavorConfig.instance.apiBaseUrl}/users/$userId/profile-image')
       );
       
       request.files.add(

@@ -1,5 +1,10 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:paws_connect/features/fundraising/models/fundraising_model.dart';
+import 'package:paws_connect/features/pets/models/pet_model.dart';
+
+import '../../../core/extension/int.ext.dart';
+import '../../../flavors/flavor_config.dart';
 
 part 'event_model.mapper.dart';
 
@@ -15,7 +20,9 @@ class Event with EventMappable {
   final List<Comment>? comments;
   final DateTime? startingDate;
   final DateTime? endedAt;
-  final List<EventMember>? members; // List of user IDs who joined the event
+  final List<EventMember>? members;
+  final Fundraising? fundraising;
+  final Pet? pet;
 
   Event(
     this.id,
@@ -29,6 +36,8 @@ class Event with EventMappable {
     this.startingDate,
     this.endedAt,
     this.members,
+    this.fundraising,
+    this.pet,
   );
 
   /// Check if a user is a member of this event
@@ -38,6 +47,14 @@ class Event with EventMappable {
 
   /// Get the number of members in this event
   int get memberCount => members?.length ?? 0;
+
+  List<String>? get transformedImages {
+    if (FlavorConfig.isDevelopment()) {
+      return images?.map((image) => image.transformedUrl).toList();
+    } else {
+      return images;
+    }
+  }
 }
 
 @MappableClass(caseStyle: CaseStyle.snakeCase)
@@ -54,7 +71,7 @@ class Comment with CommentMappable {
 @MappableClass(caseStyle: CaseStyle.snakeCase)
 class CommentUser with CommentUserMappable {
   final String username;
-  final String profileImageLink;
+  final String? profileImageLink;
   final String id;
 
   CommentUser(this.username, this.profileImageLink, this.id);
@@ -63,7 +80,7 @@ class CommentUser with CommentUserMappable {
 @MappableClass(caseStyle: CaseStyle.snakeCase)
 class Member with MemberMappable {
   final String username;
-  final String profileImageLink;
+  final String? profileImageLink;
   final String id;
 
   Member(this.username, this.profileImageLink, this.id);

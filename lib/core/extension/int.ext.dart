@@ -51,6 +51,10 @@ extension StringExt on String {
     return this[0].toUpperCase() + substring(1).toLowerCase();
   }
 
+  String get transformedUrl {
+    return replaceFirst('127.0.0.1', '10.0.2.2');
+  }
+
   Color get color {
     switch (this) {
       case 'PENDING':

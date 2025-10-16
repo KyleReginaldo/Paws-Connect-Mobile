@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_reactions/flutter_chat_reactions.dart'
     as chat_reactions;
+import 'package:shadcn_flutter/shadcn_flutter.dart' show RefreshTrigger;
 
 import '../../../core/components/components.dart';
 import '../../../core/theme/paws_theme.dart';
@@ -84,7 +85,7 @@ class ChatMessageList extends StatelessWidget {
       );
     }
 
-    return RefreshIndicator(
+    return RefreshTrigger(
       onRefresh: () async => onRefresh(),
       child: Builder(
         builder: (context) {

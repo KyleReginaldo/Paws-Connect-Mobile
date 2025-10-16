@@ -40,6 +40,12 @@ class DonationMapper extends ClassMapperBase<Donation> {
   static const Field<Donation, double> _f$amount = Field('amount', _$amount);
   static String _$message(Donation v) => v.message;
   static const Field<Donation, String> _f$message = Field('message', _$message);
+  static bool _$isAnonymous(Donation v) => v.isAnonymous;
+  static const Field<Donation, bool> _f$isAnonymous = Field(
+    'isAnonymous',
+    _$isAnonymous,
+    key: r'is_anonymous',
+  );
 
   @override
   final MappableFields<Donation> fields = const {
@@ -49,6 +55,7 @@ class DonationMapper extends ClassMapperBase<Donation> {
     #donor: _f$donor,
     #amount: _f$amount,
     #message: _f$message,
+    #isAnonymous: _f$isAnonymous,
   };
 
   static Donation _instantiate(DecodingData data) {
@@ -59,6 +66,7 @@ class DonationMapper extends ClassMapperBase<Donation> {
       donor: data.dec(_f$donor),
       amount: data.dec(_f$amount),
       message: data.dec(_f$message),
+      isAnonymous: data.dec(_f$isAnonymous),
     );
   }
 
@@ -126,6 +134,7 @@ abstract class DonationCopyWith<$R, $In extends Donation, $Out>
     String? donor,
     double? amount,
     String? message,
+    bool? isAnonymous,
   });
   DonationCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -146,6 +155,7 @@ class _DonationCopyWithImpl<$R, $Out>
     String? donor,
     double? amount,
     String? message,
+    bool? isAnonymous,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -154,6 +164,7 @@ class _DonationCopyWithImpl<$R, $Out>
       if (donor != null) #donor: donor,
       if (amount != null) #amount: amount,
       if (message != null) #message: message,
+      if (isAnonymous != null) #isAnonymous: isAnonymous,
     }),
   );
   @override
@@ -164,6 +175,7 @@ class _DonationCopyWithImpl<$R, $Out>
     donor: data.get(#donor, or: $value.donor),
     amount: data.get(#amount, or: $value.amount),
     message: data.get(#message, or: $value.message),
+    isAnonymous: data.get(#isAnonymous, or: $value.isAnonymous),
   );
 
   @override

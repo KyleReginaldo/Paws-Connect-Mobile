@@ -11,6 +11,8 @@ import 'package:paws_connect/dependency.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/mixins/tutorial_target_mixin.dart';
+import '../../../core/notifiers/user_id_notifier.dart';
 import '../../../core/router/app_route.gr.dart';
 import '../../../core/theme/paws_theme.dart';
 
@@ -45,6 +47,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
   @override
   void initState() {
+    print('🎯 MAIN SCREEN: initState called');
     handleOneSignalLogin();
     if (!_oneSignalListenerInitialized) {
       initPlatformState();
@@ -52,6 +55,10 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     }
     _initForumChatsRealtime();
     _initNotificationsRealtime();
+
+    // Listen for USER_ID changes
+    UserIdNotifier().addListener(_onUserIdChanged);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final userId = USER_ID;
       if (userId != null && userId.isNotEmpty) {
@@ -61,6 +68,22 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     });
     WidgetsBinding.instance.addObserver(this); // Add this line
     super.initState();
+  }
+
+  void _onUserIdChanged() {
+    print('🎯 MAIN SCREEN: _onUserIdChanged called');
+    final userId = UserIdNotifier().userId;
+    print('🎯 MAIN SCREEN: New USER_ID from notifier: $userId');
+
+    if (userId != null && userId.isNotEmpty && mounted) {
+      print('🎯 MAIN SCREEN: USER_ID is now available, checking tutorial');
+      // Update global USER_ID
+      USER_ID = userId;
+
+      // Load user data
+      sl<CommonRepository>().getMessageCount(userId);
+      sl<CommonRepository>().getNotificationCount(userId);
+    }
   }
 
   void _initForumChatsRealtime() {
@@ -254,10 +277,10 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final mesCount = context.watch<CommonRepository>().messageCount;
     return AutoTabsScaffold(
-      homeIndex: 4,
+      // homeIndex: 4,
       routes: [HomeRoute(), FundraisingRoute(), PetRoute(), ForumRoute()],
       bottomNavigationBuilder: (_, tabsRouter) {
-        if (widget.initialIndex != null && !_hasSetInitialIndex) {
+        if (mounted && widget.initialIndex != null && !_hasSetInitialIndex) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (widget.initialIndex != tabsRouter.activeIndex) {
               tabsRouter.setActiveIndex(widget.initialIndex!);
@@ -276,22 +299,25 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
           showSelectedLabels: false,
           onTap: tabsRouter.setActiveIndex,
           items: [
-            const BottomNavigationBarItem(
+            BottomNavigationBarItem(
               label: '',
-              icon: Icon(LucideIcons.house),
+              icon: Icon(LucideIcons.house, key: TutorialKeys.homeTabKey),
             ),
-            const BottomNavigationBarItem(
+            BottomNavigationBarItem(
               label: '',
-              icon: Icon(LucideIcons.heartHandshake),
+              icon: Icon(
+                LucideIcons.heartHandshake,
+                key: TutorialKeys.fundraisingTabKey,
+              ),
             ),
-            const BottomNavigationBarItem(
+            BottomNavigationBarItem(
               label: '',
-              icon: Icon(LucideIcons.dog),
+              icon: Icon(LucideIcons.dog, key: TutorialKeys.petsTabKey),
             ),
-
             BottomNavigationBarItem(
               label: '',
               icon: Stack(
+                key: TutorialKeys.forumTabKey,
                 clipBehavior: Clip.none,
                 children: [
                   const Icon(LucideIcons.messageCircle),
@@ -338,7 +364,9 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    UserIdNotifier().removeListener(_onUserIdChanged);
     _forumChatsChannel?.unsubscribe();
+    _notificationsChannel?.unsubscribe();
     super.dispose();
   }
 }

@@ -1,4 +1,5 @@
 import 'package:onesignal_flutter/onesignal_flutter.dart';
+import 'package:paws_connect/core/notifiers/user_id_notifier.dart';
 import 'package:paws_connect/core/repository/common_repository.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/dependency.dart';
@@ -36,6 +37,7 @@ class SessionManager {
   static Future<void> clearCachesOnly() async {
     // Clear global/user-scoped IDs
     USER_ID = null;
+    UserIdNotifier().clearUserId();
 
     // Clear repository caches
     if (sl.isRegistered<PetRepository>()) sl<PetRepository>().reset();

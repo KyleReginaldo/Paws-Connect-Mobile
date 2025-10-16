@@ -7,6 +7,7 @@ import 'package:flutter_chat_reactions/flutter_chat_reactions.dart'
     as chat_reactions;
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/dependency.dart';
 import 'package:paws_connect/features/forum/provider/forum_provider.dart';
@@ -23,14 +24,6 @@ import '../models/forum_model.dart';
 import '../repository/forum_repository.dart';
 import '../widgets/chat_message_list.dart';
 
-/// Forum chat screen that displays real-time messages and reactions.
-///
-/// Features:
-/// - Real-time message synchronization
-/// - Reaction system with haptic feedback
-/// - Message navigation and replies
-/// - Image sharing capabilities
-/// - GlobalKey-based message navigation
 @RoutePage()
 class ForumChatScreen extends StatefulWidget implements AutoRouteWrapper {
   final int forumId;
@@ -148,7 +141,6 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
   }
 
   void _markNewMessagesAsViewed() {
-    // Use a slight delay to ensure the new messages are loaded first
     Future.delayed(const Duration(milliseconds: 500), () {
       final userId = USER_ID;
       if (mounted && userId != null && userId.isNotEmpty) {
@@ -185,9 +177,8 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
           ),
           callback: (payload) {
             if (mounted) {
-              // Refresh the chat list
               context.read<ForumRepository>().setForumChats(widget.forumId);
-              // Auto-mark new messages as viewed when they come in via realtime
+
               _markNewMessagesAsViewed();
             }
           },
@@ -314,7 +305,7 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
       debugPrint(
         'Message with ID $messageId not loaded or no longer available',
       );
-      // ignore: use_build_context_synchronously
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Message not found or not loaded yet'),
@@ -329,7 +320,6 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     if (!mounted) return;
 
     if (!scrolled) {
-      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Message not found or not loaded yet'),
@@ -345,8 +335,6 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
 
   void _setupScrollListener() {
     _scrollController.addListener(() {
-      // Check if user scrolled to the top (which means they want to load older messages)
-      // Since the list is reversed, top means maximum scroll extent
       if (_scrollController.offset >=
           _scrollController.position.maxScrollExtent * 0.9) {
         _loadMoreChatsIfNeeded();
@@ -507,10 +495,9 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     final message = _messageController.text.trim();
     final mentionUUIDs = _extractMentionsFromMessage(message);
 
-    // Log mentions for debugging
     if (mentionUUIDs.isNotEmpty) {
       debugPrint('Message contains mention UUIDs: $mentionUUIDs');
-      // Also log the usernames for easier debugging
+
       final mentionedUsernames = RegExp(
         r'@(\w+)',
       ).allMatches(message).map((match) => match.group(1)!).toList();
@@ -519,7 +506,6 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
 
     _messageController.clear();
 
-    // Add to pending messages immediately for better UX
     context.read<ForumRepository>().addPendingChat(message);
     _scrollToBottom();
 
@@ -532,7 +518,6 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
 
   Future<void> _performSendMessage(String message) async {
     try {
-      // Extract mentions from the message using the MentionParser
       final mentions = _extractMentionsFromMessage(message);
 
       await ForumProvider().sendChat(
@@ -551,14 +536,11 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
   }
 
   List<String> _extractMentionsFromMessage(String message) {
-    // Use regex to find all @mentions in the message
     final RegExp mentionRegex = RegExp(r'@(\w+)');
     final matches = mentionRegex.allMatches(message);
 
-    // Extract usernames from mentions
     final mentionedUsernames = matches.map((match) => match.group(1)!).toList();
 
-    // Convert usernames to UUIDs using forum members list
     final mentionedUUIDs = <String>[];
     for (final username in mentionedUsernames) {
       final user = _forumMembers.firstWhere(
@@ -595,7 +577,6 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
         ),
       );
 
-      // Restore the message in the text field
       _messageController.text = message;
 
       setState(() {
@@ -629,6 +610,30 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     final isLoadingMoreChats = repo.isLoadingMoreChats;
     final pendingChats = repo.pendingChats;
     final forum = repo.forum;
+    final forumName = repo.forumName;
+    final errorMessage = repo.errorMessage;
+
+    if (errorMessage.isNotEmpty && mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<ForumRepository>().clearErrorMessage();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: () {
+                _loadChats();
+              },
+            ),
+          ),
+        );
+      });
+    }
+
     _forumMembers = (forum?.members ?? []).map((e) {
       return AvailableUser(
         id: e.id,
@@ -643,7 +648,7 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     return SafeArea(
       top: false,
       child: Scaffold(
-        appBar: _buildAppBar(),
+        appBar: _buildAppBar(forumName),
         body: _buildBody(
           forumChats,
           pendingChats,
@@ -654,15 +659,18 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(String forumName) {
     return AppBar(
-      title: const Text('Forum Chat'),
+      title: Text(
+        forumName,
+        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+      ),
       centerTitle: true,
       actions: [
         IconButton(
           onPressed: () =>
               context.router.push(ForumSettingsRoute(forumId: widget.forumId)),
-          icon: const Icon(Icons.info),
+          icon: const Icon(LucideIcons.info),
           color: PawsColors.textSecondary,
         ),
       ],

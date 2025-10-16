@@ -1,9 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:paws_connect/features/adoption/models/adoption_model.dart';
+import 'package:paws_connect/flavors/flavor_config.dart';
 
 import '../../../core/config/result.dart';
 import '../../../core/dto/adoption.dto.dart';
@@ -13,7 +13,7 @@ class AdoptionProvider {
     required AdoptionApplicationDTO application,
   }) async {
     final response = await http.post(
-      Uri.parse('${dotenv.get('BASE_URL')}/adoption'),
+      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/adoption'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(application.toMap()),
     );
@@ -27,7 +27,7 @@ class AdoptionProvider {
   Future<Result<List<Adoption>>> fetchUserAdoptions(String userId) async {
     debugPrint('calling fetchUserAdoptions for userId: $userId');
     final response = await http.get(
-      Uri.parse('${dotenv.get('BASE_URL')}/users/$userId/adoption'),
+      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/users/$userId/adoption'),
     );
     debugPrint('Response status: ${response.statusCode}');
     if (response.statusCode == 200) {
@@ -46,7 +46,7 @@ class AdoptionProvider {
 
   Future<Result<Adoption>> fetchAdoptionDetail(int id) async {
     final response = await http.get(
-      Uri.parse('${dotenv.get('BASE_URL')}/adoption/$id'),
+      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/adoption/$id'),
     );
     if (response.statusCode == 200) {
       debugPrint(response.body);

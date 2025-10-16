@@ -1,10 +1,11 @@
 import 'dart:convert';
 
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:paws_connect/core/config/result.dart';
 import 'package:paws_connect/features/pets/models/pet_model.dart';
+
+import '../../../flavors/flavor_config.dart';
 
 class PetProvider {
   Future<Result<List<Pet>>> fetchPets({
@@ -63,7 +64,7 @@ class PetProvider {
       if (userId != null && userId.isNotEmpty) queryParams['user'] = userId;
 
       final uri = Uri.parse(
-        '${dotenv.get('BASE_URL')}/pets',
+        '${FlavorConfig.instance.apiBaseUrl}/pets',
       ).replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
 
       final response = await http.get(uri);
@@ -95,11 +96,12 @@ class PetProvider {
     }
 
     try {
-      final uri = Uri.parse('${dotenv.get('BASE_URL')}/pets/recent').replace(
-        queryParameters: userId != null && userId.isNotEmpty
-            ? {'user': userId}
-            : null,
-      );
+      final uri = Uri.parse('${FlavorConfig.instance.apiBaseUrl}/pets/recent')
+          .replace(
+            queryParameters: userId != null && userId.isNotEmpty
+                ? {'user': userId}
+                : null,
+          );
 
       final response = await http.get(uri);
 
@@ -134,11 +136,12 @@ class PetProvider {
     }
 
     try {
-      final uri = Uri.parse('${dotenv.get('BASE_URL')}/pets/$petId').replace(
-        queryParameters: userId != null && userId.isNotEmpty
-            ? {'user': userId}
-            : null,
-      );
+      final uri = Uri.parse('${FlavorConfig.instance.apiBaseUrl}/pets/$petId')
+          .replace(
+            queryParameters: userId != null && userId.isNotEmpty
+                ? {'user': userId}
+                : null,
+          );
 
       final response = await http.get(uri);
 
@@ -175,7 +178,7 @@ class PetProvider {
       if (userId != null && userId.isNotEmpty) params['user'] = userId;
 
       final uri = Uri.parse(
-        '${dotenv.get('BASE_URL')}/pets',
+        '${FlavorConfig.instance.apiBaseUrl}/pets',
       ).replace(queryParameters: params);
       final response = await http.get(uri);
       if (response.statusCode == 200) {
@@ -205,7 +208,7 @@ class PetProvider {
       );
     }
     try {
-      final uri = Uri.parse('${dotenv.get('BASE_URL')}/pets/$petId');
+      final uri = Uri.parse('${FlavorConfig.instance.apiBaseUrl}/pets/$petId');
       final response = await http.delete(uri);
       if (response.statusCode == 200 || response.statusCode == 204) {
         return Result.success(true);

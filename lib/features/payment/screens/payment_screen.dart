@@ -1,4 +1,3 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:io';
 
 import 'package:auto_route/auto_route.dart';
@@ -18,7 +17,7 @@ import 'package:paws_connect/features/payment/services/payment_text_extractor.da
 import 'package:paws_connect/features/profile/repository/profile_repository.dart';
 import 'package:provider/provider.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart'
-    show StepItem, Steps, TextArea;
+    show StepItem, Steps, TextArea, RefreshTrigger;
 
 import '../../../core/supabase/client.dart';
 import '../../../core/theme/paws_theme.dart';
@@ -56,6 +55,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_scrollListener);
+
+    // Add listener to referenceNumber controller to update UI when text changes
+    referenceNumber.addListener(() {
+      setState(() {
+        // This will trigger a rebuild when the reference number changes
+      });
+    });
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<ProfileRepository>().fetchUserProfile(USER_ID ?? "");
@@ -70,8 +77,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
       final maxScrollExtent = _scrollController.position.maxScrollExtent;
       final currentScrollPosition = _scrollController.offset;
 
-      // If we're close to the top (within 100 pixels), show scroll to bottom
-      // If we're close to the bottom (within 100 pixels), show scroll to top
       final isAtTop = currentScrollPosition <= 100;
       final isAtBottom = currentScrollPosition >= (maxScrollExtent - 100);
 
@@ -118,16 +123,41 @@ class _PaymentScreenState extends State<PaymentScreen> {
     super.dispose();
   }
 
+  Future<bool> isAnonymous() async {
+    bool? anonymous = await showDialog<bool?>(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: PawsText('Anonymous'),
+          content: PawsText('Do you want to make this donation anonymous?'),
+          actions: [
+            PawsTextButton(
+              label: 'No',
+              onPressed: () {
+                Navigator.pop(context, false);
+              },
+            ),
+            PawsTextButton(
+              label: 'Yes',
+              onPressed: () {
+                Navigator.pop(context, true);
+              },
+            ),
+          ],
+        );
+      },
+    );
+    return anonymous ?? false;
+  }
+
   void handleDonation() async {
     if (!formKey.currentState!.validate()) return;
-
+    final anonymous = await isAnonymous();
     if (_screenshotImage == null) {
       EasyLoading.showError('Please upload a screenshot of your GCash payment');
       return;
     }
-
     EasyLoading.show(status: 'Submitting donation...');
-
     final result = await DirectDonationProvider().createDirectDonation(
       donor: USER_ID ?? "",
       amount: int.parse(amount.text),
@@ -135,6 +165,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       message: message.text.trim(),
       referenceNumber: referenceNumber.text.trim(),
       screenshot: _screenshotImage!,
+      isAnonymous: anonymous,
     );
 
     EasyLoading.dismiss();
@@ -143,14 +174,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
       EasyLoading.showError(result.error);
     } else {
       EasyLoading.showSuccess(result.value);
-      // Clear form and navigate back
+
       amount.clear();
       message.clear();
       referenceNumber.clear();
       setState(() {
         _screenshotImage = null;
       });
-      // Optionally navigate back
+
       if (mounted) {
         Navigator.of(context).pop();
       }
@@ -190,7 +221,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
       _screenshotImage = image;
     });
 
-    // Show loading while extracting text
     EasyLoading.show(status: 'Analyzing image...');
 
     try {
@@ -199,29 +229,31 @@ class _PaymentScreenState extends State<PaymentScreen> {
       EasyLoading.dismiss();
 
       if (paymentData.success) {
-        // Auto-fill fields if data was extracted successfully
-        if (paymentData.referenceNumber.isNotEmpty) {
-          setState(() {
-            referenceNumber.text = paymentData.referenceNumber;
-          });
-        }
-        if (paymentData.amount.isNotEmpty && amount.text.isEmpty) {
-          setState(() {
-            amount.text = paymentData.amount;
-          });
-        }
+        debugPrint('Extracted payment data: $paymentData');
 
-        // Show success message
+        // Update controllers and trigger rebuild
+        setState(() {
+          if (paymentData.referenceNumber.isNotEmpty) {
+            referenceNumber.text = paymentData.referenceNumber;
+            debugPrint('Updated reference number: ${referenceNumber.text}');
+          }
+          if (paymentData.amount.isNotEmpty && amount.text.isEmpty) {
+            amount.text = paymentData.amount;
+            debugPrint('Updated amount: ${amount.text}');
+          }
+        });
+
         EasyLoading.showSuccess('Payment details extracted!');
 
-        // Show extracted data dialog for user confirmation
         _showExtractedDataDialog(paymentData);
       } else {
+        debugPrint('Text extraction failed: ${paymentData.error}');
         EasyLoading.showInfo(
           'Could not extract payment details automatically. Please fill manually.',
         );
       }
     } catch (e) {
+      debugPrint('Error in text extraction: $e');
       EasyLoading.dismiss();
       EasyLoading.showError('Failed to analyze image: $e');
     }
@@ -275,16 +307,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
       top: false,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(
+          title: const Text(
             'Payment',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 15,
               fontWeight: FontWeight.w500,
               color: PawsColors.textPrimary,
             ),
           ),
         ),
-        body: RefreshIndicator(
+        body: RefreshTrigger(
           onRefresh: () async {
             context.read<ProfileRepository>().fetchUserProfile(USER_ID ?? "");
           },
@@ -298,7 +330,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 spacing: 8,
                 children: [
-                  // GCash Payment Information Card
                   Container(
                     width: double.infinity,
                     padding: EdgeInsets.all(16),
@@ -335,7 +366,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         ),
                         SizedBox(height: 16),
 
-                        // GCash Number Section
                         if (fundraising?.gcashNumber != null) ...[
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -394,7 +424,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           SizedBox(height: 8),
                         ],
 
-                        // QR Code Section
                         if (fundraising?.qrCode != null) ...[
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -427,7 +456,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                     ),
                                   ),
                                   child: NetworkImageView(
-                                    fundraising!.qrCode!,
+                                    fundraising!.transformedQrCode!,
                                     height: 180,
                                     width: 180,
                                     fit: BoxFit.cover,
@@ -451,7 +480,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ),
                   SizedBox(height: 16),
 
-                  // Payment Steps Guide
                   Container(
                     width: double.infinity,
                     padding: EdgeInsets.all(16),
@@ -569,7 +597,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ),
 
                   SizedBox(height: 16),
-
                   Row(
                     spacing: 5,
                     children: [
@@ -592,60 +619,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ),
                   SizedBox(height: 16),
 
-                  // Amount Field
-                  PawsTextField(
-                    hint: 'Amount',
-                    label: 'Amount',
-                    controller: amount,
-                    prefixIcon: PawsTextButton(
-                      label: '₱',
-                      padding: EdgeInsets.zero,
-                      foregroundColor: PawsColors.textSecondary,
-                    ),
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter an amount';
-                      }
-                      final intValue = int.tryParse(value);
-                      if (intValue == null) {
-                        return 'Please enter a valid number';
-                      }
-                      final remaining =
-                          (fundraising?.targetAmount ?? 0) -
-                          (fundraising?.raisedAmount ?? 0);
-
-                      if (intValue > remaining) {
-                        return 'Amount exceeds remaining target amount of ${remaining.displayMoney()}';
-                      }
-                      if (intValue < 50) {
-                        return 'Minimum amount is ₱50.00';
-                      }
-
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: 16),
-                  // Reference Number Field
-                  PawsTextField(
-                    hint: 'Reference Number',
-                    label: 'GCash Reference Number',
-                    controller: referenceNumber,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter the GCash reference number';
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: 16),
-                  TextArea(
-                    placeholder: PawsText('Message (optional)'),
-                    controller: message,
-                  ),
-                  SizedBox(height: 16),
-
-                  // Screenshot Upload Section
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -761,6 +734,58 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               ),
                       ),
                     ],
+                  ),
+                  SizedBox(height: 16),
+
+                  PawsTextField(
+                    hint: 'Amount',
+                    label: 'Amount',
+                    controller: amount,
+                    prefixIcon: PawsTextButton(
+                      label: '₱',
+                      padding: EdgeInsets.zero,
+                      foregroundColor: PawsColors.textSecondary,
+                    ),
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter an amount';
+                      }
+                      final intValue = int.tryParse(value);
+                      if (intValue == null) {
+                        return 'Please enter a valid number';
+                      }
+                      final remaining =
+                          (fundraising?.targetAmount ?? 0) -
+                          (fundraising?.raisedAmount ?? 0);
+
+                      if (intValue > remaining) {
+                        return 'Amount exceeds remaining target amount of ${remaining.displayMoney()}';
+                      }
+                      if (intValue < 50) {
+                        return 'Minimum amount is ₱50.00';
+                      }
+
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 16),
+
+                  PawsTextField(
+                    hint: 'Reference Number',
+                    label: 'GCash Reference Number',
+                    controller: referenceNumber,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the GCash reference number';
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 16),
+                  TextArea(
+                    placeholder: PawsText('Message (optional)'),
+                    controller: message,
                   ),
                 ],
               ),

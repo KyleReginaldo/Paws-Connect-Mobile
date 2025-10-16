@@ -5,6 +5,7 @@ import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/dependency.dart';
 import 'package:paws_connect/features/favorite/provider/favorite_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart' show RefreshTrigger;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/router/app_route.gr.dart';
@@ -84,7 +85,13 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
       (FavoriteRepository repo) => repo.favorites,
     );
     return Scaffold(
-      appBar: AppBar(title: const Text('Favorites'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text(
+          'Favorites',
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+        ),
+        centerTitle: true,
+      ),
       body: favorites == null || favorites.isEmpty
           ? Center(
               child: Column(
@@ -100,7 +107,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                 ],
               ),
             )
-          : RefreshIndicator(
+          : RefreshTrigger(
               onRefresh: () async {
                 context.read<FavoriteRepository>().getFavorites(USER_ID ?? "");
               },
@@ -156,7 +163,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                                         AspectRatio(
                                           aspectRatio: 4 / 3,
                                           child: NetworkImageView(
-                                            pet.photos.first,
+                                            pet.transformedPhotos.first,
                                             fit: BoxFit.cover,
                                             width: double.infinity,
                                             enableTapToView: false,

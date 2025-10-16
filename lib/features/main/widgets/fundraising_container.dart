@@ -36,12 +36,12 @@ class FundraisingContainer extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 8,
               children: [
-                if (fundraising.images != null &&
-                    fundraising.images!.isNotEmpty)
+                if (fundraising.transformedImages != null &&
+                    fundraising.transformedImages!.isNotEmpty)
                   ClipRRect(
                     borderRadius: BorderRadius.circular(6),
                     child: NetworkImageView(
-                      fundraising.images![0],
+                      fundraising.transformedImages![0],
                       width: 64,
                       height: 64,
                       fit: BoxFit.cover,

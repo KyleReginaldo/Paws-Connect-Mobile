@@ -59,6 +59,23 @@ android {
             )
         }
     }
+    flavorDimensions += "app"
+    productFlavors {
+        create("dev") {
+            dimension = "app"
+            versionNameSuffix = "-dev"
+            resValue("string", "app_name", "[DEV]Paws Connect")
+        }
+        create("staging") {
+            dimension = "app"
+            versionNameSuffix = "-staging"
+            resValue("string", "app_name", "[STAGING]Paws Connect")
+        }
+        create("prod") {
+            dimension = "app"
+            resValue("string", "app_name", "Paws Connect")
+        }
+    }
 }
 
 dependencies {

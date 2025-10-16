@@ -1,18 +1,19 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:paws_connect/core/config/result.dart';
 import 'package:paws_connect/core/services/supabase_service.dart';
 import 'package:paws_connect/features/events/models/event_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../flavors/flavor_config.dart';
+
 class EventProvider {
   Future<Result<List<Event>>> fetchEvents() async {
     try {
       final response = await http.get(
-        Uri.parse('${dotenv.get('BASE_URL')}/events'),
+        Uri.parse('${FlavorConfig.instance.apiBaseUrl}/events'),
       );
       final data = jsonDecode(response.body);
       debugPrint('data: ${data['data']}');
@@ -33,7 +34,7 @@ class EventProvider {
   Future<Result<Event>> fetchEventById({required int eventId}) async {
     try {
       final response = await http.get(
-        Uri.parse('${dotenv.get('BASE_URL')}/events/$eventId'),
+        Uri.parse('${FlavorConfig.instance.apiBaseUrl}/events/$eventId'),
       );
       final data = jsonDecode(response.body);
       debugPrint('data: ${data['data']}');
@@ -54,7 +55,7 @@ class EventProvider {
     required String content,
   }) async {
     final response = await http.post(
-      Uri.parse('${dotenv.get('BASE_URL')}/events/$eventId/comment'),
+      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/events/$eventId/comment'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'user': userId, 'content': content}),
     );
@@ -88,7 +89,7 @@ class EventProvider {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('${dotenv.get('BASE_URL')}/events/$eventId'),
+        Uri.parse('${FlavorConfig.instance.apiBaseUrl}/events/$eventId'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'user_id': userId}),
       );
@@ -117,7 +118,7 @@ class EventProvider {
   }) async {
     try {
       final response = await http.patch(
-        Uri.parse('${dotenv.get('BASE_URL')}/events/$eventId'),
+        Uri.parse('${FlavorConfig.instance.apiBaseUrl}/events/$eventId'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'user_id': userId}),
       );

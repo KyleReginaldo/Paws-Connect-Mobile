@@ -17,12 +17,15 @@ import 'package:paws_connect/features/main/widgets/home/event_post_list.dart';
 import 'package:paws_connect/features/main/widgets/home/verify_now.dart';
 import 'package:paws_connect/features/pets/repository/pet_repository.dart';
 import 'package:provider/provider.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart' show RefreshTrigger;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+import '../../../core/mixins/tutorial_target_mixin.dart';
 import '../../../core/provider/common_provider.dart';
 import '../../../core/repository/common_repository.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/services/tutorial_service.dart';
 import '../../../core/session/session_manager.dart';
 import '../../../core/theme/paws_theme.dart';
 import '../../../core/widgets/search_field.dart';
@@ -64,12 +67,13 @@ class HomeScreen extends StatefulWidget implements AutoRouteWrapper {
   }
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with TutorialTargetMixin {
   final scaffoldKey = GlobalKey<ScaffoldState>();
   final petChannel = supabase.channel('public:pets');
   final userIdentificationChannel = supabase.channel(
     'public:user_identification:user=eq.$USER_ID',
   );
+  final userChannel = supabase.channel('public:users');
   final eventChannel = supabase.channel('public:events');
   final commentChannel = supabase.channel('public:event_comments');
   final memberChannel = supabase.channel('public:event_members');
@@ -78,6 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final fundraisingChannel = supabase.channel('public:fundraising');
   late final WebViewController webviewController;
   late RealtimeChannel addressChannel;
+  bool _onboardingScheduled = false;
   void handleDeleteAddress(int addressId) async {
     final isConnected = context.read<InternetProvider>().isConnected;
     if (!isConnected) {
@@ -181,6 +186,18 @@ class _HomeScreenState extends State<HomeScreen> {
             column: 'user',
             value: USER_ID,
           ),
+          callback: (payload) {
+            if (USER_ID != null) {
+              context.read<ProfileRepository>().fetchUserProfile(USER_ID!);
+            }
+          },
+        )
+        .subscribe();
+    userChannel
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'users',
           callback: (payload) {
             if (USER_ID != null) {
               context.read<ProfileRepository>().fetchUserProfile(USER_ID!);
@@ -352,7 +369,27 @@ class _HomeScreenState extends State<HomeScreen> {
     final user = context.watch<ProfileRepository>().userProfile;
     final isConnected = context.watch<InternetProvider>().isConnected;
     final events = context.watch<EventRepository>().events;
-
+    // Launch onboarding tutorial once for users who are not onboarded yet
+    if (user != null && user.onboarded == false && !_onboardingScheduled) {
+      _onboardingScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        // Small delay to ensure targets are laid out
+        await Future.delayed(const Duration(milliseconds: 300));
+        if (!mounted) return;
+        final keys = getTutorialKeys();
+        TutorialService.startTutorial(
+          context,
+          targetKeys: keys,
+          onComplete: () {
+            // TutorialService internally sets onboarded=true
+          },
+          onSkip: () {
+            // No-op
+          },
+        );
+      });
+    }
     debugPrint('may laman ba yung events: ${events?.length}');
     return Scaffold(
       key: scaffoldKey,
@@ -378,6 +415,9 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         address: defaultAddress,
         profile: user,
+        locationButtonKey: locationButtonKey,
+        notificationsButtonKey: notificationsButtonKey,
+        profileButtonKey: profileButtonKey,
         onOpenCurrentLocation: isConnected
             ? () {
                 showModalBottomSheet(
@@ -495,7 +535,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               },
       ),
-      body: RefreshIndicator.adaptive(
+      body: RefreshTrigger(
         onRefresh: () async {
           final isConnected = context.read<InternetProvider>().isConnected;
           if (!isConnected) {
@@ -556,6 +596,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
               PawsSearchBar(
+                key: searchFieldKey,
                 hintText: 'Search for pets...',
                 onTap: () {
                   showSearch(
@@ -602,7 +643,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   user?.status != UserStatus.PENDING &&
                   adoptions != null &&
                   adoptions.isNotEmpty) ...{
-                AdoptionOverview(adoptions: adoptions),
+                AdoptionOverview(
+                  key: adoptionOverviewKey,
+                  adoptions: adoptions,
+                ),
               },
               if (recentPets != null) ...{
                 PawsText(
@@ -658,6 +702,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       )
                     : recentPets != null
                     ? SingleChildScrollView(
+                        key: recentPetsKey,
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           spacing: 10,
@@ -720,6 +765,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         margin: EdgeInsets.only(bottom: 10),
                       )
                     : SingleChildScrollView(
+                        key: fundraisingListKey,
                         physics: PageScrollPhysics(),
                         scrollDirection: Axis.horizontal,
                         child: Row(

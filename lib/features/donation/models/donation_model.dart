@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:dart_mappable/dart_mappable.dart';
 
 part 'donation_model.mapper.dart';
@@ -10,6 +11,7 @@ class Donation with DonationMappable {
   final String donor;
   final double amount;
   final String message;
+  final bool isAnonymous;
 
   Donation({
     required this.id,
@@ -18,5 +20,6 @@ class Donation with DonationMappable {
     required this.donor,
     required this.amount,
     required this.message,
+    required this.isAnonymous,
   });
 }

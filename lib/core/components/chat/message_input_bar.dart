@@ -63,7 +63,10 @@ class MessageInputBar extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              IconButton(onPressed: onPickImage, icon: const Icon(Icons.image)),
+              IconButton(
+                onPressed: onPickImage,
+                icon: const Icon(LucideIcons.image, color: PawsColors.primary),
+              ),
               Expanded(
                 child: MentionableTextField(
                   controller: controller,
@@ -82,12 +85,9 @@ class MessageInputBar extends StatelessWidget {
                     ? const SizedBox(
                         width: 16,
                         height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Icon(LucideIcons.send, color: PawsColors.textPrimary),
+                    : Icon(LucideIcons.send, color: PawsColors.primary),
               ),
             ],
           ),

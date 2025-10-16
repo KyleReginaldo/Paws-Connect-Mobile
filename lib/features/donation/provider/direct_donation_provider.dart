@@ -2,11 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:paws_connect/core/config/result.dart';
 import 'package:paws_connect/core/services/supabase_service.dart';
+
+import '../../../flavors/flavor_config.dart';
 
 class DirectDonationProvider {
   /// Upload screenshot to Supabase storage and create donation
@@ -17,6 +18,7 @@ class DirectDonationProvider {
     required String message,
     required String referenceNumber,
     required XFile screenshot,
+    required bool isAnonymous,
   }) async {
     try {
       // First, upload the screenshot to Supabase storage
@@ -27,7 +29,7 @@ class DirectDonationProvider {
 
       // Create donation with screenshot URL
       final response = await http.post(
-        Uri.parse('${dotenv.get('BASE_URL')}/donations'),
+        Uri.parse('${FlavorConfig.instance.apiBaseUrl}/donations'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           "donor": donor,
@@ -36,6 +38,7 @@ class DirectDonationProvider {
           "message": message,
           "reference_number": referenceNumber,
           "screenshot": screenshotUrl,
+          "is_anonymous": isAnonymous,
         }),
       );
 

@@ -1,11 +1,11 @@
 import 'dart:convert';
 
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:paws_connect/features/google_map/models/address_model.dart';
 
 import '../../../core/config/result.dart';
+import '../../../flavors/flavor_config.dart';
 
 class AddressProvider {
   Future<Result<Address>> fetchDefaultAddress(String userId) async {
@@ -18,7 +18,9 @@ class AddressProvider {
 
     try {
       final response = await http.get(
-        Uri.parse('${dotenv.get('BASE_URL')}/address/default?userId=$userId'),
+        Uri.parse(
+          '${FlavorConfig.instance.apiBaseUrl}/address/default?userId=$userId',
+        ),
       );
       final data = jsonDecode(response.body);
       if (response.statusCode == 200) {
@@ -42,7 +44,7 @@ class AddressProvider {
 
     try {
       final response = await http.get(
-        Uri.parse('${dotenv.get('BASE_URL')}/address/user/$userId'),
+        Uri.parse('${FlavorConfig.instance.apiBaseUrl}/address/user/$userId'),
       );
       final data = jsonDecode(response.body);
       if (response.statusCode == 200) {

@@ -13,6 +13,7 @@ import 'package:paws_connect/core/widgets/button.dart';
 import 'package:paws_connect/dependency.dart';
 import 'package:paws_connect/features/fundraising/repository/fundraising_repository.dart';
 import 'package:provider/provider.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart' show RefreshTrigger;
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
@@ -103,6 +104,31 @@ class _FundraisingDetailScreenState extends State<FundraisingDetailScreen> {
     final errorMessage = repo.errorMessage;
     final isLoading = repo.isLoading;
     debugPrint('Fundraising: $fundraising');
+
+    // Show error message with retry option for network errors
+    if (errorMessage != null && !isLoading && mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Clear the error message first to prevent repeated showing
+        context.read<FundraisingRepository>().clearErrorMessage();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: () {
+                context.read<FundraisingRepository>().fetchFundraisingById(
+                  widget.id,
+                );
+              },
+            ),
+          ),
+        );
+      });
+    }
     Widget bodyContent;
     if (isLoading) {
       bodyContent = const Center(child: CircularProgressIndicator());
@@ -111,7 +137,7 @@ class _FundraisingDetailScreenState extends State<FundraisingDetailScreen> {
     } else if (fundraising == null) {
       bodyContent = Center(child: PawsText('Fundraising not found'));
     } else {
-      bodyContent = RefreshIndicator(
+      bodyContent = RefreshTrigger(
         onRefresh: () async {
           context.read<FundraisingRepository>().fetchFundraisingById(widget.id);
         },
@@ -119,7 +145,8 @@ class _FundraisingDetailScreenState extends State<FundraisingDetailScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             children: [
-              if (fundraising.images != null && fundraising.images!.isNotEmpty)
+              if (fundraising.transformedImages != null &&
+                  fundraising.transformedImages!.isNotEmpty)
                 Stack(
                   children: [
                     SizedBox(
@@ -132,7 +159,7 @@ class _FundraisingDetailScreenState extends State<FundraisingDetailScreen> {
                             currentPage = index;
                           });
                         },
-                        children: fundraising.images!.map((image) {
+                        children: fundraising.transformedImages!.map((image) {
                           return Container(
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
@@ -312,7 +339,9 @@ class _FundraisingDetailScreenState extends State<FundraisingDetailScreen> {
                                   color: PawsColors.textPrimary,
                                 ),
                                 subtitle: PawsText(
-                                  e.donor.id == USER_ID
+                                  e.isAnonymous
+                                      ? 'Anonymous'
+                                      : e.donor.id == USER_ID
                                       ? '${e.donor.username} (You)'
                                       : e.donor.username,
                                   fontSize: 14,
@@ -352,7 +381,13 @@ class _FundraisingDetailScreenState extends State<FundraisingDetailScreen> {
     return SafeArea(
       top: false,
       child: Scaffold(
-        appBar: AppBar(title: const Text('Fundraising'), centerTitle: true),
+        appBar: AppBar(
+          title: const Text(
+            'Fundraising',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+          ),
+          centerTitle: true,
+        ),
         body: bodyContent,
         bottomNavigationBar: Padding(
           padding: EdgeInsets.all(16),
@@ -396,7 +431,7 @@ class _FundraisingDetailScreenState extends State<FundraisingDetailScreen> {
                             await SharePlus.instance.share(
                               ShareParams(
                                 text:
-                                    'Title: ${fundraising.title}\nDescription: ${fundraising.description}\nLink: https://paws-connect-sable.vercel.app/fundraising/${fundraising.id}',
+                                    'Title: ${fundraising.title}\nDescription: ${fundraising.description}\nLink: https://paws-connect-rho.vercel.app/fundraising/${fundraising.id}',
                               ),
                             );
                           }

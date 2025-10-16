@@ -159,10 +159,10 @@ class _CreateAdoptionScreenState extends State<CreateAdoptionScreen> {
           iconTheme: IconThemeData(color: Colors.white),
           centerTitle: true,
           backgroundColor: PawsColors.primary,
-          title: Text(
+          title: const Text(
             'Create Adoption',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 15,
               fontWeight: FontWeight.w500,
               color: Colors.white,
             ),
@@ -203,7 +203,7 @@ class _CreateAdoptionScreenState extends State<CreateAdoptionScreen> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: CachedNetworkImage(
-                        imageUrl: pet.photos.first,
+                        imageUrl: pet.transformedPhotos.first,
                         width: 80,
                         height: 80,
                         fit: BoxFit.cover,

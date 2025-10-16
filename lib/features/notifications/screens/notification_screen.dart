@@ -7,6 +7,7 @@ import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/dependency.dart';
 import 'package:paws_connect/features/notifications/provider/notification_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart' show RefreshTrigger;
 import 'package:timeago/timeago.dart' as timeago;
 
 import '../models/notification_model.dart' as notif_model;
@@ -170,7 +171,10 @@ class _NotificationScreenState extends State<NotificationScreen>
             return Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('Notifications'),
+                const Text(
+                  'Notifications',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                ),
                 if (hasUnread) ...[
                   const SizedBox(width: 8),
                   Container(
@@ -290,7 +294,7 @@ class _NotificationListView extends StatelessWidget {
           return const _EmptyView();
         }
 
-        return RefreshIndicator(
+        return RefreshTrigger(
           onRefresh: () async {
             final userId = USER_ID;
             if (userId != null && userId.isNotEmpty) {
@@ -651,10 +655,10 @@ class _SignedOutView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.notifications_off_outlined,
-              size: 72,
-              color: theme.colorScheme.onSurfaceVariant,
+            Image.asset(
+              'assets/images/no_notif.png',
+              height: 140,
+              fit: BoxFit.contain,
             ),
             const SizedBox(height: 12),
             Text(
@@ -671,12 +675,6 @@ class _SignedOutView extends StatelessWidget {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.login),
-              label: const Text('I\'m signed in now'),
             ),
           ],
         ),

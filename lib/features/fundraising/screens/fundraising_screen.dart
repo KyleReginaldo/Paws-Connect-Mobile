@@ -7,6 +7,7 @@ import 'package:paws_connect/dependency.dart';
 import 'package:paws_connect/features/fundraising/models/fundraising_model.dart';
 import 'package:paws_connect/features/fundraising/repository/fundraising_repository.dart';
 import 'package:provider/provider.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart' show RefreshTrigger;
 
 import '../../../core/router/app_route.gr.dart';
 import '../../../core/theme/paws_theme.dart';
@@ -60,9 +61,40 @@ class _FundraisingScreenState extends State<FundraisingScreen>
     final isLoading = context.watch<FundraisingRepository>().isLoading;
     final errorMessage = context.watch<FundraisingRepository>().errorMessage;
 
+    // Show error message with retry option for network errors
+    if (errorMessage != null && !isLoading && mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Clear the error message first to prevent repeated showing
+        context.read<FundraisingRepository>().clearErrorMessage();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: () {
+                context.read<FundraisingRepository>().fetchFundraisings();
+              },
+            ),
+          ),
+        );
+      });
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(title: const Text('Fundraising'), centerTitle: true),
+      appBar: AppBar(
+        surfaceTintColor: Colors.white,
+        backgroundColor: Colors.white,
+        title: const Text(
+          'Fundraising',
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+        ),
+        centerTitle: true,
+      ),
       body: Column(
         children: [
           // Custom Tab Bar Container
@@ -81,7 +113,7 @@ class _FundraisingScreenState extends State<FundraisingScreen>
                   // ),
                   child: TabBar(
                     controller: _tabController,
-                    // isScrollable: true,
+                    isScrollable: true,
                     indicator: BoxDecoration(
                       borderRadius: BorderRadius.circular(25),
                       color: PawsColors.primary,
@@ -118,13 +150,7 @@ class _FundraisingScreenState extends State<FundraisingScreen>
           // Tab Content
           Expanded(
             child: isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        PawsColors.primary,
-                      ),
-                    ),
-                  )
+                ? const Center(child: CircularProgressIndicator())
                 : (errorMessage != null
                       ? Center(
                           child: Column(
@@ -196,18 +222,7 @@ class _FundraisingScreenState extends State<FundraisingScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.volunteer_activism_outlined,
-                size: 48,
-                color: Colors.grey[400],
-              ),
-            ),
+            Image.asset('assets/images/no_fundraising.png', width: 150),
             const SizedBox(height: 24),
             const PawsText(
               'No fundraising found',
@@ -227,11 +242,10 @@ class _FundraisingScreenState extends State<FundraisingScreen>
       );
     }
 
-    return RefreshIndicator(
+    return RefreshTrigger(
       onRefresh: () async {
         context.read<FundraisingRepository>().fetchFundraisings();
       },
-      color: PawsColors.primary,
       child: ListView.builder(
         padding: const EdgeInsets.all(8),
         itemCount: fundraisings.length,
@@ -272,8 +286,8 @@ class _FundraisingScreenState extends State<FundraisingScreen>
                           color: Colors.grey[100],
                         ),
                         child:
-                            (fundraising.images == null ||
-                                fundraising.images!.isEmpty)
+                            (fundraising.transformedImages == null ||
+                                fundraising.transformedImages!.isEmpty)
                             ? Icon(
                                 Icons.volunteer_activism_outlined,
                                 size: 32,
@@ -282,7 +296,7 @@ class _FundraisingScreenState extends State<FundraisingScreen>
                             : ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
                                 child: NetworkImageView(
-                                  fundraising.images![0],
+                                  fundraising.transformedImages![0],
                                   fit: BoxFit.cover,
                                   width: 80,
                                   height: 80,

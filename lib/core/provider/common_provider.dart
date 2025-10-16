@@ -8,6 +8,8 @@ import 'package:paws_connect/core/config/result.dart';
 import 'package:paws_connect/core/services/supabase_service.dart';
 import 'package:paws_connect/core/transfer_object/address.dto.dart';
 
+import '../../flavors/flavor_config.dart';
+
 class CommonProvider {
   // In-memory cache for quick access
   static final Map<String, String> _responseCache = {};
@@ -173,7 +175,7 @@ class CommonProvider {
 
     try {
       final response = await http.post(
-        Uri.parse('${dotenv.get('BASE_URL')}/address'),
+        Uri.parse('${FlavorConfig.instance.apiBaseUrl}/address'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(dto.toJson()),
       );
@@ -200,7 +202,7 @@ class CommonProvider {
 
     try {
       final response = await http.delete(
-        Uri.parse('${dotenv.get('BASE_URL')}/address/$addressId'),
+        Uri.parse('${FlavorConfig.instance.apiBaseUrl}/address/$addressId'),
       );
       print('delete address response: ${response.body}');
       final data = jsonDecode(response.body);
@@ -225,7 +227,7 @@ class CommonProvider {
 
     try {
       final response = await http.post(
-        Uri.parse('${dotenv.get('BASE_URL')}/address/default'),
+        Uri.parse('${FlavorConfig.instance.apiBaseUrl}/address/default'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'userId': userId, 'addressId': addressId}),
       );
