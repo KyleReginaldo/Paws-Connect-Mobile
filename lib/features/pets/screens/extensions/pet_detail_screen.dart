@@ -1122,6 +1122,23 @@ class _PollCardState extends State<_PollCard> {
     }
   }
 
+  Future removeSuggestion(int pollId) async {
+    final result = await PetProvider().deletePollSuggestion(pollId: pollId);
+
+    if (!mounted) return;
+    if (result.isSuccess) {
+      _controller.clear();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Suggested name removed')));
+      context.read<PetRepository>().getPoll(widget.petId);
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.error)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final List<Poll> polls = context.watch<PetRepository>().poll ?? <Poll>[];
@@ -1275,9 +1292,27 @@ class _PollCardState extends State<_PollCard> {
                                     ),
                                   ),
                                 )
-                              : const Text('Vote'),
+                              : Text(
+                                  (p.votes ?? []).any((e) => e == USER_ID)
+                                      ? 'Unvote'
+                                      : 'Vote',
+                                ),
                         ),
                       ),
+                      if (p.createdBy == USER_ID) ...[
+                        const SizedBox(width: 8),
+                        InkWell(
+                          onTap: () {
+                            debugPrint('Delete poll ${p.id}');
+                            removeSuggestion(p.id);
+                          },
+                          child: Icon(
+                            LucideIcons.x,
+                            size: 18,
+                            color: PawsColors.error,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 );

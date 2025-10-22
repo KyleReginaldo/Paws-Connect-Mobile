@@ -236,4 +236,16 @@ class PetProvider {
       return Result.error('Failed to add the suggested name');
     }
   }
+
+  Future<Result<String>> deletePollSuggestion({required int pollId}) async {
+    final response = await http.delete(
+      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/poll/$pollId'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    if (response.statusCode == 200 || response.statusCode == 204) {
+      return Result.success('Suggested name removed');
+    } else {
+      return Result.error('Failed to remove the suggested name');
+    }
+  }
 }
