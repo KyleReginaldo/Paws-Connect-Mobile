@@ -85,6 +85,7 @@ class _FundraisingDetailScreenState extends State<FundraisingDetailScreen> {
 
   @override
   void dispose() {
+    pageController.dispose();
     donationsChannel?.unsubscribe();
     super.dispose();
   }

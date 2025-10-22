@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -13,6 +12,7 @@ import 'package:paws_connect/core/theme/paws_theme.dart';
 import 'package:paws_connect/core/widgets/text_field.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/services/loading_service.dart';
 import '../../../core/supabase/client.dart';
 import '../../../core/transfer_object/address.dto.dart';
 
@@ -90,6 +90,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     _searchFocusNode.dispose();
     _searchDebouncer?.cancel();
     _positionStreamSubscription?.cancel();
+    _sheetController.dispose();
     super.dispose();
   }
 
@@ -120,26 +121,34 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     }
   }
 
-  void handleAddAddress() async {
-    EasyLoading.show(status: 'Saving address...', dismissOnTap: false);
-    final result = await CommonProvider().addAddress(
-      AddAddressDTO(
-        street: _streetController.text,
-        city: _cityController.text,
-        state: _stateController.text,
-        zipCode: _zipController.text,
-        latitude: _selectedLocation?.latitude ?? 0.0,
-        longitude: _selectedLocation?.longitude ?? 0.0,
-        user: USER_ID ?? '',
+  Future<void> _handleAddAddress() async {
+    final result = await LoadingService.showWhileExecuting(
+      context,
+      CommonProvider().addAddress(
+        AddAddressDTO(
+          street: _streetController.text,
+          city: _cityController.text,
+          state: _stateController.text,
+          zipCode: _zipController.text,
+          latitude: _selectedLocation?.latitude ?? 0.0,
+          longitude: _selectedLocation?.longitude ?? 0.0,
+          user: USER_ID ?? '',
+        ),
       ),
+      message: 'Saving address...',
     );
+
     if (result.isError) {
-      EasyLoading.dismiss();
-      EasyLoading.showError(result.error);
-    } else {
-      EasyLoading.dismiss();
-      EasyLoading.showSuccess(result.value);
       if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(result.error)));
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Address saved successfully')),
+        );
         context.router.pop();
       }
     }
@@ -718,7 +727,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             child: ElevatedButton(
               onPressed: () {
                 if (_addressFormKey.currentState?.validate() ?? false) {
-                  handleAddAddress();
+                  _handleAddAddress();
                 }
               },
               style: ElevatedButton.styleFrom(

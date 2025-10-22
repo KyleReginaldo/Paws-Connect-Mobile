@@ -16,6 +16,7 @@ class ForumTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('image: ${forum.forumImageUrl}');
     final profile = forum.members?.singleWhere((e) => e.id == USER_ID);
     return ListTile(
       title: profile != null && profile.mute
@@ -42,11 +43,9 @@ class ForumTile extends StatelessWidget {
               color: PawsColors.textPrimary,
             ),
       leading: ClipOval(
-        child:
-            forum.lastChat != null &&
-                forum.lastChat!.sender.profileImageLink != null
+        child: forum.forumImageUrl != null
             ? NetworkImageView(
-                forum.lastChat!.sender.profileImageLink!,
+                forum.forumImageUrl!,
                 height: 50,
                 width: 50,
                 fit: BoxFit.cover,

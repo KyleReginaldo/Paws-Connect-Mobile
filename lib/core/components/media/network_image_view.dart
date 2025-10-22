@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 /// Reusable Network Image with loading, error, and fullscreen tap.
@@ -20,16 +21,35 @@ class NetworkImageView extends StatelessWidget {
   });
 
   void _openFullScreen(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => Scaffold(
-          backgroundColor: Colors.black,
-          appBar: AppBar(backgroundColor: Colors.black),
-          body: Center(
-            child: InteractiveViewer(
-              child: Image.network(imageUrl, fit: BoxFit.contain),
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) => Dialog.fullscreen(
+        backgroundColor: Colors.black,
+        child: Stack(
+          children: [
+            Center(
+              child: InteractiveViewer(
+                child: CachedNetworkImage(
+                  imageUrl: imageUrl,
+                  fit: BoxFit.contain,
+                  cacheKey: '${imageUrl}_fullscreen',
+                ),
+              ),
             ),
-          ),
+            Positioned(
+              top: 40,
+              right: 16,
+              child: IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.black54,
+                  padding: const EdgeInsets.all(8),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -37,13 +57,13 @@ class NetworkImageView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget child = Image.network(
-      imageUrl,
+    Widget child = CachedNetworkImage(
+      imageUrl: imageUrl,
       height: height,
       width: width,
+      cacheKey: imageUrl,
       fit: fit,
-      loadingBuilder: (context, widget, loadingProgress) {
-        if (loadingProgress == null) return widget;
+      progressIndicatorBuilder: (context, widget, loadingProgress) {
         return SizedBox(
           height: height,
           width: width,
@@ -56,7 +76,7 @@ class NetworkImageView extends StatelessWidget {
           ),
         );
       },
-      errorBuilder: (context, error, stackTrace) {
+      errorWidget: (context, error, stackTrace) {
         return Container(
           height: height,
           width: width,

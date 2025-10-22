@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:paws_connect/core/config/result.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -15,14 +14,6 @@ class AuthProvider {
     required String email,
     required String password,
   }) async {
-    // Check internet connectivity first
-    final hasInternet = await InternetConnection().hasInternetAccess;
-    if (!hasInternet) {
-      return Result.error(
-        'No internet connection. Please check your network and try again.',
-      );
-    }
-
     try {
       final response = await Supabase.instance.client.auth.signInWithPassword(
         email: email,
@@ -57,14 +48,6 @@ class AuthProvider {
     required String phoneNumber,
     required String username,
   }) async {
-    // Check internet connectivity first
-    final hasInternet = await InternetConnection().hasInternetAccess;
-    if (!hasInternet) {
-      return Result.error(
-        'No internet connection. Please check your network and try again.',
-      );
-    }
-
     try {
       final url = Uri.parse('${FlavorConfig.instance.apiBaseUrl}/users');
       final response = await http.post(

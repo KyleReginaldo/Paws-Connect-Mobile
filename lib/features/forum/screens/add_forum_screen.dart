@@ -60,6 +60,7 @@ class _AddForumScreenState extends State<AddForumScreen> {
         userId: USER_ID ?? "",
         forumName: forumName.trim(),
         private: private,
+        forumImageFile: context.read<ImageRepository>().selectedImage,
       );
 
       if (mounted) {
@@ -123,36 +124,6 @@ class _AddForumScreenState extends State<AddForumScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Stack(
-                children: [
-                  Container(
-                    height: 48,
-                    width: 48,
-                    decoration: BoxDecoration(
-                      color: PawsColors.primary.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                      border: Border.all(width: 2, color: PawsColors.primary),
-                      image: imageFile != null
-                          ? DecorationImage(
-                              image: FileImage(File(imageFile.path)),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                    ),
-                  ),
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: Icon(
-                      LucideIcons.pencil,
-                      size: 18,
-                      color: PawsColors.primary,
-                    ),
-                  ),
-                ],
-              ),
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -232,6 +203,70 @@ class _AddForumScreenState extends State<AddForumScreen> {
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: PawsColors.textPrimary,
+                    ),
+                    const SizedBox(height: 16),
+                    // Forum image picker
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () => context
+                              .read<ImageRepository>()
+                              .showImageSourceDialog(context),
+                          child: Container(
+                            width: 72,
+                            height: 72,
+                            decoration: BoxDecoration(
+                              color: PawsColors.primary.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: PawsColors.primary.withValues(
+                                  alpha: 0.2,
+                                ),
+                              ),
+                              image: imageFile != null
+                                  ? DecorationImage(
+                                      image: FileImage(File(imageFile.path)),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null,
+                            ),
+                            child: imageFile == null
+                                ? Center(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: const [
+                                        Icon(
+                                          LucideIcons.imagePlus,
+                                          color: PawsColors.primary,
+                                        ),
+                                        SizedBox(height: 4),
+                                        PawsText(
+                                          'Add Image',
+                                          fontSize: 11,
+                                          color: PawsColors.primary,
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : null,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: PawsText(
+                            'Optional forum image to help users recognize your forum at a glance.',
+                            fontSize: 12,
+                            color: PawsColors.textSecondary,
+                          ),
+                        ),
+                        if (imageFile != null)
+                          IconButton(
+                            onPressed: () =>
+                                context.read<ImageRepository>().clearImage(),
+                            icon: const Icon(LucideIcons.x, size: 18),
+                            color: PawsColors.textSecondary,
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 16),
                     Row(

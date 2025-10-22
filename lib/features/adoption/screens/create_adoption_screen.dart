@@ -50,6 +50,153 @@ class _CreateAdoptionScreenState extends State<CreateAdoptionScreen> {
   String typeOfResidence = 'Apartment';
   final other = TextEditingController();
 
+  String _yn(bool v) => v ? 'Yes' : 'No';
+
+  Future<void> _confirmAndSubmit({
+    required AdoptionApplicationDTO dto,
+    required String petName,
+    String? applicantName,
+  }) async {
+    final String displayResidence = typeOfResidence == 'Other'
+        ? (other.text.isNotEmpty ? other.text : 'Other')
+        : typeOfResidence;
+
+    final confirmed =
+        await showDialog<bool>(
+          context: context,
+          barrierDismissible: true,
+          builder: (ctx) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              surfaceTintColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              title: Row(
+                children: [
+                  Icon(
+                    LucideIcons.clipboardList,
+                    size: 18,
+                    color: PawsColors.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Confirm Adoption Request',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: PawsColors.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: PawsColors.primary.withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            LucideIcons.info,
+                            size: 18,
+                            color: PawsColors.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: PawsText(
+                              'Please make sure your Profile has a clear photo of your home in Profile management. This helps speed up the review of your adoption request.',
+                              color: PawsColors.textPrimary,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    PawsText(
+                      'Application Summary',
+                      fontWeight: FontWeight.w600,
+                      color: PawsColors.textPrimary,
+                    ),
+                    const SizedBox(height: 8),
+                    _summaryRow('Applicant', applicantName ?? '—'),
+                    _summaryRow('Pet', petName.isNotEmpty ? petName : '—'),
+                    _summaryRow(
+                      'Household Members',
+                      numberOfHouseholdMembers.toString(),
+                    ),
+                    _summaryRow('Residence Type', displayResidence),
+                    _summaryRow('Renting', _yn(isRenting)),
+                    _summaryRow(
+                      'Permission from Landlord',
+                      _yn(havePermissionFromLandlord),
+                    ),
+                    _summaryRow('Outdoor Space', _yn(haveOutdoorSpace)),
+                    _summaryRow('Kids in Household', _yn(hasChildrenInHome)),
+                    _summaryRow(
+                      'Other Pets in Household',
+                      _yn(hasOtherPetsInHome),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: const Text('Review & Edit'),
+                ),
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: PawsColors.primary,
+                  ),
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  child: const Text('Confirm & Submit'),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+
+    if (confirmed) {
+      submitAdoptionRequest(dto, petName);
+    }
+  }
+
+  Widget _summaryRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 160,
+            child: PawsText(
+              label,
+              color: PawsColors.textSecondary,
+              fontSize: 13,
+            ),
+          ),
+          Expanded(
+            child: PawsText(
+              value,
+              color: PawsColors.textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void submitAdoptionRequest(AdoptionApplicationDTO dto, String petName) async {
     if (_formKey.currentState?.validate() ?? false) {
       _formKey.currentState?.save();
@@ -213,7 +360,7 @@ class _CreateAdoptionScreenState extends State<CreateAdoptionScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         PawsText(
-                          pet.name,
+                          pet.name.isEmpty ? 'No name' : pet.name,
                           fontWeight: FontWeight.w500,
                           fontSize: 16,
                         ),
@@ -346,7 +493,7 @@ class _CreateAdoptionScreenState extends State<CreateAdoptionScreen> {
                   Icon(LucideIcons.info, size: 16),
                   Expanded(
                     child: PawsText(
-                      'By submitting this form, you consent to the use of your information for processing your adoption request',
+                      'By submitting this form, you consent the use of your information for processing your adoption request',
                       color: PawsColors.primary,
                     ),
                   ),
@@ -354,7 +501,10 @@ class _CreateAdoptionScreenState extends State<CreateAdoptionScreen> {
               ),
               PawsElevatedButton(
                 label: 'Submit for Adoption',
-                onPressed: () {
+                onPressed: () async {
+                  // Validate before showing confirmation
+                  if (!(_formKey.currentState?.validate() ?? false)) return;
+
                   final dto = AdoptionApplicationDTO(
                     hasChildrenInHome: hasChildrenInHome,
                     hasOtherPetsInHome: hasOtherPetsInHome,
@@ -364,13 +514,15 @@ class _CreateAdoptionScreenState extends State<CreateAdoptionScreen> {
                     numberOfHouseholdMembers: numberOfHouseholdMembers,
                     pet: widget.petId,
                     typeOfResidence: typeOfResidence == 'Other'
-                        ? other.text.isNotEmpty
-                              ? other.text
-                              : 'Other'
+                        ? (other.text.isNotEmpty ? other.text : 'Other')
                         : typeOfResidence,
                     user: USER_ID ?? '',
                   );
-                  submitAdoptionRequest(dto, pet?.name ?? '');
+                  await _confirmAndSubmit(
+                    dto: dto,
+                    petName: pet?.name ?? '',
+                    applicantName: user?.username,
+                  );
                 },
               ),
             ],

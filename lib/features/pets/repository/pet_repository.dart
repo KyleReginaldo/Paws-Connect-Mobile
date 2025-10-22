@@ -4,6 +4,8 @@ import 'package:paws_connect/features/pets/provider/pet_provider.dart';
 
 class PetRepository extends ChangeNotifier {
   final PetProvider _petProvider;
+  List<Poll>? _poll;
+  List<Poll>? get poll => _poll;
   String? _errorMessage;
   List<Pet>? _pets;
   Pet? _pet;
@@ -298,5 +300,16 @@ class PetRepository extends ChangeNotifier {
       }
     }
     if (changed) notifyListeners();
+  }
+
+  void getPoll(int petId) async {
+    final result = await _petProvider.fetchPetNamePoll(petId);
+    if (result.isError) {
+      _poll = null;
+      notifyListeners();
+    } else {
+      _poll = result.value;
+      notifyListeners();
+    }
   }
 }

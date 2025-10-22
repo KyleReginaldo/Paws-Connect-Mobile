@@ -14,6 +14,7 @@ import 'package:paws_connect/features/profile/repository/profile_repository.dart
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/services/loading_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/supabase/client.dart';
 
@@ -61,20 +62,23 @@ class _UserHouseScreenState extends State<UserHouseScreen> {
   }
 
   void uploadImages(List<XFile> images) async {
-    EasyLoading.show(status: 'Uploading images...');
-    final result = await ProfileProvider().uploadHouseImages(
-      USER_ID ?? "",
-      images,
-    );
-    if (result.isError) {
-      EasyLoading.dismiss();
+    try {
+      final result = await LoadingService.showWhileExecuting(
+        context,
+        ProfileProvider().uploadHouseImages(USER_ID ?? "", images),
+        message: 'Uploading images...',
+      );
+
+      if (result.isError) {
+        EasyLoading.showError('Failed to upload images');
+      } else {
+        EasyLoading.showSuccess('Images uploaded successfully');
+        setState(() {
+          selectedImages.clear();
+        });
+      }
+    } catch (e) {
       EasyLoading.showError('Failed to upload images');
-    } else {
-      EasyLoading.dismiss();
-      EasyLoading.showSuccess('Images uploaded successfully');
-      setState(() {
-        selectedImages.clear();
-      });
     }
   }
 

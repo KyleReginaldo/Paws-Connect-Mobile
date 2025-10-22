@@ -2,7 +2,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -24,7 +23,6 @@ import '../../../core/widgets/global_confirm_dialog.dart';
 import '../../../core/widgets/text.dart';
 import '../../../dependency.dart';
 import '../../auth/repository/auth_repository.dart';
-import '../../internet/internet.dart';
 
 @RoutePage()
 class ProfileScreen extends StatefulWidget implements AutoRouteWrapper {
@@ -320,19 +318,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   message: 'Are you sure you want to sign out?',
                                   confirmLabel: 'Sign Out',
                                   onConfirm: () async {
-                                    final isConnected = context
-                                        .read<InternetProvider>()
-                                        .isConnected;
-                                    if (!isConnected) {
-                                      Navigator.pop(context);
-                                      EasyLoading.showToast(
-                                        'You currently are offline',
-                                        toastPosition:
-                                            EasyLoadingToastPosition.top,
-                                      );
-                                      return;
-                                    }
-
                                     Navigator.pop(context);
                                     // Sign out from backend and clear all app state
                                     await SessionManager.signOutAndClear();

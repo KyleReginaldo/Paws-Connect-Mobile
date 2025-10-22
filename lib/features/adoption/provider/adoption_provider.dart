@@ -24,6 +24,22 @@ class AdoptionProvider {
     }
   }
 
+  Future<Result<String>> cancelAdoption({
+    required String userId,
+    required int petId,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/adoption/cancel'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'pet': petId, 'user': userId}),
+    );
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return Result.success('Adoption application cancelled successfully');
+    } else {
+      return Result.error('Failed to cancel adoption application');
+    }
+  }
+
   Future<Result<List<Adoption>>> fetchUserAdoptions(String userId) async {
     debugPrint('calling fetchUserAdoptions for userId: $userId');
     final response = await http.get(

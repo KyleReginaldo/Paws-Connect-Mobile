@@ -23,3 +23,44 @@ class Donation with DonationMappable {
     required this.isAnonymous,
   });
 }
+
+@MappableClass(caseStyle: CaseStyle.snakeCase)
+class DonorLeaderboard with DonorLeaderboardMappable {
+  final int rank;
+  final Donor user;
+  final DonorTotals totals;
+
+  DonorLeaderboard({
+    required this.rank,
+    required this.user,
+    required this.totals,
+  });
+}
+
+@MappableClass(caseStyle: CaseStyle.snakeCase)
+class Donor with DonorMappable {
+  final String id;
+  final String username;
+  final String email;
+  final String? profileImageLink;
+
+  Donor({
+    required this.id,
+    required this.username,
+    required this.email,
+    this.profileImageLink,
+  });
+}
+
+@MappableClass(caseStyle: CaseStyle.snakeCase)
+class DonorTotals with DonorTotalsMappable {
+  final double amount;
+  final int count;
+  final DateTime lastDonatedAt;
+
+  DonorTotals({
+    required this.amount,
+    required this.count,
+    required this.lastDonatedAt,
+  });
+}

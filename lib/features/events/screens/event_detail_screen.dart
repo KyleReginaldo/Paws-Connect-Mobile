@@ -5,7 +5,6 @@ import 'dart:io';
 import 'package:auto_route/auto_route.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_gemini/flutter_gemini.dart';
 import 'package:glow_container/glow_container.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';
@@ -15,6 +14,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:paws_connect/core/components/components.dart';
+import 'package:paws_connect/core/services/loading_service.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/core/theme/paws_theme.dart';
 import 'package:paws_connect/core/widgets/button.dart';
@@ -90,21 +90,29 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     }
   }
 
-  Future<void> toogleLike(int commentId) async {
+  Future<void> _toggleCommentLike(int commentId) async {
     final response = await EventProvider().toogleLike(
       commentId: commentId,
       userId: USER_ID ?? "",
     );
     if (response.isError) {
-      EasyLoading.showToast(
-        response.error,
-        toastPosition: EasyLoadingToastPosition.top,
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.error),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     } else {
-      EasyLoading.showToast(
-        response.value,
-        toastPosition: EasyLoadingToastPosition.top,
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.value),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -115,65 +123,113 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       eventId: widget.id,
     );
     if (response.isError) {
-      EasyLoading.showToast(
-        response.error,
-        toastPosition: EasyLoadingToastPosition.top,
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.error),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     } else {
-      EasyLoading.showToast(
-        response.value,
-        toastPosition: EasyLoadingToastPosition.top,
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.value),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
   Future<void> joinEvent() async {
     if (USER_ID == null || USER_ID!.isEmpty) {
-      EasyLoading.showToast(
-        'Please sign in to join events',
-        toastPosition: EasyLoadingToastPosition.top,
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please sign in to join events'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
       return;
     }
 
-    EasyLoading.show(status: 'Joining event...');
+    try {
+      await LoadingService.showWhileExecuting(
+        context,
+        joinEventOperation(),
+        message: 'Joining event...',
+      );
 
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Successfully joined the event!'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> joinEventOperation() async {
     final error = await context.read<EventRepository>().joinEvent(
       eventId: widget.id,
       userId: USER_ID!,
     );
-
-    EasyLoading.dismiss();
-
     if (error != null) {
-      EasyLoading.showToast(error, toastPosition: EasyLoadingToastPosition.top);
-    } else {
-      EasyLoading.showToast(
-        'Successfully joined the event!',
-        toastPosition: EasyLoadingToastPosition.top,
-      );
+      throw Exception(error);
+    }
+  }
+
+  Future<void> leaveEventOperation() async {
+    final error = await context.read<EventRepository>().leaveEvent(
+      eventId: widget.id,
+      userId: USER_ID!,
+    );
+    if (error != null) {
+      throw Exception(error);
     }
   }
 
   Future<void> leaveEvent() async {
     if (USER_ID == null || USER_ID!.isEmpty) return;
 
-    EasyLoading.show(status: 'Leaving event...');
-
-    final error = await context.read<EventRepository>().leaveEvent(
-      eventId: widget.id,
-      userId: USER_ID!,
-    );
-
-    EasyLoading.dismiss();
-
-    if (error != null) {
-      EasyLoading.showToast(error, toastPosition: EasyLoadingToastPosition.top);
-    } else {
-      EasyLoading.showToast(
-        'Successfully left the event!',
-        toastPosition: EasyLoadingToastPosition.top,
+    try {
+      await LoadingService.showWhileExecuting(
+        context,
+        leaveEventOperation(),
+        message: 'Leaving event...',
       );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Successfully left the event!'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -306,9 +362,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                     debugPrint(
                                       'Downloading image: ${event.transformedImages!.first}',
                                     );
-                                    EasyLoading.show(
-                                      status: 'Preparing to share...',
-                                    );
 
                                     imageFile = await downloadImageToFile(
                                       event.transformedImages!.first,
@@ -325,8 +378,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                     }
                                   }
 
-                                  EasyLoading.dismiss();
-
                                   await SocialSharingPlus.shareToSocialMedia(
                                     SocialPlatform.facebook,
                                     '${event.title}\n\n${event.description}',
@@ -334,7 +385,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                     isOpenBrowser: true,
                                   );
                                 } catch (e) {
-                                  EasyLoading.dismiss();
                                   debugPrint('Error sharing to Facebook: $e');
 
                                   // Fallback to sharing without media if there's an error
@@ -533,8 +583,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                   : double.infinity,
                             ),
                             child: event.members!.length <= 6
-                                ? _buildMembersGrid(event.members!)
-                                : _buildMembersScrollableList(event.members!),
+                                ? buildMembersGrid(event.members!)
+                                : buildMembersScrollableList(event.members!),
                           ),
 
                           // Show more indicator if there are many members
@@ -826,7 +876,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                       InkWell(
                                         borderRadius: BorderRadius.circular(8),
                                         onTap: () {
-                                          toogleLike(e.id);
+                                          _toggleCommentLike(e.id);
                                         },
                                         child: Padding(
                                           padding: EdgeInsets.all(8.0),
@@ -875,27 +925,27 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   }
 
   // Helper method to build members grid for smaller lists
-  Widget _buildMembersGrid(List<EventMember> members) {
+  Widget buildMembersGrid(List<EventMember> members) {
     return Wrap(
       spacing: 12,
       runSpacing: 12,
-      children: members.map((member) => _buildMemberItem(member)).toList(),
+      children: members.map((member) => buildMemberItem(member)).toList(),
     );
   }
 
   // Helper method to build scrollable members list for larger lists
-  Widget _buildMembersScrollableList(List<EventMember> members) {
+  Widget buildMembersScrollableList(List<EventMember> members) {
     return SingleChildScrollView(
       child: Wrap(
         spacing: 12,
         runSpacing: 12,
-        children: members.map((member) => _buildMemberItem(member)).toList(),
+        children: members.map((member) => buildMemberItem(member)).toList(),
       ),
     );
   }
 
   // Helper method to build individual member item
-  Widget _buildMemberItem(EventMember member) {
+  Widget buildMemberItem(EventMember member) {
     return Container(
       constraints: BoxConstraints(minWidth: 100, maxWidth: 120),
       padding: EdgeInsets.all(12),
@@ -1015,10 +1065,10 @@ class _SuggestionModalState extends State<SuggestionModal> {
   @override
   void initState() {
     super.initState();
-    _generateSuggestion();
+    generateSuggestion();
   }
 
-  void _generateSuggestion() async {
+  void generateSuggestion() async {
     try {
       setState(() {
         isLoading = true;
@@ -1071,7 +1121,7 @@ class _SuggestionModalState extends State<SuggestionModal> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          errorMessage = _getGeminiErrorMessage(e);
+          errorMessage = getGeminiErrorMessage(e);
           isLoading = false;
         });
       }
@@ -1107,7 +1157,7 @@ class _SuggestionModalState extends State<SuggestionModal> {
             ),
             SizedBox(height: 10),
             if (isLoading)
-              _buildSkeletonLoader()
+              buildSkeletonLoader()
             else if (errorMessage != null)
               Container(
                 width: double.infinity,
@@ -1142,7 +1192,7 @@ class _SuggestionModalState extends State<SuggestionModal> {
                     ),
                     SizedBox(height: 8),
                     GestureDetector(
-                      onTap: _generateSuggestion,
+                      onTap: generateSuggestion,
                       child: Container(
                         padding: EdgeInsets.symmetric(
                           horizontal: 12,
@@ -1173,9 +1223,9 @@ class _SuggestionModalState extends State<SuggestionModal> {
     );
   }
 
-  Widget _buildSkeletonLoader() {
+  Widget buildSkeletonLoader() {
     return AnimatedBuilder(
-      animation: _getShimmerAnimation(),
+      animation: getShimmerAnimation(),
       builder: (context, child) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1218,7 +1268,7 @@ class _SuggestionModalState extends State<SuggestionModal> {
             SizedBox(height: 16),
 
             // Title skeleton
-            _buildShimmerContainer(16, double.infinity),
+            buildShimmerContainer(16, double.infinity),
             SizedBox(height: 12),
 
             // Paragraph skeletons with varying widths
@@ -1226,7 +1276,7 @@ class _SuggestionModalState extends State<SuggestionModal> {
               5,
               (index) => Padding(
                 padding: EdgeInsets.only(bottom: 8.0),
-                child: _buildShimmerContainer(14, _getRandomWidth(index)),
+                child: buildShimmerContainer(14, getRandomWidth(index)),
               ),
             ),
 
@@ -1240,10 +1290,10 @@ class _SuggestionModalState extends State<SuggestionModal> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildShimmerContainer(6, 6, isCircle: true, topMargin: 4),
+                    buildShimmerContainer(6, 6, isCircle: true, topMargin: 4),
                     SizedBox(width: 8),
                     Expanded(
-                      child: _buildShimmerContainer(14, _getBulletWidth(index)),
+                      child: buildShimmerContainer(14, getBulletWidth(index)),
                     ),
                   ],
                 ),
@@ -1253,14 +1303,14 @@ class _SuggestionModalState extends State<SuggestionModal> {
             SizedBox(height: 20),
 
             // Footer skeleton
-            _buildShimmerContainer(14, MediaQuery.sizeOf(context).width * 0.6),
+            buildShimmerContainer(14, MediaQuery.sizeOf(context).width * 0.6),
           ],
         );
       },
     );
   }
 
-  Widget _buildShimmerContainer(
+  Widget buildShimmerContainer(
     double height,
     double width, {
     bool isCircle = false,
@@ -1286,11 +1336,11 @@ class _SuggestionModalState extends State<SuggestionModal> {
     );
   }
 
-  Animation<double> _getShimmerAnimation() {
+  Animation<double> getShimmerAnimation() {
     return AlwaysStoppedAnimation(0.0);
   }
 
-  double _getRandomWidth(int index) {
+  double getRandomWidth(int index) {
     final widths = [
       double.infinity,
       MediaQuery.sizeOf(context).width * 0.9,
@@ -1301,7 +1351,7 @@ class _SuggestionModalState extends State<SuggestionModal> {
     return widths[index % widths.length];
   }
 
-  double _getBulletWidth(int index) {
+  double getBulletWidth(int index) {
     final widths = [
       MediaQuery.sizeOf(context).width * 0.8,
       MediaQuery.sizeOf(context).width * 0.9,
@@ -1311,7 +1361,7 @@ class _SuggestionModalState extends State<SuggestionModal> {
     return widths[index % widths.length];
   }
 
-  String _getGeminiErrorMessage(dynamic error) {
+  String getGeminiErrorMessage(dynamic error) {
     final errorString = error.toString().toLowerCase();
 
     if (errorString.contains('api key') ||

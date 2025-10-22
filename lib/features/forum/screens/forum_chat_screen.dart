@@ -713,10 +713,19 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
       scrollController: _scrollController,
       chatKeys: _chatKeys,
       reactionsController: _controller,
+
       reactionsConfig: chat_reactions.ChatReactionsConfig(
         enableHapticFeedback: true,
         maxReactionsToShow: 3,
         enableDoubleTap: true,
+        menuItems: [
+          chat_reactions.MenuItem(label: 'Copy', icon: LucideIcons.copy),
+          chat_reactions.MenuItem(
+            label: 'Delete',
+            icon: LucideIcons.trash,
+            isDestructive: true,
+          ),
+        ],
       ),
       currentUserId: USER_ID,
       onRefresh: _loadChats,
@@ -782,11 +791,11 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
 
   void _handleMenuAction(String menuLabel, ForumChat chat) {
     debugPrint('Menu tapped: $menuLabel');
-    if (menuLabel == 'Reply') {
-      setState(() {
-        replyTo = chat;
-      });
-    }
+    // if (menuLabel == 'Reply') {
+    //   setState(() {
+    //     replyTo = chat;
+    //   });
+    // }
     if (menuLabel == 'Delete') {
       removeChat(chatId: chat.id);
     }

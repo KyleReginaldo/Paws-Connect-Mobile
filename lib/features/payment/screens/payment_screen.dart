@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart' hide ButtonStyle;
 import 'package:flutter/services.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:installed_apps/app_info.dart';
 import 'package:installed_apps/installed_apps.dart';
@@ -19,6 +18,7 @@ import 'package:provider/provider.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart'
     show StepItem, Steps, TextArea, RefreshTrigger;
 
+import '../../../core/services/loading_service.dart';
 import '../../../core/supabase/client.dart';
 import '../../../core/theme/paws_theme.dart';
 import '../../../core/widgets/button.dart';
@@ -154,36 +154,58 @@ class _PaymentScreenState extends State<PaymentScreen> {
     if (!formKey.currentState!.validate()) return;
     final anonymous = await isAnonymous();
     if (_screenshotImage == null) {
-      EasyLoading.showError('Please upload a screenshot of your GCash payment');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please upload a screenshot of your GCash payment'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
       return;
     }
-    EasyLoading.show(status: 'Submitting donation...');
-    final result = await DirectDonationProvider().createDirectDonation(
-      donor: USER_ID ?? "",
-      amount: int.parse(amount.text),
-      fundraising: widget.fundraisingId,
-      message: message.text.trim(),
-      referenceNumber: referenceNumber.text.trim(),
-      screenshot: _screenshotImage!,
-      isAnonymous: anonymous,
-    );
+    try {
+      final result = await LoadingService.showWhileExecuting(
+        context,
+        DirectDonationProvider().createDirectDonation(
+          donor: USER_ID ?? "",
+          amount: int.parse(amount.text),
+          fundraising: widget.fundraisingId,
+          message: message.text.trim(),
+          referenceNumber: referenceNumber.text.trim(),
+          screenshot: _screenshotImage!,
+          isAnonymous: anonymous,
+        ),
+        message: 'Submitting donation...',
+      );
 
-    EasyLoading.dismiss();
+      if (result.isError) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(result.error)));
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(result.value)));
+        }
 
-    if (result.isError) {
-      EasyLoading.showError(result.error);
-    } else {
-      EasyLoading.showSuccess(result.value);
+        amount.clear();
+        message.clear();
+        referenceNumber.clear();
+        setState(() {
+          _screenshotImage = null;
+        });
 
-      amount.clear();
-      message.clear();
-      referenceNumber.clear();
-      setState(() {
-        _screenshotImage = null;
-      });
-
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
+      }
+    } catch (e) {
       if (mounted) {
-        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to submit donation')),
+        );
       }
     }
   }
@@ -198,7 +220,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
         await _processImageWithTextExtraction(image);
       }
     } catch (e) {
-      EasyLoading.showError('Failed to pick image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to pick image: $e')));
+      }
     }
   }
 
@@ -212,7 +238,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
         await _processImageWithTextExtraction(image);
       }
     } catch (e) {
-      EasyLoading.showError('Failed to take photo: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to take photo: $e')));
+      }
     }
   }
 
@@ -221,41 +251,50 @@ class _PaymentScreenState extends State<PaymentScreen> {
       _screenshotImage = image;
     });
 
-    EasyLoading.show(status: 'Analyzing image...');
-
     try {
-      final paymentData = await PaymentTextExtractor.extractPaymentData(image);
-
-      EasyLoading.dismiss();
+      final paymentData = await LoadingService.showWhileExecuting(
+        context,
+        PaymentTextExtractor.extractPaymentData(image),
+        message: 'Analyzing image...',
+      );
 
       if (paymentData.success) {
         debugPrint('Extracted payment data: $paymentData');
 
         // Update controllers and trigger rebuild
         setState(() {
-          if (paymentData.referenceNumber.isNotEmpty) {
-            referenceNumber.text = paymentData.referenceNumber;
-            debugPrint('Updated reference number: ${referenceNumber.text}');
-          }
-          if (paymentData.amount.isNotEmpty && amount.text.isEmpty) {
-            amount.text = paymentData.amount;
-            debugPrint('Updated amount: ${amount.text}');
-          }
+          referenceNumber.text = paymentData.referenceNumber;
+          debugPrint('Updated reference number: ${referenceNumber.text}');
+          amount.text = paymentData.amount;
+          debugPrint('Updated amount: ${amount.text}');
         });
 
-        EasyLoading.showSuccess('Payment details extracted!');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Payment details extracted!')),
+          );
+        }
 
         _showExtractedDataDialog(paymentData);
       } else {
         debugPrint('Text extraction failed: ${paymentData.error}');
-        EasyLoading.showInfo(
-          'Could not extract payment details automatically. Please fill manually.',
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Could not extract payment details automatically. Please fill manually.',
+              ),
+            ),
+          );
+        }
       }
     } catch (e) {
       debugPrint('Error in text extraction: $e');
-      EasyLoading.dismiss();
-      EasyLoading.showError('Failed to analyze image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to analyze image: $e')));
+      }
     }
   }
 
@@ -289,9 +328,108 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
+  List<(String, String)> supportedApps = [
+    ('com.globe.gcash.android', 'gcash'),
+    ('com.paymaya', 'maya'),
+    ('ph.com.gotyme', 'gotyme'),
+  ];
+
+  Future<List<(String, AppInfo)>> _getInstalledSupportedApps() async {
+    final List<(String, AppInfo)> installed = [];
+    for (final pkg in supportedApps) {
+      try {
+        AppInfo? info = await InstalledApps.getAppInfo(
+          pkg.$1,
+          BuiltWith.native_or_others,
+        );
+
+        if (info != null) installed.add((pkg.$2, info));
+      } catch (_) {
+        // Ignore failures for individual packages
+      }
+    }
+    return installed;
+  }
+
+  Future<void> _startApp(AppInfo app) async {
+    try {
+      InstalledApps.startApp(app.packageName);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to open ${app.name}')));
+      }
+    }
+  }
+
+  Future<void> openPaymentApp() async {
+    final apps = await _getInstalledSupportedApps();
+    if (!mounted) return;
+    if (apps.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No supported payment apps installed (GCash, Maya, GoTyme).',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    if (apps.length == 1) {
+      await _startApp(apps.first.$2);
+      return;
+    }
+
+    // Let the user choose which app to open
+    if (!mounted) return;
+    final chosen = await showDialog<AppInfo>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(),
+        backgroundColor: Colors.white,
+        title: const PawsText('Open payment app', fontSize: 15),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.separated(
+            shrinkWrap: true,
+            itemCount: apps.length,
+            separatorBuilder: (_, __) => const Divider(height: 1),
+            itemBuilder: (_, i) {
+              final a = apps[i];
+              return ListTile(
+                leading: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.asset(
+                    'assets/images/${a.$1}.jpeg',
+                    width: 32,
+                    height: 32,
+                  ),
+                ),
+                title: Text(a.$2.name),
+                subtitle: Text('Open ${a.$2.name} app'),
+                onTap: () => Navigator.of(ctx).pop(a.$2),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+    if (chosen != null) {
+      await _startApp(chosen);
+    }
+  }
+
   Future<void> openGCashApp() async {
     AppInfo? app = await InstalledApps.getAppInfo(
-      'com.globe.gcash.android',
+      'com.paymaya',
       BuiltWith.native_or_others,
     );
     if (app != null) {
@@ -402,8 +540,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                           text: fundraising.gcashNumber!,
                                         ),
                                       );
-                                      EasyLoading.showSuccess(
-                                        'Copied to clipboard!',
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Copied to clipboard!'),
+                                          behavior: SnackBarBehavior.floating,
+                                        ),
                                       );
                                     },
                                     icon: Icon(
@@ -511,7 +654,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           children: [
                             StepItem(
                               title: Text(
-                                'Open your GCash app',
+                                'Open your GCash, Maya, or GoTyme app',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
@@ -519,7 +662,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               ),
                               content: [
                                 Text(
-                                  'Launch the GCash app on your mobile device.',
+                                  'Launch the app on your mobile device.',
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: PawsColors.textSecondary,
@@ -597,25 +740,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ),
 
                   SizedBox(height: 16),
-                  Row(
-                    spacing: 5,
-                    children: [
-                      CircleAvatar(
-                        radius: 15,
-                        foregroundImage: AssetImage('assets/images/gcash.jpeg'),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          PawsText('Pay with GCash'),
-                          PawsText(
-                            'Manual Payment',
-                            fontSize: 16,
-                            color: PawsColors.textSecondary,
-                          ),
-                        ],
-                      ),
-                    ],
+                  PawsText('Pay with GCash, Maya, GoTyme'),
+                  PawsText(
+                    'Manual Payment',
+                    fontSize: 16,
+                    color: PawsColors.textSecondary,
                   ),
                   SizedBox(height: 16),
 
@@ -645,7 +774,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       ),
                       SizedBox(height: 4),
                       PawsText(
-                        'Upload a clear screenshot of your GCash payment confirmation',
+                        'Upload a clear screenshot of your payment confirmation (GCash/Maya/GoTyme)',
                         fontSize: 12,
                         color: PawsColors.textSecondary,
                       ),
@@ -751,7 +880,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       if (value == null || value.isEmpty) {
                         return 'Please enter an amount';
                       }
-                      final intValue = int.tryParse(value);
+                      final intValue = double.tryParse(value);
                       if (intValue == null) {
                         return 'Please enter a valid number';
                       }
@@ -773,11 +902,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
                   PawsTextField(
                     hint: 'Reference Number',
-                    label: 'GCash Reference Number',
+                    label: 'Reference Number',
                     controller: referenceNumber,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter the GCash reference number';
+                        return 'Please enter the reference number';
                       }
                       return null;
                     },
@@ -820,11 +949,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
           padding: EdgeInsets.all(16).copyWith(bottom: 24),
           child: PawsElevatedButton(
             label: referenceNumber.text.isEmpty
-                ? 'Open GCash App'
+                ? 'Open Payment App'
                 : 'Submit Donation',
             onPressed: () {
               if (referenceNumber.text.isEmpty) {
-                openGCashApp();
+                openPaymentApp();
               } else {
                 handleDonation();
               }

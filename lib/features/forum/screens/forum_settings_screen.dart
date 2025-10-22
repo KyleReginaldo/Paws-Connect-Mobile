@@ -2,6 +2,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/supabase/client.dart';
@@ -43,6 +44,7 @@ class ForumSettingsScreen extends StatefulWidget implements AutoRouteWrapper {
 
 class _ForumSettingsScreenState extends State<ForumSettingsScreen> {
   late RealtimeChannel forumChannel;
+  final ImagePicker _picker = ImagePicker();
 
   void handleNotificationStatus(int forumMemberId, bool mute) async {
     final result = await ForumProvider().toggleForumNotificationSettings(
@@ -61,7 +63,7 @@ class _ForumSettingsScreenState extends State<ForumSettingsScreen> {
       ).showSnackBar(SnackBar(content: Text(result.value)));
       context.read<ForumRepository>().fetchForumById(
         widget.forumId,
-        USER_ID ?? "",
+        USER_ID ?? '',
       );
     }
   }
@@ -100,22 +102,19 @@ class _ForumSettingsScreenState extends State<ForumSettingsScreen> {
       '🚀 Initializing ForumSettingsScreen for forum ID: ${widget.forumId}',
     );
 
-    // Create unique channel name
     forumChannel = supabase.channel(
       'forum_members_${widget.forumId}_${DateTime.now().millisecondsSinceEpoch}',
     );
 
-    // Load initial data
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       debugPrint('🔄 Loading initial forum data...');
       context.read<ForumRepository>().fetchForumById(
         widget.forumId,
-        USER_ID ?? "",
+        USER_ID ?? '',
       );
     });
 
-    // Set up listener
     listenToChanges();
   }
 
@@ -220,6 +219,37 @@ class _ForumSettingsScreenState extends State<ForumSettingsScreen> {
     }
   }
 
+  Future<void> _onChangeForumImage() async {
+    try {
+      final XFile? picked = await _picker.pickImage(
+        source: ImageSource.gallery,
+      );
+      if (picked == null) return;
+      EasyLoading.show(status: 'Updating image...');
+      final result = await ForumProvider().updateForum(
+        forumId: widget.forumId,
+        forumImageFile: picked,
+      );
+      EasyLoading.dismiss();
+      if (mounted) {
+        if (result.isError) {
+          EasyLoading.showToast(result.error);
+        } else {
+          EasyLoading.showToast('Forum image updated');
+          context.read<ForumRepository>().fetchForumById(
+            widget.forumId,
+            USER_ID ?? '',
+          );
+        }
+      }
+    } catch (e) {
+      EasyLoading.dismiss();
+      if (mounted) {
+        EasyLoading.showToast('Failed to update image');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final forum = context.watch<ForumRepository>().forum;
@@ -276,29 +306,63 @@ class _ForumSettingsScreenState extends State<ForumSettingsScreen> {
                   physics: AlwaysScrollableScrollPhysics(),
                   child: Column(
                     children: [
-                      Container(
-                        width: 100,
-                        height: 100,
-                        margin: EdgeInsets.only(top: 16),
-                        decoration: BoxDecoration(
-                          color: PawsColors.primary.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: PawsColors.primary.withValues(alpha: 0.2),
-                            width: 3,
-                          ),
-                        ),
-                        child: forum.private
-                            ? Icon(
-                                LucideIcons.shieldCheck,
-                                size: 64,
-                                color: PawsColors.primary,
-                              )
-                            : Icon(
-                                LucideIcons.globe,
-                                size: 64,
-                                color: PawsColors.primary,
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Container(
+                            width: 100,
+                            height: 100,
+                            margin: const EdgeInsets.only(top: 16),
+                            decoration: BoxDecoration(
+                              color: PawsColors.primary.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: PawsColors.primary.withValues(
+                                  alpha: 0.2,
+                                ),
+                                width: 3,
                               ),
+                            ),
+                            child: ClipOval(
+                              child:
+                                  (forum.transformedForumImageUrl != null &&
+                                      forum
+                                          .transformedForumImageUrl!
+                                          .isNotEmpty)
+                                  ? NetworkImageView(
+                                      forum.transformedForumImageUrl!,
+                                      fit: BoxFit.cover,
+                                      width: 100,
+                                      height: 100,
+                                    )
+                                  : Center(
+                                      child: Icon(
+                                        forum.private
+                                            ? LucideIcons.shieldCheck
+                                            : LucideIcons.globe,
+                                        size: 64,
+                                        color: PawsColors.primary,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                          Positioned(
+                            right: 10,
+                            bottom: 0,
+                            child: GestureDetector(
+                              onTap: _onChangeForumImage,
+                              child: const CircleAvatar(
+                                radius: 16,
+                                backgroundColor: Colors.white,
+                                child: Icon(
+                                  LucideIcons.camera,
+                                  size: 16,
+                                  color: PawsColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       SizedBox(height: 8),
                       Row(

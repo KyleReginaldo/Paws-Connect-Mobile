@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:paws_connect/core/config/result.dart';
@@ -24,105 +25,80 @@ class PetProvider {
     String? goodWith,
     String? location,
   }) async {
-    // Check internet connectivity first
-    final hasInternet = await InternetConnection().hasInternetAccess;
-    if (!hasInternet) {
+    final Map<String, String> queryParams = {};
+
+    if (type != null && type.isNotEmpty) queryParams['type'] = type;
+    if (breed != null && breed.isNotEmpty) queryParams['breed'] = breed;
+    if (gender != null && gender.isNotEmpty) queryParams['gender'] = gender;
+    if (size != null && size.isNotEmpty) queryParams['size'] = size;
+    if (ageMin != null) queryParams['age_min'] = ageMin.toString();
+    if (ageMax != null) queryParams['age_max'] = ageMax.toString();
+    if (isVaccinated != null) {
+      queryParams['is_vaccinated'] = isVaccinated.toString();
+    }
+    if (isSpayedOrNeutered != null) {
+      queryParams['is_spayed_or_neutured'] = isSpayedOrNeutered.toString();
+    }
+    if (isTrained != null) queryParams['is_trained'] = isTrained.toString();
+    if (healthStatus != null && healthStatus.isNotEmpty) {
+      queryParams['health_status'] = healthStatus;
+    }
+    if (requestStatus != null && requestStatus.isNotEmpty) {
+      queryParams['request_status'] = requestStatus;
+    }
+    if (goodWith != null && goodWith.isNotEmpty) {
+      queryParams['good_with'] = goodWith;
+    }
+    if (location != null && location.isNotEmpty) {
+      queryParams['location'] = location;
+    }
+    if (userId != null && userId.isNotEmpty) queryParams['user'] = userId;
+
+    final uri = Uri.parse(
+      '${FlavorConfig.instance.apiBaseUrl}/pets',
+    ).replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
+
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      List<Pet> pets = [];
+      final data = jsonDecode(response.body);
+      data['data'].forEach((petData) {
+        pets.add(PetMapper.fromMap(petData));
+      });
+      return Result.success(pets);
+    } else {
       return Result.error(
-        'No internet connection. Please check your network and try again.',
+        'Failed to fetch pets. Server returned ${response.statusCode}',
       );
     }
+  }
 
-    try {
-      // Build query parameters
-      final Map<String, String> queryParams = {};
+  Future<Result<List<Pet>>> fetchRecentPets({String? userId}) async {
+    final uri = Uri.parse('${FlavorConfig.instance.apiBaseUrl}/pets/recent')
+        .replace(
+          queryParameters: userId != null && userId.isNotEmpty
+              ? {'user': userId}
+              : null,
+        );
+    final response = await http.get(uri);
+    debugPrint('recent pets: $response');
 
-      if (type != null && type.isNotEmpty) queryParams['type'] = type;
-      if (breed != null && breed.isNotEmpty) queryParams['breed'] = breed;
-      if (gender != null && gender.isNotEmpty) queryParams['gender'] = gender;
-      if (size != null && size.isNotEmpty) queryParams['size'] = size;
-      if (ageMin != null) queryParams['age_min'] = ageMin.toString();
-      if (ageMax != null) queryParams['age_max'] = ageMax.toString();
-      if (isVaccinated != null) {
-        queryParams['is_vaccinated'] = isVaccinated.toString();
-      }
-      if (isSpayedOrNeutered != null) {
-        queryParams['is_spayed_or_neutured'] = isSpayedOrNeutered.toString();
-      }
-      if (isTrained != null) queryParams['is_trained'] = isTrained.toString();
-      if (healthStatus != null && healthStatus.isNotEmpty) {
-        queryParams['health_status'] = healthStatus;
-      }
-      if (requestStatus != null && requestStatus.isNotEmpty) {
-        queryParams['request_status'] = requestStatus;
-      }
-      if (goodWith != null && goodWith.isNotEmpty) {
-        queryParams['good_with'] = goodWith;
-      }
-      if (location != null && location.isNotEmpty) {
-        queryParams['location'] = location;
-      }
-      if (userId != null && userId.isNotEmpty) queryParams['user'] = userId;
-
-      final uri = Uri.parse(
-        '${FlavorConfig.instance.apiBaseUrl}/pets',
-      ).replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
-
-      final response = await http.get(uri);
-
-      if (response.statusCode == 200) {
-        List<Pet> pets = [];
-        final data = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      List<Pet> pets = [];
+      final data = jsonDecode(response.body);
+      if (data['data'] != null && data['data'].isNotEmpty) {
         data['data'].forEach((petData) {
           pets.add(PetMapper.fromMap(petData));
         });
         return Result.success(pets);
       } else {
-        return Result.error(
-          'Failed to fetch pets. Server returned ${response.statusCode}',
-        );
+        return Result.error('No recent pets found');
       }
-    } catch (e) {
-      return Result.error('Failed to fetch pets: ${e.toString()}');
-    }
-  }
-
-  Future<Result<List<Pet>>> fetchRecentPets({String? userId}) async {
-    // Check internet connectivity first
-    final hasInternet = await InternetConnection().hasInternetAccess;
-    if (!hasInternet) {
+    } else {
       return Result.error(
-        'No internet connection. Please check your network and try again.',
+        'Failed to fetch pets. Server returned ${response.statusCode}',
       );
-    }
-
-    try {
-      final uri = Uri.parse('${FlavorConfig.instance.apiBaseUrl}/pets/recent')
-          .replace(
-            queryParameters: userId != null && userId.isNotEmpty
-                ? {'user': userId}
-                : null,
-          );
-
-      final response = await http.get(uri);
-
-      if (response.statusCode == 200) {
-        List<Pet> pets = [];
-        final data = jsonDecode(response.body);
-        if (data['data'] != null && data['data'].isNotEmpty) {
-          data['data'].forEach((petData) {
-            pets.add(PetMapper.fromMap(petData));
-          });
-          return Result.success(pets);
-        } else {
-          return Result.error('No recent pets found');
-        }
-      } else {
-        return Result.error(
-          'Failed to fetch pets. Server returned ${response.statusCode}',
-        );
-      }
-    } catch (e) {
-      return Result.error('Failed to fetch pets: ${e.toString()}');
     }
   }
 
@@ -221,6 +197,43 @@ class PetProvider {
       );
     } catch (e) {
       return Result.error('Failed to delete pet: $e');
+    }
+  }
+
+  Future<Result<List<Poll>>> fetchPetNamePoll(int petId) async {
+    final response = await http.get(
+      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/poll?pet_id=$petId'),
+    );
+    final data = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      List<Poll> polls = [];
+      for (var item in data['data']) {
+        polls.add(PollMapper.fromMap(item));
+      }
+      return Result.success(polls);
+    } else {
+      return Result.error('Failed to get pet poll');
+    }
+  }
+
+  Future<Result<String>> addPoll({
+    required int pet,
+    required String suggestedName,
+    required String createdBy,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/poll'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'pet': pet,
+        'suggested_name': suggestedName,
+        'created_by': createdBy,
+      }),
+    );
+    if (response.statusCode == 201) {
+      return Result.success('Suggested name added');
+    } else {
+      return Result.error('Failed to add the suggested name');
     }
   }
 }

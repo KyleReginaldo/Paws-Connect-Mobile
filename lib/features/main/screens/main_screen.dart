@@ -291,6 +291,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         final badgeCount = mesCount ?? 0;
         String displayCount = badgeCount > 99 ? '99+' : badgeCount.toString();
         return BottomNavigationBar(
+          backgroundColor: Colors.white,
           currentIndex: tabsRouter.activeIndex,
           selectedItemColor: PawsColors.primary,
           unselectedItemColor: PawsColors.disabled,

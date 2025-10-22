@@ -68,6 +68,49 @@ class PaymentTextExtractor {
       if (_isReferenceNumber(trimmedLine)) {
         final extractedRef = _extractReferenceNumber(trimmedLine);
         if (extractedRef.length >= 8) {
+          // Avoid picking account numbers: if this line is just digits
+          // and adjacent line mentions a bank/account (without ref/id labels), skip it.
+          final isStandaloneNumeric = RegExp(
+            r'^\s*\d{8,}\s*$',
+          ).hasMatch(trimmedLine);
+          if (isStandaloneNumeric) {
+            final prev = i > 0 ? lines[i - 1].toLowerCase() : '';
+            final next = i + 1 < lines.length ? lines[i + 1].toLowerCase() : '';
+            bool mentionsBankOrAccount(String s) =>
+                s.contains('bank') ||
+                s.contains('maya bank') ||
+                s.contains('account') ||
+                s.contains('acct') ||
+                s.contains('wallet id') ||
+                s.contains('card');
+            bool hasRefLabel(String s) =>
+                s.contains('ref') ||
+                s.contains('reference') ||
+                (s.contains('transaction') && s.contains('id')) ||
+                s.contains('receipt') ||
+                s.contains('bill reference');
+
+            final nearBank =
+                mentionsBankOrAccount(prev) || mentionsBankOrAccount(next);
+            final nearHasLabel = hasRefLabel(prev) || hasRefLabel(next);
+            if (nearBank && !nearHasLabel) {
+              debugPrint(
+                'Skipping standalone numeric near bank/account: "$trimmedLine"',
+              );
+              // Do not consider this as a reference candidate
+            } else {
+              final refScore = _getReferenceScore(trimmedLine, extractedRef);
+              debugPrint(
+                'Found reference candidate: $extractedRef from "$trimmedLine" (score: $refScore)',
+              );
+              if (refScore > bestReferenceScore || bestReference.isEmpty) {
+                bestReference = extractedRef;
+                bestReferenceScore = refScore;
+                foundRef = true;
+              }
+            }
+            continue;
+          }
           // Allow shorter references (like 9-digit ones)
           final refScore = _getReferenceScore(trimmedLine, extractedRef);
           debugPrint(
@@ -77,6 +120,45 @@ class PaymentTextExtractor {
           if (refScore > bestReferenceScore || bestReference.isEmpty) {
             bestReference = extractedRef;
             bestReferenceScore = refScore;
+            foundRef = true;
+          }
+        }
+      }
+
+      // Lookahead: handle label on current line and reference on next line
+      final lower = trimmedLine.toLowerCase();
+      final hasRefLabel =
+          lower.contains('bill reference no') ||
+          lower.contains('ref no') ||
+          lower.contains('reference number') ||
+          lower.contains('reference no') ||
+          (lower.contains('transaction') && lower.contains('id')) ||
+          lower.contains('receipt');
+      if (hasRefLabel && i + 1 < lines.length) {
+        final nextLine = lines[i + 1].trim();
+        String candidate = '';
+        // GoTyme ITO format on the next line
+        final itoMatch = RegExp(
+          r'^\s*ITO[\d\s]+\s*$',
+          caseSensitive: false,
+        ).hasMatch(nextLine);
+        if (itoMatch) {
+          candidate = nextLine.replaceAll(RegExp(r'[^\w]'), '');
+        } else {
+          final nums = _extractNumbersOnly(nextLine);
+          if (nums.length >= 8) candidate = nums;
+        }
+        if (candidate.isNotEmpty) {
+          final combined = '$trimmedLine $nextLine';
+          final score =
+              _getReferenceScore(combined, candidate) +
+              2; // slight adjacency bonus
+          debugPrint(
+            'Lookahead reference candidate: $candidate from "$combined" (score: $score)',
+          );
+          if (score > bestReferenceScore || bestReference.isEmpty) {
+            bestReference = candidate;
+            bestReferenceScore = score;
             foundRef = true;
           }
         }
@@ -124,38 +206,56 @@ class PaymentTextExtractor {
     );
   }
 
+  /// Public helper to parse raw OCR text directly (useful for unit tests)
+  static PaymentData parseFromRawText(String text) => _parsePaymentData(text);
+
   /// Get context score for amount based on surrounding lines
   static int _getAmountContextScore(List<String> lines, int lineIndex) {
     int score = 5; // Base score
 
-    // Check previous and next lines for context clues
-    final contextRange = 2;
+    // Check previous and next lines for context clues (including the same line)
+    const contextRange = 2;
     final startIndex = (lineIndex - contextRange).clamp(0, lines.length - 1);
     final endIndex = (lineIndex + contextRange).clamp(0, lines.length - 1);
 
     for (int i = startIndex; i <= endIndex; i++) {
-      if (i == lineIndex) continue;
-
       final contextLine = lines[i].toLowerCase();
 
       // Positive context indicators for multiple platforms
-      if (contextLine.contains('gcash') ||
+      final isPositive =
+          contextLine.contains('gcash') ||
           contextLine.contains('gotyme') ||
           contextLine.contains('paymaya') ||
+          contextLine.contains('maya') ||
           contextLine.contains('sent') ||
           contextLine.contains('transfer') ||
           contextLine.contains('payment') ||
+          contextLine.contains('paid') ||
           contextLine.contains('successful') ||
           contextLine.contains('bill amount') ||
-          contextLine.contains('transfer amount')) {
+          contextLine.contains('transfer amount') ||
+          contextLine.contains('total amount') ||
+          contextLine.contains('total');
+      if (isPositive) {
         score += 3;
+        if (i == lineIndex &&
+            (contextLine.contains('bill amount') ||
+                contextLine.contains('transfer amount') ||
+                contextLine.contains('total amount') ||
+                contextLine.contains('total'))) {
+          score += 2; // boost when the keyword is on the same line
+        }
       }
 
-      // Negative context indicators (avoid false positives)
-      if (contextLine.contains('balance') ||
+      // Negative context indicators (avoid false positives like fees/balances)
+      final isNegative =
+          contextLine.contains('balance') ||
           contextLine.contains('available') ||
-          contextLine.contains('limit')) {
-        score -= 2;
+          contextLine.contains('limit') ||
+          contextLine.contains('fee') ||
+          contextLine.contains('charge');
+      if (isNegative) {
+        score -= (i == lineIndex ? 4 : 2);
       }
     }
 
@@ -197,7 +297,8 @@ class PaymentTextExtractor {
     // Platform specific scoring
     if (lowerLine.contains('gcash') ||
         lowerLine.contains('gotyme') ||
-        lowerLine.contains('paymaya')) {
+        lowerLine.contains('paymaya') ||
+        lowerLine.contains('maya')) {
       score += 4;
     }
 
@@ -231,9 +332,9 @@ class PaymentTextExtractor {
         caseSensitive: false,
       ), // "Reference Number 00334459323121"
       RegExp(
-        r'ref\s+no\.?\s+([\d\s]{10,})',
+        r'ref\s+no\.?\s+([\d\s]{8,})',
         caseSensitive: false,
-      ), // "Ref No. 0033 415 944973" (with spaces)
+      ), // "Ref No. 0033 415 944973" (with spaces) and 9-digit refs
       // GoTyme reference patterns
       RegExp(
         r'reference\s+no\.?\s+ITO[\d\s]{8,}',
@@ -241,9 +342,9 @@ class PaymentTextExtractor {
       ), // "Reference No. ITO13213312"
       // PayMaya reference patterns
       RegExp(
-        r'bill\s+reference\s+number\s+([\d\s]{8,})',
+        r'bill\s+reference\s+(?:no\.?|number)\s*:?[\s]*([\d\s]{8,})',
         caseSensitive: false,
-      ), // "Bill reference number 323131"
+      ), // PayMaya: "Bill reference number: 323131" or "Bill reference no. 323131"
       // More flexible labeled reference patterns (handle spaces in numbers)
       RegExp(
         r'ref(?:erence)?[\s\.:]*(?:no\.?|number)?[\s\.:]*[\d\s]{8,}',
@@ -308,21 +409,36 @@ class PaymentTextExtractor {
   static bool _isLikelyNotReference(String line) {
     final lowerLine = line.toLowerCase();
 
-    // Skip if it looks like a phone number
-    if (lowerLine.contains('phone') ||
+    // Explicit phone numbers (PH): +63 or 0 followed by 9xxxxxxxxx
+    final phoneLike = RegExp(r'(\+?63|0)9\d{9}');
+    if (phoneLike.hasMatch(lowerLine) ||
+        lowerLine.contains('phone') ||
         lowerLine.contains('mobile') ||
-        lowerLine.contains('number')) {
+        lowerLine.contains('contact')) {
       return true;
     }
 
-    // Skip if it contains currency symbols (likely an amount)
+    // Amount/currency context is not a reference
     if (lowerLine.contains('₱') ||
         lowerLine.contains('php') ||
-        lowerLine.contains('peso')) {
+        lowerLine.contains('peso') ||
+        lowerLine.contains('amount') ||
+        lowerLine.contains('fee') ||
+        lowerLine.contains('charge')) {
       return true;
     }
 
-    // Skip if it looks like a date/time
+    // Bank-only lines without explicit ref/id
+    if (lowerLine.contains('bank') &&
+        !(lowerLine.contains('ref') ||
+            lowerLine.contains('reference') ||
+            lowerLine.contains('transaction') ||
+            lowerLine.contains('receipt') ||
+            lowerLine.contains('id'))) {
+      return true;
+    }
+
+    // Likely date/time
     if (lowerLine.contains('/') ||
         lowerLine.contains('-') ||
         lowerLine.contains(':')) {
@@ -505,7 +621,10 @@ class PaymentTextExtractor {
       RegExp(r'reference\s+no\.?\s+(ITO[\d\s]+)', caseSensitive: false),
 
       // PayMaya patterns
-      RegExp(r'bill\s+reference\s+number\s+([\d\s]+)', caseSensitive: false),
+      RegExp(
+        r'bill\s+reference\s+(?:no\.?|number)\s*:?[\s]*([\d\s]+)',
+        caseSensitive: false,
+      ),
 
       // Generic patterns
       RegExp(

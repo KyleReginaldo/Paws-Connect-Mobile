@@ -1,4 +1,4 @@
-import 'package:avatar_stack/animated_avatar_stack.dart';
+import 'package:avatar_stack/avatar_stack.dart';
 import 'package:avatar_stack/positions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_reactions/flutter_chat_reactions.dart'
@@ -164,22 +164,65 @@ class ChatMessageWidget extends StatelessWidget {
                   ? const EdgeInsets.only(right: 8)
                   : const EdgeInsets.only(left: 40),
               height: 24,
-              child: AnimatedAvatarStack(
-                width: filteredViewers.length >= 5
-                    ? (24 * 5).toDouble()
-                    : (24 * (filteredViewers.length)).toDouble(),
-                settings: RestrictedPositions(
-                  align: isCurrentUser ? StackAlign.right : StackAlign.left,
-                  maxCoverage: (filteredViewers.length > 5) ? 0.7 : 0.9,
-                ),
-                borderColor: PawsColors.primary,
-                avatars: filteredViewers.map((viewer) {
-                  return viewer.profileImage != null &&
-                          viewer.profileImage!.isNotEmpty
-                      ? NetworkImage(viewer.profileImage!)
-                      : const AssetImage('assets/images/user.png')
-                            as ImageProvider;
-                }).toList(),
+              child: Builder(
+                builder: (context) {
+                  // Ensure unique viewers by id to avoid duplicate keys
+                  final uniqueViewers = <Viewer>[];
+                  final seenIds = <String>{};
+                  for (final v in filteredViewers) {
+                    if (!seenIds.contains(v.id)) {
+                      uniqueViewers.add(v);
+                      seenIds.add(v.id);
+                    }
+                  }
+
+                  final width = uniqueViewers.length >= 5
+                      ? (24 * 5).toDouble()
+                      : (24 * uniqueViewers.length).toDouble();
+
+                  return SizedBox(
+                    width: width,
+                    child: WidgetStack(
+                      positions: RestrictedPositions(
+                        align: isCurrentUser
+                            ? StackAlign.right
+                            : StackAlign.left,
+                        maxCoverage: (uniqueViewers.length > 5) ? 0.7 : 0.9,
+                      ),
+                      buildInfoWidget: (context, surplus) {
+                        // We don't want a "+N" pill, so render nothing when overflowing
+                        return const SizedBox.shrink();
+                      },
+                      stackedWidgets: uniqueViewers.map((viewer) {
+                        final hasImage =
+                            viewer.profileImage != null &&
+                            viewer.profileImage!.isNotEmpty;
+                        return Container(
+                          key: ValueKey('viewer-${viewer.id}'),
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: PawsColors.primary,
+                              width: 1.5,
+                            ),
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: hasImage
+                              ? Image.network(
+                                  viewer.profileImage!,
+                                  fit: BoxFit.cover,
+                                )
+                              : Image.asset(
+                                  'assets/images/user.png',
+                                  fit: BoxFit.cover,
+                                ),
+                        );
+                      }).toList(),
+                    ),
+                  );
+                },
               ),
             ),
           },

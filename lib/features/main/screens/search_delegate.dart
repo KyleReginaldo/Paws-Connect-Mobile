@@ -260,7 +260,7 @@ class PetSearchDelegate extends SearchDelegate<Pet?> {
         ),
       ),
       title: Text(
-        pet.name,
+        pet.name.isEmpty ? 'No name' : pet.name,
         style: const TextStyle(
           fontWeight: FontWeight.w600,
           color: PawsColors.textPrimary,

@@ -6,6 +6,8 @@ import '../provider/donation_provider.dart';
 class DonationRepository extends ChangeNotifier {
   List<Donation>? _donations;
   List<Donation>? get donations => _donations;
+  List<DonorLeaderboard>? _leaderboard;
+  List<DonorLeaderboard>? get leaderboard => _leaderboard;
   final DonationProvider donationProvider;
 
   DonationRepository(this.donationProvider);
@@ -18,6 +20,18 @@ class DonationRepository extends ChangeNotifier {
       notifyListeners();
     } else {
       _donations = null;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchDonorLeaderboard() async {
+    debugPrint('Fetching donor leaderboard');
+    final result = await donationProvider.fetchTopDonors();
+    if (result.isSuccess) {
+      _leaderboard = result.value;
+      notifyListeners();
+    } else {
+      _leaderboard = null;
       notifyListeners();
     }
   }

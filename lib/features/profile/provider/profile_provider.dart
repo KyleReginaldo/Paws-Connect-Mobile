@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
-import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:paws_connect/core/services/supabase_service.dart';
 import 'package:paws_connect/features/profile/models/user_profile_model.dart';
 
@@ -14,59 +13,38 @@ import '../../../flavors/flavor_config.dart';
 class ProfileProvider {
   Future<Result<UserProfile>> getUserProfile(String userId) async {
     // Check internet connectivity first
-    final hasInternet = await InternetConnection().hasInternetAccess;
-    if (!hasInternet) {
+    final response = await http.get(
+      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/users/$userId'),
+    );
+    final data = jsonDecode(response.body);
+    debugPrint('user [data]: ${data['data']}');
+    // debugPrint('User Profile Data: ${data['data']}'); // Commented to reduce console spam
+    if (response.statusCode == 200) {
+      final userProfile = UserProfileMapper.fromMap(data['data']);
+      return Result.success(userProfile);
+    } else {
       return Result.error(
-        'No internet connection. Please check your network and try again.',
+        'Failed to load user profile. Server returned ${response.statusCode}',
       );
-    }
-    try {
-      final response = await http.get(
-        Uri.parse('${FlavorConfig.instance.apiBaseUrl}/users/$userId'),
-      );
-      final data = jsonDecode(response.body);
-      debugPrint('user [data]: ${data['data']}');
-      // debugPrint('User Profile Data: ${data['data']}'); // Commented to reduce console spam
-      if (response.statusCode == 200) {
-        final userProfile = UserProfileMapper.fromMap(data['data']);
-        return Result.success(userProfile);
-      } else {
-        return Result.error(
-          'Failed to load user profile. Server returned ${response.statusCode}',
-        );
-      }
-    } catch (e) {
-      return Result.error('Failed to load user profile: ${e.toString()}');
     }
   }
 
   Future<Result<List<UserProfile>>> fetchUsers() async {
-    // Check internet connectivity first
-    final hasInternet = await InternetConnection().hasInternetAccess;
-    if (!hasInternet) {
+    final response = await http.get(
+      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/users'),
+    );
+    final data = jsonDecode(response.body);
+    // debugPrint('User Profile Data: ${data['data']}'); // Commented to reduce console spam
+    if (response.statusCode == 200) {
+      List<UserProfile> users = [];
+      data['data'].forEach((user) {
+        users.add(UserProfileMapper.fromMap(user));
+      });
+      return Result.success(users);
+    } else {
       return Result.error(
-        'No internet connection. Please check your network and try again.',
+        'Failed to load user profile. Server returned ${response.statusCode}',
       );
-    }
-    try {
-      final response = await http.get(
-        Uri.parse('${FlavorConfig.instance.apiBaseUrl}/users'),
-      );
-      final data = jsonDecode(response.body);
-      // debugPrint('User Profile Data: ${data['data']}'); // Commented to reduce console spam
-      if (response.statusCode == 200) {
-        List<UserProfile> users = [];
-        data['data'].forEach((user) {
-          users.add(UserProfileMapper.fromMap(user));
-        });
-        return Result.success(users);
-      } else {
-        return Result.error(
-          'Failed to load user profile. Server returned ${response.statusCode}',
-        );
-      }
-    } catch (e) {
-      return Result.error('Failed to load user profile: ${e.toString()}');
     }
   }
 
@@ -77,62 +55,52 @@ class ProfileProvider {
   }) async {
     // Check internet connectivity first
     String? profileImageLink;
-    final hasInternet = await InternetConnection().hasInternetAccess;
-    if (!hasInternet) {
-      return Result.error(
-        'No internet connection. Please check your network and try again.',
-      );
-    }
-    try {
-      debugPrint('Image: $image');
-      debugPrint('Username: $username');
-      if (image != null) {
-        debugPrint('Uploading image: ${image.path}');
-        final fileName =
-            '${DateTime.now().microsecondsSinceEpoch.toString()}_${image.name}';
+    debugPrint('Image: $image');
+    debugPrint('Username: $username');
+    if (image != null) {
+      debugPrint('Uploading image: ${image.path}');
+      final fileName =
+          '${DateTime.now().microsecondsSinceEpoch.toString()}_${image.name}';
 
-        try {
-          final uploadResult = await supabase.storage
-              .from('files')
-              .upload(fileName, File(image.path));
-          debugPrint('Upload result: $uploadResult');
+      try {
+        final uploadResult = await supabase.storage
+            .from('files')
+            .upload(fileName, File(image.path));
+        debugPrint('Upload result: $uploadResult');
 
-          // Get the public URL using the correct bucket and file path
-          profileImageLink = supabase.storage
-              .from('files')
-              .getPublicUrl(fileName);
-          debugPrint('Uploaded image URL: $profileImageLink');
-        } catch (uploadError) {
-          debugPrint('Upload error: $uploadError');
-          return Result.error(
-            'Failed to upload image: ${uploadError.toString()}',
-          );
-        }
-      }
-      final response = await http.put(
-        Uri.parse('${FlavorConfig.instance.apiBaseUrl}/users/$userId'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          if (username != null) 'username': username,
-          if (profileImageLink != null) 'profile_image_link': profileImageLink,
-        }),
-      );
-      final data = jsonDecode(response.body);
-      if (response.statusCode == 200) {
-        debugPrint('Profile updated successfully');
-        return Result.success('Profile updated successfully');
-      } else {
-        debugPrint(
-          'Failed to update profile. Server returned ${response.statusCode}',
-        );
-        debugPrint('Response body: ${response.body}');
+        // Get the public URL using the correct bucket and file path
+        profileImageLink = supabase.storage
+            .from('files')
+            .getPublicUrl(fileName);
+        debugPrint('Uploaded image URL: $profileImageLink');
+      } catch (uploadError) {
+        debugPrint('Upload error: $uploadError');
         return Result.error(
-          data['error'] ??
-              'Failed to update profile. Server returned ${response.statusCode}',
+          'Failed to upload image: ${uploadError.toString()}',
         );
       }
-    } catch (e) {
-      return Result.error('Failed to update profile: ${e.toString()}');
+    }
+    final response = await http.put(
+      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/users/$userId'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        if (username != null) 'username': username,
+        if (profileImageLink != null) 'profile_image_link': profileImageLink,
+      }),
+    );
+    final data = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      debugPrint('Profile updated successfully');
+      return Result.success('Profile updated successfully');
+    } else {
+      debugPrint(
+        'Failed to update profile. Server returned ${response.statusCode}',
+      );
+      debugPrint('Response body: ${response.body}');
+      return Result.error(
+        data['error'] ??
+            'Failed to update profile. Server returned ${response.statusCode}',
+      );
     }
   }
 
@@ -147,35 +115,26 @@ class ProfileProvider {
     required DateTime dateOfBirth,
   }) async {
     // Check internet connectivity first
-    final hasInternet = await InternetConnection().hasInternetAccess;
-    if (!hasInternet) {
-      return Result.error(
-        'No internet connection. Please check your network and try again.',
-      );
-    }
+
     late String idAttachmentUrl;
+    debugPrint('Uploading ID attachment: ${idAttachment.path}');
+    final fileName =
+        'id_${DateTime.now().microsecondsSinceEpoch.toString()}_${idAttachment.name}';
+
     try {
-      debugPrint('Uploading ID attachment: ${idAttachment.path}');
-      final fileName =
-          'id_${DateTime.now().microsecondsSinceEpoch.toString()}_${idAttachment.name}';
+      final uploadResult = await supabase.storage
+          .from('files')
+          .upload(fileName, File(idAttachment.path));
+      debugPrint('Upload result: $uploadResult');
 
-      try {
-        final uploadResult = await supabase.storage
-            .from('files')
-            .upload(fileName, File(idAttachment.path));
-        debugPrint('Upload result: $uploadResult');
-
-        // Get the public URL using the correct bucket and file path
-        idAttachmentUrl = supabase.storage.from('files').getPublicUrl(fileName);
-        debugPrint('Uploaded ID attachment URL: $idAttachmentUrl');
-      } catch (uploadError) {
-        debugPrint('Upload error: $uploadError');
-        return Result.error(
-          'Failed to upload ID attachment: ${uploadError.toString()}',
-        );
-      }
-    } catch (e) {
-      return Result.error('Failed to upload ID attachment: ${e.toString()}');
+      // Get the public URL using the correct bucket and file path
+      idAttachmentUrl = supabase.storage.from('files').getPublicUrl(fileName);
+      debugPrint('Uploaded ID attachment URL: $idAttachmentUrl');
+    } catch (uploadError) {
+      debugPrint('Upload error: $uploadError');
+      return Result.error(
+        'Failed to upload ID attachment: ${uploadError.toString()}',
+      );
     }
     try {
       final response = await http.post(
@@ -221,12 +180,7 @@ class ProfileProvider {
     List<XFile> images,
   ) async {
     // Check internet connectivity first
-    final hasInternet = await InternetConnection().hasInternetAccess;
-    if (!hasInternet) {
-      return Result.error(
-        'No internet connection. Please check your network and try again.',
-      );
-    }
+
     List<String> imageUrls = [];
     try {
       for (var image in images) {

@@ -15,7 +15,7 @@ class Pet with PetMappable {
   String type;
   String breed;
   String gender;
-  int age;
+  String age;
   DateTime dateOfBirth;
   String size;
   String weight;
@@ -94,5 +94,23 @@ class PetAdoption with PetAdoptionMappable {
     required this.createdAt,
     required this.user,
     required this.status,
+  });
+}
+
+@MappableClass(caseStyle: CaseStyle.snakeCase)
+class Poll with PollMappable {
+  final int id;
+  final DateTime createdAt;
+  final int pet;
+  final String suggestedName;
+  final List<String>? votes;
+  final String createdBy;
+  Poll({
+    required this.id,
+    required this.createdAt,
+    required this.pet,
+    required this.suggestedName,
+    this.votes,
+    required this.createdBy,
   });
 }

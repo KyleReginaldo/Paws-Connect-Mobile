@@ -193,12 +193,11 @@ class ForumProvider {
   }) async {
     String? forumImageUrl;
     if (forumImageFile != null) {
+      final filePath =
+          '${DateTime.now().microsecondsSinceEpoch}_${forumImageFile.name}';
       final storagePath = await supabase.storage
           .from('files')
-          .upload(
-            '${DateTime.now().microsecondsSinceEpoch.toString()}_${forumImageFile.name}',
-            File(forumImageFile.path),
-          );
+          .upload(filePath, File(forumImageFile.path));
       forumImageUrl = supabase.storage.from('').getPublicUrl(storagePath);
     }
     final response = await http.post(
@@ -213,6 +212,45 @@ class ForumProvider {
     );
     if (response.statusCode != 201) {
       throw Exception('Failed to create forum');
+    }
+  }
+
+  Future<Result<String>> updateForum({
+    required int forumId,
+    String? forumName,
+    bool? private,
+    XFile? forumImageFile,
+  }) async {
+    try {
+      String? forumImageUrl;
+      if (forumImageFile != null) {
+        final filePath =
+            '${DateTime.now().microsecondsSinceEpoch}_${forumImageFile.name}';
+        final storagePath = await supabase.storage
+            .from('files')
+            .upload(filePath, File(forumImageFile.path));
+        forumImageUrl = supabase.storage.from('').getPublicUrl(storagePath);
+      }
+
+      final Map<String, dynamic> body = {
+        if (forumName != null) 'forum_name': forumName,
+        if (private != null) 'private': private,
+        if (forumImageUrl != null) 'forum_image_url': forumImageUrl,
+      };
+
+      final response = await http.put(
+        Uri.parse('${FlavorConfig.instance.apiBaseUrl}/forum/$forumId'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        return Result.success(data['message'] ?? 'Forum updated successfully');
+      } else {
+        return Result.error(data['message'] ?? 'Failed to update forum');
+      }
+    } catch (e) {
+      return Result.error('Something went wrong: $e');
     }
   }
 

@@ -69,8 +69,12 @@ class PetContainer extends StatelessWidget {
                   ],
                 ),
                 SizedBox(height: 4),
-                PawsText(pet.name, fontSize: 16, fontWeight: FontWeight.w500),
-                PawsText('${pet.age} year(s) old', fontSize: 14),
+                PawsText(
+                  pet.name.isEmpty ? 'No name' : pet.name,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+                PawsText(pet.age, fontSize: 14),
                 PawsText(
                   pet.breed,
                   fontSize: 14,

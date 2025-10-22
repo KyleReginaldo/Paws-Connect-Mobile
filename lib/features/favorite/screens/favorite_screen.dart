@@ -182,7 +182,9 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                                                 CrossAxisAlignment.start,
                                             children: [
                                               PawsText(
-                                                pet.name,
+                                                pet.name.isEmpty
+                                                    ? 'No name'
+                                                    : pet.name,
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.w600,
                                                 maxLines: 1,

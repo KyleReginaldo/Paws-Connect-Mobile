@@ -547,9 +547,9 @@ class _LoadingView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Lottie.asset(
-        'assets/json/paw_loader.json',
-        width: 64,
-        height: 64,
+        'assets/json/dog_loading.json',
+        width: 100,
+        height: 100,
         repeat: true,
       ),
     );

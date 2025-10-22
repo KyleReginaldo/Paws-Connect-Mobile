@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/supabase/client.dart';
@@ -11,6 +10,8 @@ import 'package:paws_connect/core/widgets/button.dart';
 import 'package:paws_connect/core/widgets/text.dart';
 import 'package:paws_connect/core/widgets/text_field.dart';
 import 'package:paws_connect/features/profile/provider/profile_provider.dart';
+
+import '../../../core/services/loading_service.dart';
 
 /// ID Verification screen with manual photo capture and form input
 @RoutePage()
@@ -123,54 +124,78 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
 
     // Validate photo
     if (_frontIdPhoto == null) {
-      EasyLoading.showError('Please capture a photo of your ID');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please capture a photo of your ID'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
       return;
     }
 
     // Validate user authentication
     if (USER_ID == null || USER_ID!.isEmpty) {
-      EasyLoading.showError('User not authenticated');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('User not authenticated'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
       return;
     }
 
     // Validate date of birth
     if (_selectedDateOfBirth == null) {
-      EasyLoading.showError('Please select your date of birth');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select your date of birth'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
       return;
     }
 
     setState(() => _submitting = true);
-    EasyLoading.show(status: 'Submitting verification...');
 
     try {
-      final result = await ProfileProvider().submitIdVerification(
-        userId: USER_ID!,
-        idNumber:
-            '', // No longer using ID number - keeping empty for API compatibility
-        idAttachment: _frontIdPhoto!,
-        firstName: _firstNameController.text.trim(),
-        lastName: _lastNameController.text.trim(),
-        middleInitial: _middleInitialController.text.isNotEmpty
-            ? _middleInitialController.text.trim()
-            : null,
-        address: _addressController.text.trim(),
-        dateOfBirth: _selectedDateOfBirth!,
+      final result = await LoadingService.showWhileExecuting(
+        context,
+        ProfileProvider().submitIdVerification(
+          userId: USER_ID!,
+          idNumber:
+              '', // No longer using ID number - keeping empty for API compatibility
+          idAttachment: _frontIdPhoto!,
+          firstName: _firstNameController.text.trim(),
+          lastName: _lastNameController.text.trim(),
+          middleInitial: _middleInitialController.text.isNotEmpty
+              ? _middleInitialController.text.trim()
+              : null,
+          address: _addressController.text.trim(),
+          dateOfBirth: _selectedDateOfBirth!,
+        ),
+        message: 'Submitting verification...',
       );
 
-      EasyLoading.dismiss();
-
       if (result.isSuccess) {
-        EasyLoading.showSuccess(result.value);
-        // Navigate back or to profile
         if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(result.value)));
           context.router.maybePop();
         }
       } else {
-        EasyLoading.showError(result.error);
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(result.error)));
+        }
       }
     } catch (e) {
-      EasyLoading.dismiss();
-      EasyLoading.showError('Failed to submit verification: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to submit verification: $e')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

@@ -38,8 +38,8 @@ class PetMapper extends ClassMapperBase<Pet> {
   static const Field<Pet, String> _f$breed = Field('breed', _$breed);
   static String _$gender(Pet v) => v.gender;
   static const Field<Pet, String> _f$gender = Field('gender', _$gender);
-  static int _$age(Pet v) => v.age;
-  static const Field<Pet, int> _f$age = Field('age', _$age);
+  static String _$age(Pet v) => v.age;
+  static const Field<Pet, String> _f$age = Field('age', _$age);
   static DateTime _$dateOfBirth(Pet v) => v.dateOfBirth;
   static const Field<Pet, DateTime> _f$dateOfBirth = Field(
     'dateOfBirth',
@@ -276,7 +276,7 @@ abstract class PetCopyWith<$R, $In extends Pet, $Out>
     String? type,
     String? breed,
     String? gender,
-    int? age,
+    String? age,
     DateTime? dateOfBirth,
     String? size,
     String? weight,
@@ -344,7 +344,7 @@ class _PetCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Pet, $Out>
     String? type,
     String? breed,
     String? gender,
-    int? age,
+    String? age,
     DateTime? dateOfBirth,
     String? size,
     String? weight,
@@ -575,5 +575,175 @@ class _PetAdoptionCopyWithImpl<$R, $Out>
   PetAdoptionCopyWith<$R2, PetAdoption, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   ) => _PetAdoptionCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class PollMapper extends ClassMapperBase<Poll> {
+  PollMapper._();
+
+  static PollMapper? _instance;
+  static PollMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = PollMapper._());
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'Poll';
+
+  static int _$id(Poll v) => v.id;
+  static const Field<Poll, int> _f$id = Field('id', _$id);
+  static DateTime _$createdAt(Poll v) => v.createdAt;
+  static const Field<Poll, DateTime> _f$createdAt = Field(
+    'createdAt',
+    _$createdAt,
+    key: r'created_at',
+  );
+  static int _$pet(Poll v) => v.pet;
+  static const Field<Poll, int> _f$pet = Field('pet', _$pet);
+  static String _$suggestedName(Poll v) => v.suggestedName;
+  static const Field<Poll, String> _f$suggestedName = Field(
+    'suggestedName',
+    _$suggestedName,
+    key: r'suggested_name',
+  );
+  static List<String>? _$votes(Poll v) => v.votes;
+  static const Field<Poll, List<String>> _f$votes = Field(
+    'votes',
+    _$votes,
+    opt: true,
+  );
+  static String _$createdBy(Poll v) => v.createdBy;
+  static const Field<Poll, String> _f$createdBy = Field(
+    'createdBy',
+    _$createdBy,
+    key: r'created_by',
+  );
+
+  @override
+  final MappableFields<Poll> fields = const {
+    #id: _f$id,
+    #createdAt: _f$createdAt,
+    #pet: _f$pet,
+    #suggestedName: _f$suggestedName,
+    #votes: _f$votes,
+    #createdBy: _f$createdBy,
+  };
+
+  static Poll _instantiate(DecodingData data) {
+    return Poll(
+      id: data.dec(_f$id),
+      createdAt: data.dec(_f$createdAt),
+      pet: data.dec(_f$pet),
+      suggestedName: data.dec(_f$suggestedName),
+      votes: data.dec(_f$votes),
+      createdBy: data.dec(_f$createdBy),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static Poll fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<Poll>(map);
+  }
+
+  static Poll fromJson(String json) {
+    return ensureInitialized().decodeJson<Poll>(json);
+  }
+}
+
+mixin PollMappable {
+  String toJson() {
+    return PollMapper.ensureInitialized().encodeJson<Poll>(this as Poll);
+  }
+
+  Map<String, dynamic> toMap() {
+    return PollMapper.ensureInitialized().encodeMap<Poll>(this as Poll);
+  }
+
+  PollCopyWith<Poll, Poll, Poll> get copyWith =>
+      _PollCopyWithImpl<Poll, Poll>(this as Poll, $identity, $identity);
+  @override
+  String toString() {
+    return PollMapper.ensureInitialized().stringifyValue(this as Poll);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return PollMapper.ensureInitialized().equalsValue(this as Poll, other);
+  }
+
+  @override
+  int get hashCode {
+    return PollMapper.ensureInitialized().hashValue(this as Poll);
+  }
+}
+
+extension PollValueCopy<$R, $Out> on ObjectCopyWith<$R, Poll, $Out> {
+  PollCopyWith<$R, Poll, $Out> get $asPoll =>
+      $base.as((v, t, t2) => _PollCopyWithImpl<$R, $Out>(v, t, t2));
+}
+
+abstract class PollCopyWith<$R, $In extends Poll, $Out>
+    implements ClassCopyWith<$R, $In, $Out> {
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get votes;
+  $R call({
+    int? id,
+    DateTime? createdAt,
+    int? pet,
+    String? suggestedName,
+    List<String>? votes,
+    String? createdBy,
+  });
+  PollCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
+}
+
+class _PollCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Poll, $Out>
+    implements PollCopyWith<$R, Poll, $Out> {
+  _PollCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<Poll> $mapper = PollMapper.ensureInitialized();
+  @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get votes =>
+      $value.votes != null
+      ? ListCopyWith(
+          $value.votes!,
+          (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(votes: v),
+        )
+      : null;
+  @override
+  $R call({
+    int? id,
+    DateTime? createdAt,
+    int? pet,
+    String? suggestedName,
+    Object? votes = $none,
+    String? createdBy,
+  }) => $apply(
+    FieldCopyWithData({
+      if (id != null) #id: id,
+      if (createdAt != null) #createdAt: createdAt,
+      if (pet != null) #pet: pet,
+      if (suggestedName != null) #suggestedName: suggestedName,
+      if (votes != $none) #votes: votes,
+      if (createdBy != null) #createdBy: createdBy,
+    }),
+  );
+  @override
+  Poll $make(CopyWithData data) => Poll(
+    id: data.get(#id, or: $value.id),
+    createdAt: data.get(#createdAt, or: $value.createdAt),
+    pet: data.get(#pet, or: $value.pet),
+    suggestedName: data.get(#suggestedName, or: $value.suggestedName),
+    votes: data.get(#votes, or: $value.votes),
+    createdBy: data.get(#createdBy, or: $value.createdBy),
+  );
+
+  @override
+  PollCopyWith<$R2, Poll, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
+      _PollCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 

@@ -12,6 +12,7 @@ import 'package:paws_connect/features/adoption/repository/adoption_repository.da
 import 'package:provider/provider.dart';
 
 import '../../../dependency.dart';
+import '../../pets/models/pet_model.dart';
 import '../models/adoption_model.dart';
 
 @RoutePage()
@@ -186,7 +187,7 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
                 ),
                 const SizedBox(height: 4),
                 PawsText(
-                  '${adoption.pets.breed} • ${adoption.pets.age} year${adoption.pets.age > 1 ? 's' : ''} old',
+                  '${adoption.pets.breed} • ${adoption.pets.age}',
                   fontSize: 16,
                   color: Colors.white.withValues(alpha: 0.9),
                 ),
@@ -343,17 +344,26 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
     );
   }
 
-  Widget _buildPetDetailsCard(pet) {
+  Widget _buildPetDetailsCard(Pet pet) {
     return _buildCard(
       title: 'Pet Information',
       icon: LucideIcons.heart,
       child: Column(
         children: [
-          _buildInfoRow('Name', pet.name),
+          _buildInfoRow(
+            'Name',
+            pet.name.isEmpty
+                ? 'No name'
+                : pet.name.isEmpty
+                ? 'No name'
+                : pet.name.isEmpty
+                ? 'No name'
+                : pet.name,
+          ),
           const SizedBox(height: 12),
           _buildInfoRow('Breed', pet.breed),
           const SizedBox(height: 12),
-          _buildInfoRow('Age', '${pet.age} year${pet.age > 1 ? 's' : ''} old'),
+          _buildInfoRow('Age', pet.age),
           const SizedBox(height: 12),
           _buildInfoRow('Gender', pet.gender),
           const SizedBox(height: 12),
