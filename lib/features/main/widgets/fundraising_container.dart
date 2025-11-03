@@ -16,6 +16,7 @@ class FundraisingContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('transformed url: ${fundraising.transformedImages}');
     return InkWell(
       onTap: () {
         context.router.push(FundraisingDetailRoute(id: fundraising.id));
