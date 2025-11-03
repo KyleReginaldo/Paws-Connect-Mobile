@@ -6,6 +6,7 @@ import 'package:paws_connect/features/pets/repository/pet_repository.dart';
 
 import '../../../core/router/app_route.gr.dart';
 import '../../../core/theme/paws_theme.dart';
+import '../../../core/widgets/text.dart';
 // Removed provider dependency; delegate receives repository directly
 
 class PetSearchDelegate extends SearchDelegate<Pet?> {
@@ -248,15 +249,37 @@ class PetSearchDelegate extends SearchDelegate<Pet?> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       leading: Hero(
         tag: 'pet-${pet.id}',
-        child: CircleAvatar(
-          radius: 28,
-          backgroundImage: pet.transformedPhotos.isNotEmpty
-              ? NetworkImage(pet.transformedPhotos.first)
-              : null,
-          backgroundColor: PawsColors.background,
-          child: pet.transformedPhotos.isEmpty
-              ? const Icon(Icons.pets, color: PawsColors.textSecondary)
-              : null,
+        child: Stack(
+          children: [
+            CircleAvatar(
+              radius: 28,
+              backgroundImage: pet.transformedPhotos.isNotEmpty
+                  ? NetworkImage(pet.transformedPhotos.first)
+                  : null,
+              backgroundColor: PawsColors.background,
+              child: pet.transformedPhotos.isEmpty
+                  ? const Icon(Icons.pets, color: PawsColors.textSecondary)
+                  : null,
+            ),
+            if (pet.adopted != null)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    color: PawsColors.success,
+                  ),
+                  child: PawsText(
+                    'ADOPTED',
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
       title: Text(

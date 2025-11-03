@@ -307,7 +307,7 @@ class _CreateAdoptionScreenState extends State<CreateAdoptionScreen> {
           centerTitle: true,
           backgroundColor: PawsColors.primary,
           title: const Text(
-            'Create Adoption',
+            'Set Adoption Details',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w500,
@@ -347,14 +347,39 @@ class _CreateAdoptionScreenState extends State<CreateAdoptionScreen> {
                   spacing: 10,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: CachedNetworkImage(
-                        imageUrl: pet.transformedPhotos.first,
-                        width: 80,
-                        height: 80,
-                        fit: BoxFit.cover,
-                      ),
+                    Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: CachedNetworkImage(
+                            imageUrl: pet.transformedPhotos.first,
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        if (pet.adopted != null)
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                color: PawsColors.success,
+                              ),
+                              child: PawsText(
+                                'ADOPTED',
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

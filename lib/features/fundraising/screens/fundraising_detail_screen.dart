@@ -286,6 +286,50 @@ class _FundraisingDetailScreenState extends State<FundraisingDetailScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     SizedBox(height: 10),
+
+                    // Campaign ended but target not reached message
+                    if (DateTime.now().isAfter(fundraising.endDate) &&
+                        fundraising.raisedAmount < fundraising.targetAmount)
+                      Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.orange.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  LucideIcons.heart,
+                                  color: Colors.orange,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                PawsText(
+                                  'Campaign Update',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.orange,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            PawsText(
+                              'Thank you to everyone who has supported our campaign! While we didn\'t reach our goal of ${fundraising.targetAmount.displayMoney()}, we are grateful for the ${fundraising.raisedAmount.displayMoney()} raised, which will still help us ${fundraising.title}. We might take a little longer to reach the full target, but every bit helps and we are optimistic about continuing this mission. You can still support us by donating to our general fund or sharing our cause with your friends and family. Together, we can make a difference!',
+                              fontSize: 14,
+                              color: PawsColors.textPrimary,
+                            ),
+                          ],
+                        ),
+                      ),
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [

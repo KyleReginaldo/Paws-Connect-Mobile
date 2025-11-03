@@ -13,6 +13,7 @@ import 'package:provider/provider.dart';
 
 import '../../../dependency.dart';
 import '../../pets/models/pet_model.dart';
+import '../../profile/models/user_profile_model.dart';
 import '../models/adoption_model.dart';
 
 @RoutePage()
@@ -298,6 +299,8 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
             adoption.status.capitalize(),
             valueColor: adoption.status.color,
           ),
+          const SizedBox(height: 16),
+          _buildHouseImagesSection(adoption.users),
         ],
       ),
     );
@@ -444,6 +447,133 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: valueColor ?? PawsColors.textPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHouseImagesSection(UserProfile user) {
+    if (user.houseImages == null || user.houseImages!.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                LucideIcons.house,
+                color: PawsColors.textSecondary,
+                size: 16,
+              ),
+              const SizedBox(width: 8),
+              PawsText(
+                'House Images',
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: PawsColors.textSecondary,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(LucideIcons.imageOff, color: Colors.grey, size: 16),
+                const SizedBox(width: 8),
+                PawsText(
+                  'No house images provided',
+                  fontSize: 13,
+                  color: Colors.grey,
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(LucideIcons.house, color: PawsColors.primary, size: 16),
+            const SizedBox(width: 8),
+            PawsText(
+              'House Images (${user.houseImages!.length})',
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: PawsColors.textPrimary,
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 100,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: user.houseImages!.length,
+            itemBuilder: (context, index) {
+              final imageUrl = user.houseImages![index];
+              return Container(
+                margin: const EdgeInsets.only(right: 12),
+                child: GestureDetector(
+                  onTap: () {
+                    // Show full screen image
+                    showDialog(
+                      context: context,
+                      builder: (context) => Dialog(
+                        backgroundColor: Colors.transparent,
+                        child: Stack(
+                          children: [
+                            Center(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: NetworkImageView(
+                                  imageUrl,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 40,
+                              right: 16,
+                              child: IconButton(
+                                onPressed: () => Navigator.pop(context),
+                                icon: const Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 30,
+                                ),
+                                style: IconButton.styleFrom(
+                                  backgroundColor: Colors.black.withValues(
+                                    alpha: 0.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: NetworkImageView(
+                      imageUrl,
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ],

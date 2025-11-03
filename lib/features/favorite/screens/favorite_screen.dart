@@ -160,14 +160,42 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         // Image area with fixed aspect ratio
-                                        AspectRatio(
-                                          aspectRatio: 4 / 3,
-                                          child: NetworkImageView(
-                                            pet.transformedPhotos.first,
-                                            fit: BoxFit.cover,
-                                            width: double.infinity,
-                                            enableTapToView: false,
-                                          ),
+                                        Stack(
+                                          children: [
+                                            AspectRatio(
+                                              aspectRatio: 4 / 3,
+                                              child: NetworkImageView(
+                                                pet.transformedPhotos.first,
+                                                fit: BoxFit.cover,
+                                                width: double.infinity,
+                                                enableTapToView: false,
+                                              ),
+                                            ),
+                                            if (pet.adopted != null)
+                                              Positioned(
+                                                top: 8,
+                                                right: 8,
+                                                child: Container(
+                                                  padding: EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 4,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          12,
+                                                        ),
+                                                    color: PawsColors.success,
+                                                  ),
+                                                  child: PawsText(
+                                                    'ADOPTED',
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
                                         ),
                                         // Text content
                                         Padding(

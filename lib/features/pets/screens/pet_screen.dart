@@ -246,14 +246,18 @@ class _PetScreenState extends State<PetScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              AspectRatio(
-                                aspectRatio: 4 / 3,
-                                child: NetworkImageView(
-                                  pet.transformedPhotos.first,
-                                  fit: BoxFit.cover,
-                                  width: double.infinity,
-                                  enableTapToView: false,
-                                ),
+                              Stack(
+                                children: [
+                                  AspectRatio(
+                                    aspectRatio: 4 / 3,
+                                    child: NetworkImageView(
+                                      pet.transformedPhotos.first,
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      enableTapToView: false,
+                                    ),
+                                  ),
+                                ],
                               ),
                               Padding(
                                 padding: const EdgeInsets.fromLTRB(
@@ -265,18 +269,30 @@ class _PetScreenState extends State<PetScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    PawsText(
-                                      pet.name.isEmpty
-                                          ? 'No name'
-                                          : pet.name.isEmpty
-                                          ? 'No name'
-                                          : pet.name.isEmpty
-                                          ? 'No name'
-                                          : pet.name,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                    Row(
+                                      spacing: 6,
+                                      children: [
+                                        PawsText(
+                                          pet.name.isEmpty
+                                              ? 'No name'
+                                              : pet.name.isEmpty
+                                              ? 'No name'
+                                              : pet.name.isEmpty
+                                              ? 'No name'
+                                              : pet.name,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        if (pet.adopted != null)
+                                          PawsText(
+                                            'ADOPTED',
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: PawsColors.success,
+                                          ),
+                                      ],
                                     ),
                                     const SizedBox(height: 4),
                                     PawsText(

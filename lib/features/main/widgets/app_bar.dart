@@ -1,6 +1,8 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:iconify_flutter/iconify_flutter.dart';
+import 'package:iconify_flutter/icons/ri.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/components/components.dart';
 import 'package:paws_connect/core/repository/common_repository.dart';
@@ -86,7 +88,11 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                         // notifRepo.markAllViewed(USER_ID ?? ''); // if USER_ID accessible
                       });
                     },
-                    icon: Icon(LucideIcons.bell, size: 20),
+                    icon: Iconify(
+                      Ri.notification_line,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                   ),
                   if ((unread ?? 0) > 0)
                     Positioned(

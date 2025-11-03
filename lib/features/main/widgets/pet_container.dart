@@ -69,10 +69,31 @@ class PetContainer extends StatelessWidget {
                   ],
                 ),
                 SizedBox(height: 4),
-                PawsText(
-                  pet.name.isEmpty ? 'No name' : pet.name,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
+                Row(
+                  children: [
+                    PawsText(
+                      pet.name.isEmpty ? 'No name' : pet.name,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    if (pet.adopted != null)
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: PawsColors.success,
+                        ),
+                        child: PawsText(
+                          'ADOPTED',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                  ],
                 ),
                 PawsText(pet.age, fontSize: 14),
                 PawsText(

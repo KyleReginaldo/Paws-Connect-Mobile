@@ -18,6 +18,7 @@ import 'package:paws_connect/features/pets/provider/pet_provider.dart';
 import 'package:paws_connect/features/pets/repository/pet_repository.dart';
 import 'package:paws_connect/features/profile/repository/profile_repository.dart';
 import 'package:provider/provider.dart';
+import 'package:see_more/see_more.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart' show RefreshTrigger;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -177,9 +178,12 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
     if (!mounted) return;
     final bool? confirm = await showDialog<bool>(
       context: context,
+
       barrierDismissible: true,
       builder: (ctx) {
         return AlertDialog(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
           title: const Text('Cancel adoption?'),
           content: Text(
             'Are you sure you want to cancel your adoption application for ${widget.pet.name.isEmpty ? 'No name' : widget.pet.name}? This action cannot be undone.',
@@ -764,10 +768,30 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                         Divider(thickness: 2, color: PawsColors.border),
                         PawsText('Description'),
                         SizedBox(height: 5),
-                        PawsText(
+                        SeeMoreWidget(
                           pet.description.isNotEmpty
                               ? pet.description
                               : 'No description available',
+                          textStyle: TextStyle(
+                            fontSize: 16,
+                            color: PawsColors.textPrimary,
+                            fontWeight: FontWeight.w400,
+                          ),
+                          animationDuration: Duration(milliseconds: 200),
+                          seeMoreText: "See More",
+
+                          seeMoreStyle: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: PawsColors.primary,
+                          ),
+                          seeLessText: "See Less",
+                          seeLessStyle: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: PawsColors.primary,
+                          ),
+                          trimLength: 240,
                         ),
                         SizedBox(height: 16),
                         if (pet.adopted != null) ...[
@@ -797,7 +821,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                                   PawsText('🎉'),
 
                                   PawsText(
-                                    'by ${pet.adopted!.user.userIdentification?.firstName} ${pet.adopted!.user.userIdentification?.lastName}',
+                                    'by ${pet.adopted!.user.username}',
                                     fontSize: 15,
                                     fontWeight: FontWeight.w500,
                                     color: PawsColors.success,
@@ -884,30 +908,26 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                                     ),
                                     SizedBox(width: 12),
 
-                                    // User Info
-                                    if (pet.adopted != null &&
-                                        pet.adopted!.user.id ==
-                                            adoption.user.id)
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            PawsText(
-                                              '${pet.adopted!.user.userIdentification?.firstName} ${pet.adopted!.user.userIdentification?.lastName}',
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w500,
-                                              color: PawsColors.textPrimary,
-                                            ),
-                                            SizedBox(height: 2),
-                                            PawsText(
-                                              'Applied ${_formatDate(adoption.createdAt)}',
-                                              fontSize: 12,
-                                              color: PawsColors.textSecondary,
-                                            ),
-                                          ],
-                                        ),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          PawsText(
+                                            adoption.user.username,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: PawsColors.textPrimary,
+                                          ),
+                                          SizedBox(height: 2),
+                                          PawsText(
+                                            'Applied ${_formatDate(adoption.createdAt)}',
+                                            fontSize: 12,
+                                            color: PawsColors.textSecondary,
+                                          ),
+                                        ],
                                       ),
+                                    ),
 
                                     // Status Badge
                                     Container(

@@ -30,6 +30,7 @@ class ChangePasswordScreen extends StatefulWidget implements AutoRouteWrapper {
 
 class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _currentPassword = TextEditingController();
   final _newPassword = TextEditingController();
   final _confirmPassword = TextEditingController();
 
@@ -79,6 +80,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   @override
   void dispose() {
+    _currentPassword.dispose();
     _newPassword.dispose();
     _confirmPassword.dispose();
     super.dispose();
@@ -104,9 +106,23 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const PawsText(
-                  'For security reasons, you must change your password before continuing.',
+                  'For security reasons, please enter your current password and set a new one.',
                 ),
                 const SizedBox(height: 24),
+
+                // Current password
+                PawsTextField(
+                  hint: 'Current Password',
+                  controller: _currentPassword,
+                  obscureText: true,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Current password is required';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
 
                 // New password
                 PawsTextField(

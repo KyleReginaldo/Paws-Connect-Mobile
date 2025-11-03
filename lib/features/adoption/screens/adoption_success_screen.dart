@@ -73,58 +73,98 @@ class AdoptionSuccessScreen extends StatelessWidget {
                         color: PawsColors.textSecondary,
                         textAlign: TextAlign.center,
                       ),
-                    ],
-                  ),
-                ),
-              ),
+                      const SizedBox(height: 16),
 
-              // Information Cards
-              Expanded(
-                flex: 1,
-                child: Column(
-                  children: [
-                    // Next Steps Card
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: PawsColors.primary.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: PawsColors.primary.withValues(alpha: 0.2),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: PawsColors.primary.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: PawsColors.primary.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  LucideIcons.clock,
+                                  color: PawsColors.primary,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                const PawsText(
+                                  'What happens next?',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: PawsColors.primary,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            const PawsText(
+                              '• We\'ll review your application within 24-48 hours\n'
+                              '• You\'ll receive updates via email and notifications\n'
+                              '• If approved, we\'ll contact you to arrange a meet & greet',
+                              fontSize: 14,
+                              color: PawsColors.textSecondary,
+                            ),
+                          ],
                         ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                LucideIcons.clock,
-                                color: PawsColors.primary,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              const PawsText(
-                                'What happens next?',
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: PawsColors.primary,
-                              ),
-                            ],
+                      const SizedBox(height: 16),
+
+                      // Adoption Fee Reminder Card
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Colors.orange.withValues(alpha: 0.3),
                           ),
-                          const SizedBox(height: 12),
-                          const PawsText(
-                            '• We\'ll review your application within 24-48 hours\n'
-                            '• You\'ll receive updates via email and notifications\n'
-                            '• If approved, we\'ll contact you to arrange a meet & greet',
-                            fontSize: 14,
-                            color: PawsColors.textSecondary,
-                          ),
-                        ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  LucideIcons.heart,
+                                  color: Colors.orange,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                const PawsText(
+                                  'Important Reminder',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.orange,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            const PawsText(
+                              'Your Support Makes a Difference',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: PawsColors.textPrimary,
+                            ),
+                            const SizedBox(height: 4),
+                            const PawsText(
+                              'A donation helps us provide medical care, food, and shelter for rescued animals. Your generous contribution ensures we can continue saving lives and caring for pets in need until they find their forever homes.',
+                              fontSize: 14,
+                              color: PawsColors.textSecondary,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
 

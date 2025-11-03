@@ -1,6 +1,7 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/components/media/network_image_view.dart';
 import 'package:paws_connect/core/enum/user.enum.dart';
@@ -34,7 +35,6 @@ import '../../../core/widgets/text.dart';
 import '../../../dependency.dart';
 import '../../favorite/repository/favorite_repository.dart';
 import '../../fundraising/repository/fundraising_repository.dart';
-import '../../internet/internet.dart';
 import '../../notifications/repository/notification_repository.dart';
 import '../../profile/repository/profile_repository.dart';
 import '../widgets/app_bar.dart';
@@ -72,7 +72,6 @@ class HomeScreen extends StatefulWidget implements AutoRouteWrapper {
 
 class _TopDonorChip extends StatelessWidget {
   const _TopDonorChip({
-    super.key,
     required this.username,
     required this.rank,
     required this.id,
@@ -452,7 +451,6 @@ class _HomeScreenState extends State<HomeScreen> with TutorialTargetMixin {
     );
     final topDonors = context.watch<DonationRepository>().leaderboard;
     final user = context.watch<ProfileRepository>().userProfile;
-    final isConnected = context.watch<InternetProvider>().isConnected;
     final events = context.watch<EventRepository>().events;
     // Launch onboarding tutorial once for users who are not onboarded yet
     if (user != null && user.onboarded == false && !_onboardingScheduled) {
@@ -629,26 +627,80 @@ class _HomeScreenState extends State<HomeScreen> with TutorialTargetMixin {
                     width: double.infinity,
                     padding: EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.orange.withValues(alpha: 0.1),
+                      color: Colors.blueAccent.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: Colors.orange.withValues(alpha: 0.3),
+                        color: Colors.blueAccent.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Row(
                       children: [
                         Icon(
                           Icons.info_outline,
-                          color: Colors.orange,
+                          color: Colors.blueAccent,
                           size: 20,
                         ),
                         SizedBox(width: 8),
                         Expanded(
                           child: PawsText(
                             'Your verification is currently pending. We will notify you once it is approved.',
-                            color: Colors.orange.shade700,
+                            color: Colors.blueAccent.shade700,
                             fontSize: 14,
                           ),
+                        ),
+                      ],
+                    ),
+                  ),
+                },
+                if (user?.houseImages == null ||
+                    user!.houseImages!.isEmpty) ...{
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: PawsColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: PawsColors.primary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              PawsText(
+                                'Adding house images can increase your chances of successful adoptions. Please consider uploading some photos of your home.',
+                                color: PawsColors.primary,
+                                fontSize: 13,
+                              ),
+                              PawsElevatedButton(
+                                label: 'Add Now',
+                                isFullWidth: false,
+                                size: 14,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 0,
+                                ),
+                                borderRadius: 4,
+                                textStyle: TextStyle()
+                                  ..copyWith(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                icon: LucideIcons.housePlus,
+                                onPressed: () {
+                                  context.router.push(UserHouseRoute());
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        SvgPicture.asset(
+                          'assets/svg/houses.svg',
+                          height: 100,
+                          width: 100,
                         ),
                       ],
                     ),
