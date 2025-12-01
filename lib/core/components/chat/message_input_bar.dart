@@ -17,6 +17,7 @@ class MessageInputBar extends StatelessWidget {
   final List<AvailableUser> availableUsers;
   final String? currentUserId;
   final Function(AvailableUser)? onUserMentioned;
+  final String? hintText;
 
   const MessageInputBar({
     super.key,
@@ -29,6 +30,7 @@ class MessageInputBar extends StatelessWidget {
     this.availableUsers = const [],
     this.currentUserId,
     this.onUserMentioned,
+    this.hintText,
   });
 
   @override
@@ -70,7 +72,11 @@ class MessageInputBar extends StatelessWidget {
               Expanded(
                 child: MentionableTextField(
                   controller: controller,
-                  hintText: 'Type a message',
+                  hintText:
+                      hintText ??
+                      (previewImage != null
+                          ? 'Add a caption (optional)'
+                          : 'Type a message'),
                   onSubmitted: onSend,
                   availableUsers: availableUsers,
                   currentUserId: currentUserId,

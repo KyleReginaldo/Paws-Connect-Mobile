@@ -8,7 +8,7 @@ import 'package:installed_apps/app_info.dart';
 import 'package:installed_apps/installed_apps.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/components/media/network_image_view.dart';
-import 'package:paws_connect/core/extension/int.ext.dart';
+import 'package:paws_connect/core/extension/ext.dart';
 import 'package:paws_connect/core/widgets/text.dart';
 import 'package:paws_connect/core/widgets/text_field.dart';
 import 'package:paws_connect/features/donation/provider/direct_donation_provider.dart';
@@ -491,12 +491,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             PawsText(
-                              'GCash Payment',
+                              'Payment Options',
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
                             ),
                             PawsText(
-                              'Send your donation to the details below',
+                              'Choose any of the payment methods below',
                               fontSize: 13,
                               color: PawsColors.textSecondary,
                             ),
@@ -504,117 +504,462 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         ),
                         SizedBox(height: 16),
 
-                        if (fundraising?.gcashNumber != null) ...[
+                        // New E-Wallets Section
+                        if (fundraising?.eWallets != null &&
+                            fundraising!.eWallets!.isNotEmpty) ...[
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
                                 children: [
                                   Icon(
-                                    LucideIcons.phone,
+                                    LucideIcons.smartphone,
                                     size: 16,
                                     color: PawsColors.primary,
                                   ),
                                   SizedBox(width: 8),
                                   PawsText(
-                                    'GCash Number',
-                                    fontSize: 14,
-                                    color: PawsColors.primary,
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: PawsText(
-                                      fundraising!.gcashNumber!,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                      color: PawsColors.textPrimary,
-                                    ),
-                                  ),
-                                  IconButton(
-                                    onPressed: () {
-                                      Clipboard.setData(
-                                        ClipboardData(
-                                          text: fundraising.gcashNumber!,
-                                        ),
-                                      );
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Copied to clipboard!'),
-                                          behavior: SnackBarBehavior.floating,
-                                        ),
-                                      );
-                                    },
-                                    icon: Icon(
-                                      LucideIcons.copy,
-                                      size: 20,
-                                      color: PawsColors.primary,
-                                    ),
-                                    style: IconButton.styleFrom(
-                                      backgroundColor: PawsColors.primary
-                                          .withValues(alpha: 0.1),
-                                      foregroundColor: PawsColors.primary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 8),
-                        ],
-
-                        if (fundraising?.qrCode != null) ...[
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    LucideIcons.qrCode,
-                                    size: 16,
-                                    color: PawsColors.primary,
-                                  ),
-                                  SizedBox(width: 8),
-                                  PawsText(
-                                    'QR Code',
+                                    'E-Wallets',
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
                                     color: PawsColors.primary,
                                   ),
                                 ],
                               ),
-                              SizedBox(height: 12),
-                              Center(
-                                child: Container(
-                                  padding: EdgeInsets.all(16),
+                              SizedBox(height: 8),
+                              ...fundraising.eWallets!.map(
+                                (paymentInfo) => Container(
+                                  margin: EdgeInsets.only(bottom: 12),
+                                  padding: EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(12),
+                                    color: PawsColors.surface,
+                                    borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                      color: PawsColors.border,
+                                      color: PawsColors.border.withValues(
+                                        alpha: 0.5,
+                                      ),
                                     ),
                                   ),
-                                  child: NetworkImageView(
-                                    fundraising!.transformedQrCode!,
-                                    height: 180,
-                                    width: 180,
-                                    fit: BoxFit.cover,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 4,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: PawsColors.primary
+                                                  .withValues(alpha: 0.1),
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                            child: PawsText(
+                                              paymentInfo.label,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w500,
+                                              color: PawsColors.primary,
+                                            ),
+                                          ),
+                                          Spacer(),
+                                          if (paymentInfo
+                                              .accountNumber
+                                              .isNotEmpty)
+                                            IconButton(
+                                              onPressed: () {
+                                                Clipboard.setData(
+                                                  ClipboardData(
+                                                    text: paymentInfo
+                                                        .accountNumber,
+                                                  ),
+                                                );
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text(
+                                                      'Account number copied to clipboard!',
+                                                    ),
+                                                    behavior: SnackBarBehavior
+                                                        .floating,
+                                                  ),
+                                                );
+                                              },
+                                              icon: Icon(
+                                                LucideIcons.copy,
+                                                size: 16,
+                                                color: PawsColors.primary,
+                                              ),
+                                              style: IconButton.styleFrom(
+                                                backgroundColor: PawsColors
+                                                    .primary
+                                                    .withValues(alpha: 0.1),
+                                                foregroundColor:
+                                                    PawsColors.primary,
+                                                padding: EdgeInsets.all(8),
+                                                minimumSize: Size(32, 32),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                      if (paymentInfo
+                                          .accountNumber
+                                          .isNotEmpty) ...[
+                                        SizedBox(height: 8),
+                                        PawsText(
+                                          'Account: ${paymentInfo.accountNumber}',
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ],
+                                      if (paymentInfo.qrCode.isNotEmpty) ...[
+                                        SizedBox(height: 8),
+                                        Center(
+                                          child: Container(
+                                            padding: EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              border: Border.all(
+                                                color: PawsColors.border,
+                                              ),
+                                            ),
+                                            child: NetworkImageView(
+                                              paymentInfo.qrCode.startsWith(
+                                                    'https',
+                                                  )
+                                                  ? paymentInfo.qrCode
+                                                  : paymentInfo
+                                                        .qrCode
+                                                        .transformedUrl,
+                                              height: 120,
+                                              width: 120,
+                                              fit: BoxFit.cover,
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(height: 4),
+                                        Center(
+                                          child: PawsText(
+                                            'Scan QR code with ${paymentInfo.label}',
+                                            fontSize: 11,
+                                            color: PawsColors.textSecondary,
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
                                   ),
                                 ),
                               ),
+                            ],
+                          ),
+                        ],
+
+                        // New Bank Accounts Section
+                        if (fundraising?.bankAccounts != null &&
+                            fundraising!.bankAccounts!.isNotEmpty) ...[
+                          if (fundraising.eWallets != null &&
+                              fundraising.eWallets!.isNotEmpty)
+                            SizedBox(height: 16),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    LucideIcons.building,
+                                    size: 16,
+                                    color: PawsColors.primary,
+                                  ),
+                                  SizedBox(width: 8),
+                                  PawsText(
+                                    'Bank Accounts',
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: PawsColors.primary,
+                                  ),
+                                ],
+                              ),
                               SizedBox(height: 8),
-                              Center(
-                                child: PawsText(
-                                  'Scan this QR code with your GCash app',
-                                  fontSize: 12,
-                                  color: PawsColors.textSecondary,
-                                  textAlign: TextAlign.center,
+                              ...fundraising.bankAccounts!.map(
+                                (paymentInfo) => Container(
+                                  margin: EdgeInsets.only(bottom: 12),
+                                  padding: EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: PawsColors.surface,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: PawsColors.border.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 4,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: PawsColors.primary
+                                                  .withValues(alpha: 0.1),
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                            child: PawsText(
+                                              paymentInfo.label,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w500,
+                                              color: PawsColors.primary,
+                                            ),
+                                          ),
+                                          Spacer(),
+                                          if (paymentInfo
+                                              .accountNumber
+                                              .isNotEmpty)
+                                            IconButton(
+                                              onPressed: () {
+                                                Clipboard.setData(
+                                                  ClipboardData(
+                                                    text: paymentInfo
+                                                        .accountNumber,
+                                                  ),
+                                                );
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text(
+                                                      'Account number copied to clipboard!',
+                                                    ),
+                                                    behavior: SnackBarBehavior
+                                                        .floating,
+                                                  ),
+                                                );
+                                              },
+                                              icon: Icon(
+                                                LucideIcons.copy,
+                                                size: 16,
+                                                color: PawsColors.primary,
+                                              ),
+                                              style: IconButton.styleFrom(
+                                                backgroundColor: PawsColors
+                                                    .primary
+                                                    .withValues(alpha: 0.1),
+                                                foregroundColor:
+                                                    PawsColors.primary,
+                                                padding: EdgeInsets.all(8),
+                                                minimumSize: Size(32, 32),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                      if (paymentInfo
+                                          .accountNumber
+                                          .isNotEmpty) ...[
+                                        SizedBox(height: 8),
+                                        PawsText(
+                                          'Account: ${paymentInfo.accountNumber}',
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ],
+                                      if (paymentInfo.qrCode.isNotEmpty) ...[
+                                        SizedBox(height: 8),
+                                        Center(
+                                          child: Container(
+                                            padding: EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              border: Border.all(
+                                                color: PawsColors.border,
+                                              ),
+                                            ),
+                                            child: NetworkImageView(
+                                              paymentInfo.qrCode.startsWith(
+                                                    'https',
+                                                  )
+                                                  ? paymentInfo.qrCode
+                                                  : paymentInfo
+                                                        .qrCode
+                                                        .transformedUrl,
+                                              height: 120,
+                                              width: 120,
+                                              fit: BoxFit.cover,
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(height: 4),
+                                        Center(
+                                          child: PawsText(
+                                            'Scan QR code for ${paymentInfo.label}',
+                                            fontSize: 11,
+                                            color: PawsColors.textSecondary,
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
                                 ),
                               ),
+                            ],
+                          ),
+                        ],
+
+                        // Fallback to old GCash format if no new payment methods
+                        if ((fundraising?.eWallets == null ||
+                                fundraising!.eWallets!.isEmpty) &&
+                            (fundraising?.bankAccounts == null ||
+                                fundraising!.bankAccounts!.isEmpty) &&
+                            (fundraising?.gcashNumber != null ||
+                                fundraising?.qrCode != null)) ...[
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              PawsText(
+                                'GCash Payment',
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              PawsText(
+                                'Send your donation to the details below',
+                                fontSize: 13,
+                                color: PawsColors.textSecondary,
+                              ),
+                              SizedBox(height: 16),
+
+                              if (fundraising?.gcashNumber != null) ...[
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          LucideIcons.phone,
+                                          size: 16,
+                                          color: PawsColors.primary,
+                                        ),
+                                        SizedBox(width: 8),
+                                        PawsText(
+                                          'GCash Number',
+                                          fontSize: 14,
+                                          color: PawsColors.primary,
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: PawsText(
+                                            fundraising!.gcashNumber!,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                            color: PawsColors.textPrimary,
+                                          ),
+                                        ),
+                                        IconButton(
+                                          onPressed: () {
+                                            Clipboard.setData(
+                                              ClipboardData(
+                                                text: fundraising.gcashNumber!,
+                                              ),
+                                            );
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  'Copied to clipboard!',
+                                                ),
+                                                behavior:
+                                                    SnackBarBehavior.floating,
+                                              ),
+                                            );
+                                          },
+                                          icon: Icon(
+                                            LucideIcons.copy,
+                                            size: 20,
+                                            color: PawsColors.primary,
+                                          ),
+                                          style: IconButton.styleFrom(
+                                            backgroundColor: PawsColors.primary
+                                                .withValues(alpha: 0.1),
+                                            foregroundColor: PawsColors.primary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 8),
+                              ],
+
+                              if (fundraising?.qrCode != null) ...[
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          LucideIcons.qrCode,
+                                          size: 16,
+                                          color: PawsColors.primary,
+                                        ),
+                                        SizedBox(width: 8),
+                                        PawsText(
+                                          'QR Code',
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                          color: PawsColors.primary,
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: 12),
+                                    Center(
+                                      child: Container(
+                                        padding: EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          border: Border.all(
+                                            color: PawsColors.border,
+                                          ),
+                                        ),
+                                        child: NetworkImageView(
+                                          fundraising!.transformedQrCode!,
+                                          height: 180,
+                                          width: 180,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(height: 8),
+                                    Center(
+                                      child: PawsText(
+                                        'Scan this QR code with your GCash app',
+                                        fontSize: 12,
+                                        color: PawsColors.textSecondary,
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ],
                           ),
                         ],
@@ -654,7 +999,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           children: [
                             StepItem(
                               title: Text(
-                                'Open your GCash, Maya, or GoTyme app',
+                                'Choose a payment method',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
@@ -662,7 +1007,25 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               ),
                               content: [
                                 Text(
-                                  'Launch the app on your mobile device.',
+                                  'Select from the available payment options above.',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: PawsColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            StepItem(
+                              title: Text(
+                                'Open your payment app',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              content: [
+                                Text(
+                                  'Launch the app corresponding to your chosen payment method.',
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: PawsColors.textSecondary,
@@ -679,22 +1042,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 ),
                               ),
                               content: [
-                                if (fundraising?.qrCode != null)
-                                  Text(
-                                    'Scan the QR code above or manually enter the GCash number.',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: PawsColors.textSecondary,
-                                    ),
-                                  )
-                                else
-                                  Text(
-                                    'Use "Send Money" and enter the GCash number above.',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: PawsColors.textSecondary,
-                                    ),
+                                Text(
+                                  'Scan the QR code or use the account number provided.',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: PawsColors.textSecondary,
                                   ),
+                                ),
                               ],
                             ),
                             StepItem(
@@ -740,9 +1094,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ),
 
                   SizedBox(height: 16),
-                  PawsText('Pay with GCash, Maya, GoTyme'),
                   PawsText(
-                    'Manual Payment',
+                    'Upload payment confirmation screenshot below',
                     fontSize: 16,
                     color: PawsColors.textSecondary,
                   ),
@@ -774,7 +1127,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       ),
                       SizedBox(height: 4),
                       PawsText(
-                        'Upload a clear screenshot of your payment confirmation (GCash/Maya/GoTyme)',
+                        'Upload a clear screenshot of your payment confirmation',
                         fontSize: 12,
                         color: PawsColors.textSecondary,
                       ),
@@ -891,8 +1244,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       if (intValue > remaining) {
                         return 'Amount exceeds remaining target amount of ${remaining.displayMoney()}';
                       }
-                      if (intValue < 50) {
-                        return 'Minimum amount is ₱50.00';
+                      if (intValue < 10) {
+                        return 'Minimum amount is ₱10.00';
                       }
 
                       return null;

@@ -4,12 +4,14 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:paws_connect/core/enum/id_type.enum.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/core/theme/paws_theme.dart';
 import 'package:paws_connect/core/widgets/button.dart';
 import 'package:paws_connect/core/widgets/text.dart';
 import 'package:paws_connect/core/widgets/text_field.dart';
 import 'package:paws_connect/features/profile/provider/profile_provider.dart';
+import 'package:paws_connect/features/verification/services/id_text_extractor.dart';
 
 import '../../../core/services/loading_service.dart';
 
@@ -29,7 +31,6 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
   bool _submitting = false;
   String? _error;
   bool _hasAttemptedSubmit = false; // Track if user has attempted to submit
-  final ImagePicker _picker = ImagePicker();
 
   // Form controllers
   final _formKey = GlobalKey<FormState>();
@@ -41,6 +42,10 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
   final _dateOfBirthController = TextEditingController();
   DateTime? _selectedDateOfBirth;
 
+  // ID Type selection
+  String? _selectedIdType;
+  final List<String> _idTypes = IdType.allLabels;
+
   @override
   void dispose() {
     _firstNameController.dispose();
@@ -51,27 +56,211 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
     super.dispose();
   }
 
-  Future<void> _capturePhoto() async {
+  Future<void> _showImageSourceDialog() async {
+    final ImageSource? source = await showDialog<ImageSource>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          title: const Text('Add ID Photo'),
+          content: const Text('Choose how you want to add your ID photo:'),
+          actions: [
+            TextButton.icon(
+              onPressed: () => Navigator.of(context).pop(ImageSource.gallery),
+              icon: const Icon(LucideIcons.image),
+              label: const Text('Gallery'),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+              ),
+            ),
+            TextButton.icon(
+              onPressed: () => Navigator.of(context).pop(ImageSource.camera),
+              icon: const Icon(LucideIcons.camera),
+              label: const Text('Camera'),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (source != null) {
+      if (source == ImageSource.camera) {
+        await _pickFromCamera();
+      } else {
+        await _pickFromGallery();
+      }
+    }
+  }
+
+  // Deprecated guided camera (landscape-only). Using system camera via ImagePicker instead.
+
+  Future<void> _pickFromGallery() async {
     try {
-      final XFile? photo = await _picker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 80,
+      final ImagePicker picker = ImagePicker();
+      final XFile? pickedFile = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
         maxWidth: 1920,
-        maxHeight: 1080,
+        maxHeight: 1920,
       );
 
-      if (photo != null) {
+      if (pickedFile != null) {
+        if (!mounted) return;
+
         setState(() {
-          _frontIdPhoto = photo;
+          _frontIdPhoto = pickedFile;
           _error = null;
           _hasAttemptedSubmit = false; // Reset validation state
         });
+
+        // Extract text from the selected ID if ID type is selected
+        if (_selectedIdType != null) {
+          await _extractTextFromId();
+        }
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
-        _error = 'Failed to capture photo: $e';
+        _error = 'Failed to pick image: $e';
       });
     }
+  }
+
+  Future<void> _pickFromCamera() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? pickedFile = await picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 85,
+        maxWidth: 1920,
+        maxHeight: 1920,
+      );
+
+      if (pickedFile != null) {
+        if (!mounted) return;
+
+        setState(() {
+          _frontIdPhoto = pickedFile;
+          _error = null;
+          _hasAttemptedSubmit = false; // Reset validation state
+        });
+
+        // Extract text from the captured ID if ID type is selected
+        if (_selectedIdType != null) {
+          await _extractTextFromId();
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Failed to capture image: $e';
+      });
+    }
+  }
+
+  Future<void> _extractTextFromId() async {
+    if (_frontIdPhoto == null || _selectedIdType == null) return;
+
+    try {
+      // Show loading indicator
+      LoadingService.unawaited(
+        LoadingService.show(context, message: 'Extracting information...'),
+      );
+
+      final extractionResult = await IdTextExtractor.extractIdData(
+        imageFile: _frontIdPhoto!,
+        idType: _selectedIdType!,
+      );
+
+      if (mounted) {
+        LoadingService.dismiss(context);
+      }
+
+      if (!mounted) return;
+
+      if (extractionResult.isSuccessful) {
+        // Auto-populate form fields with extracted data
+        setState(() {
+          if (extractionResult.firstName != null &&
+              _firstNameController.text.isEmpty) {
+            _firstNameController.text = _toTitleCase(
+              extractionResult.firstName!,
+            );
+          }
+          if (extractionResult.lastName != null &&
+              _lastNameController.text.isEmpty) {
+            _lastNameController.text = _toTitleCase(extractionResult.lastName!);
+          }
+          if (extractionResult.middleName != null &&
+              _middleInitialController.text.isEmpty) {
+            // Take first character for middle initial
+            _middleInitialController.text =
+                extractionResult.middleName!.isNotEmpty
+                ? extractionResult.middleName!.substring(0, 1).toUpperCase()
+                : '';
+          }
+          if (extractionResult.address != null &&
+              _addressController.text.isEmpty) {
+            _addressController.text = _toTitleCase(extractionResult.address!);
+          }
+        });
+
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('ID information extracted successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        // Show error but don't block user from continuing
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Could not extract text from ID: ${extractionResult.error ?? "Unknown error"}',
+              ),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        LoadingService.dismiss(context);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error processing ID: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  String _toTitleCase(String text) {
+    return text
+        .toLowerCase()
+        .split(' ')
+        .map((word) {
+          if (word.isEmpty) return word;
+          return word[0].toUpperCase() + word.substring(1);
+        })
+        .join(' ');
   }
 
   void _removePhoto() {
@@ -133,6 +322,17 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
       return;
     }
 
+    // Validate ID type
+    if (_selectedIdType == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select your ID type'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     // Validate user authentication
     if (USER_ID == null || USER_ID!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -172,6 +372,7 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
               : null,
           address: _addressController.text.trim(),
           dateOfBirth: _selectedDateOfBirth!,
+          idType: IdType.fromLabel(_selectedIdType!)?.name ?? _selectedIdType!,
         ),
         message: 'Submitting verification...',
       );
@@ -181,7 +382,7 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text(result.value)));
-          context.router.maybePop();
+          context.router.maybePop(true);
         }
       } else {
         if (mounted) {
@@ -223,24 +424,46 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
           ? Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  LucideIcons.camera,
-                  size: 48,
-                  color: showError ? Colors.red.shade400 : Colors.grey.shade400,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      LucideIcons.camera,
+                      size: 24,
+                      color: showError
+                          ? Colors.red.shade400
+                          : Colors.grey.shade400,
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      LucideIcons.image,
+                      size: 24,
+                      color: showError
+                          ? Colors.red.shade400
+                          : Colors.grey.shade400,
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 PawsText(
-                  'Tap to capture $title',
+                  'Tap to add photo of $title',
                   fontSize: 14,
                   color: showError ? Colors.red.shade600 : Colors.grey.shade600,
                 ),
                 if (showError) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   PawsText(
                     'Photo is required',
                     fontSize: 12,
                     color: Colors.red.shade600,
                     fontWeight: FontWeight.w500,
+                  ),
+                ] else ...[
+                  const SizedBox(height: 4),
+                  PawsText(
+                    'Camera capture or gallery selection',
+                    fontSize: 12,
+                    color: Colors.grey.shade500,
                   ),
                 ],
               ],
@@ -311,6 +534,64 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ID Type selection
+          const PawsText(
+            'ID Type',
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: PawsColors.textPrimary,
+          ),
+          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: _hasAttemptedSubmit && _selectedIdType == null
+                    ? Colors.red
+                    : Colors.grey.shade300,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _selectedIdType,
+                hint: const Text(
+                  'Select ID type',
+                  style: TextStyle(color: Colors.grey, fontSize: 14),
+                ),
+                isExpanded: true,
+                items: _idTypes.map((String idType) {
+                  return DropdownMenuItem<String>(
+                    value: idType,
+                    child: Text(
+                      idType,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: PawsColors.textPrimary,
+                      ),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedIdType = newValue;
+                  });
+                },
+              ),
+            ),
+          ),
+
+          if (_hasAttemptedSubmit && _selectedIdType == null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                'Please select your ID type',
+                style: TextStyle(color: Colors.red.shade700, fontSize: 12),
+              ),
+            ),
+
+          SizedBox(height: 16),
           // Photo capture section
           const PawsText(
             'ID Photo',
@@ -329,13 +610,56 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
           ),
           const SizedBox(height: 8),
           GestureDetector(
-            onTap: () => _capturePhoto(),
+            onTap: () => _showImageSourceDialog(),
             child: _buildPhotoCapture(
               'your ID',
               _frontIdPhoto,
               showError: _hasAttemptedSubmit && _frontIdPhoto == null,
             ),
           ),
+
+          const SizedBox(height: 16),
+
+          // Extract Information Button
+          if (_frontIdPhoto != null && _selectedIdType != null) ...[
+            SizedBox(
+              width: double.infinity,
+              child: PawsElevatedButton(
+                label: 'Extract Information from ID',
+                onPressed: _extractTextFromId,
+                icon: LucideIcons.scanText,
+                backgroundColor: Colors.grey[100],
+                foregroundColor: Colors.grey[700],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.amber.shade200, width: 1),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    LucideIcons.info,
+                    color: Colors.amber.shade700,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: PawsText(
+                      'Note: Text extraction may not be 100% accurate. Please review and correct any information as needed.',
+                      fontSize: 12,
+                      color: Colors.amber.shade800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           const SizedBox(height: 24),
 
           // Form section
@@ -357,11 +681,11 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
                 return 'First name must be at least 2 characters';
               }
               // Check if name contains at least one letter
-              if (!RegExp(r'[a-zA-Z]').hasMatch(value)) {
+              if (!RegExp(r'[a-zA-ZñÑ]').hasMatch(value)) {
                 return 'First name must contain at least one letter';
               }
               // Check for reasonable name format (letters, spaces, periods, hyphens, apostrophes)
-              if (!RegExp(r"^[a-zA-Z\s\.\-']+$").hasMatch(value.trim())) {
+              if (!RegExp(r"^[a-zA-ZñÑ\s\.\-']+$").hasMatch(value.trim())) {
                 return 'First name contains invalid characters';
               }
               return null;
@@ -379,11 +703,11 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
                 return 'Last name must be at least 2 characters';
               }
               // Check if name contains at least one letter
-              if (!RegExp(r'[a-zA-Z]').hasMatch(value)) {
+              if (!RegExp(r'[a-zA-ZñÑ]').hasMatch(value)) {
                 return 'Last name must contain at least one letter';
               }
               // Check for reasonable name format (letters, spaces, periods, hyphens, apostrophes)
-              if (!RegExp(r"^[a-zA-Z\s\.\-']+$").hasMatch(value.trim())) {
+              if (!RegExp(r"^[a-zA-ZñÑ\s\.\-']+$").hasMatch(value.trim())) {
                 return 'Last name contains invalid characters';
               }
               return null;
@@ -393,6 +717,15 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
           PawsTextField(
             label: 'Middle Initial',
             controller: _middleInitialController,
+            validator: (value) {
+              if (value != null && value.trim().isNotEmpty) {
+                // Check if it contains only valid letters (including ñ/Ñ)
+                if (!RegExp(r'^[a-zA-Zñ\u00d1\s\.]+$').hasMatch(value.trim())) {
+                  return 'Middle initial contains invalid characters';
+                }
+              }
+              return null;
+            },
           ),
           const SizedBox(height: 12),
           PawsTextField(
@@ -404,6 +737,12 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
               }
               if (value.trim().length < 10) {
                 return 'Please enter a complete address';
+              }
+              // Accept letters (including ñ/Ñ), numbers, spaces, commas, periods, hyphens
+              if (!RegExp(
+                r'^[a-zA-Zñ\u00d1\s\d,.\-]+$',
+              ).hasMatch(value.trim())) {
+                return 'Address contains invalid characters';
               }
               return null;
             },
@@ -467,6 +806,7 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
                 tooltip: 'Clear Photo',
                 onPressed: () => setState(() {
                   _frontIdPhoto = null;
+                  _selectedIdType = null;
                   _firstNameController.clear();
                   _lastNameController.clear();
                   _middleInitialController.clear();
@@ -504,7 +844,7 @@ class _SetUpVerificationScreenState extends State<SetUpVerificationScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: const PawsText(
-                        'Take a photo of any valid ID (government-issued, school ID, or other official identification) and provide your personal details including address and date of birth to verify your identity.',
+                        'Take a photo with our guided camera or select an existing image from your gallery. Supported IDs include government-issued, school, or other official identification documents.',
                         fontSize: 13,
                         color: PawsColors.textPrimary,
                       ),

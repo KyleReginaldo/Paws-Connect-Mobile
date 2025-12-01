@@ -17,6 +17,7 @@ class FundraisingMapper extends ClassMapperBase<Fundraising> {
       CreatedByUserMapper.ensureInitialized();
       DonationsCountMapper.ensureInitialized();
       DonationMapper.ensureInitialized();
+      PaymentInfoMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -115,6 +116,20 @@ class FundraisingMapper extends ClassMapperBase<Fundraising> {
     key: r'gcash_number',
     opt: true,
   );
+  static List<PaymentInfo>? _$bankAccounts(Fundraising v) => v.bankAccounts;
+  static const Field<Fundraising, List<PaymentInfo>> _f$bankAccounts = Field(
+    'bankAccounts',
+    _$bankAccounts,
+    key: r'bank_accounts',
+    opt: true,
+  );
+  static List<PaymentInfo>? _$eWallets(Fundraising v) => v.eWallets;
+  static const Field<Fundraising, List<PaymentInfo>> _f$eWallets = Field(
+    'eWallets',
+    _$eWallets,
+    key: r'e_wallets',
+    opt: true,
+  );
   static String? _$transformedQrCode(Fundraising v) => v.transformedQrCode;
   static const Field<Fundraising, String> _f$transformedQrCode = Field(
     'transformedQrCode',
@@ -149,6 +164,8 @@ class FundraisingMapper extends ClassMapperBase<Fundraising> {
     #facebookLink: _f$facebookLink,
     #qrCode: _f$qrCode,
     #gcashNumber: _f$gcashNumber,
+    #bankAccounts: _f$bankAccounts,
+    #eWallets: _f$eWallets,
     #transformedQrCode: _f$transformedQrCode,
     #transformedImages: _f$transformedImages,
   };
@@ -171,6 +188,8 @@ class FundraisingMapper extends ClassMapperBase<Fundraising> {
       facebookLink: data.dec(_f$facebookLink),
       qrCode: data.dec(_f$qrCode),
       gcashNumber: data.dec(_f$gcashNumber),
+      bankAccounts: data.dec(_f$bankAccounts),
+      eWallets: data.dec(_f$eWallets),
     );
   }
 
@@ -244,6 +263,18 @@ abstract class FundraisingCopyWith<$R, $In extends Fundraising, $Out>
   get donationsCount;
   ListCopyWith<$R, Donation, DonationCopyWith<$R, Donation, Donation>>?
   get donations;
+  ListCopyWith<
+    $R,
+    PaymentInfo,
+    PaymentInfoCopyWith<$R, PaymentInfo, PaymentInfo>
+  >?
+  get bankAccounts;
+  ListCopyWith<
+    $R,
+    PaymentInfo,
+    PaymentInfoCopyWith<$R, PaymentInfo, PaymentInfo>
+  >?
+  get eWallets;
   $R call({
     int? id,
     DateTime? createdAt,
@@ -261,6 +292,8 @@ abstract class FundraisingCopyWith<$R, $In extends Fundraising, $Out>
     String? facebookLink,
     String? qrCode,
     String? gcashNumber,
+    List<PaymentInfo>? bankAccounts,
+    List<PaymentInfo>? eWallets,
   });
   FundraisingCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -308,6 +341,32 @@ class _FundraisingCopyWithImpl<$R, $Out>
         )
       : null;
   @override
+  ListCopyWith<
+    $R,
+    PaymentInfo,
+    PaymentInfoCopyWith<$R, PaymentInfo, PaymentInfo>
+  >?
+  get bankAccounts => $value.bankAccounts != null
+      ? ListCopyWith(
+          $value.bankAccounts!,
+          (v, t) => v.copyWith.$chain(t),
+          (v) => call(bankAccounts: v),
+        )
+      : null;
+  @override
+  ListCopyWith<
+    $R,
+    PaymentInfo,
+    PaymentInfoCopyWith<$R, PaymentInfo, PaymentInfo>
+  >?
+  get eWallets => $value.eWallets != null
+      ? ListCopyWith(
+          $value.eWallets!,
+          (v, t) => v.copyWith.$chain(t),
+          (v) => call(eWallets: v),
+        )
+      : null;
+  @override
   $R call({
     int? id,
     DateTime? createdAt,
@@ -325,6 +384,8 @@ class _FundraisingCopyWithImpl<$R, $Out>
     Object? facebookLink = $none,
     Object? qrCode = $none,
     Object? gcashNumber = $none,
+    Object? bankAccounts = $none,
+    Object? eWallets = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -343,6 +404,8 @@ class _FundraisingCopyWithImpl<$R, $Out>
       if (facebookLink != $none) #facebookLink: facebookLink,
       if (qrCode != $none) #qrCode: qrCode,
       if (gcashNumber != $none) #gcashNumber: gcashNumber,
+      if (bankAccounts != $none) #bankAccounts: bankAccounts,
+      if (eWallets != $none) #eWallets: eWallets,
     }),
   );
   @override
@@ -363,6 +426,8 @@ class _FundraisingCopyWithImpl<$R, $Out>
     facebookLink: data.get(#facebookLink, or: $value.facebookLink),
     qrCode: data.get(#qrCode, or: $value.qrCode),
     gcashNumber: data.get(#gcashNumber, or: $value.gcashNumber),
+    bankAccounts: data.get(#bankAccounts, or: $value.bankAccounts),
+    eWallets: data.get(#eWallets, or: $value.eWallets),
   );
 
   @override

@@ -5,12 +5,15 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:paws_connect/core/config/result.dart';
+import 'package:paws_connect/core/services/forum_service.dart';
 import 'package:paws_connect/core/services/supabase_service.dart';
 import 'package:paws_connect/core/transfer_object/address.dto.dart';
 
 import '../../flavors/flavor_config.dart';
 
 class CommonProvider {
+  final ForumService _forumService = ForumService();
+
   // In-memory cache for quick access
   static final Map<String, String> _responseCache = {};
   static const int _maxCacheEntries = 100; // Limit cache size
@@ -254,61 +257,7 @@ class CommonProvider {
       );
     }
 
-    try {
-      // New logic: forum_chats has a 'viewers' (array) column listing user ids who have viewed the message.
-      // We need to count chats in forums the user is a member of where:
-      //   - sender != userId (don't count own messages)
-      //   - viewers is null OR does not contain userId
-
-      // 1. Fetch forum memberships
-      final forumMemberships = await supabase
-          .from('forum_members')
-          .select('forum')
-          .eq('member', userId);
-
-      if (forumMemberships.isEmpty) {
-        return Result.success(0);
-      }
-      final forumIds = (forumMemberships as List)
-          .map((e) => e['forum'])
-          .where((v) => v != null)
-          .toSet() // ensure distinct
-          .toList();
-
-      if (forumIds.isEmpty) return Result.success(0);
-
-      // 2. Fetch chats for those forums (only required fields)
-      final rawChats = await supabase
-          .from('forum_chats')
-          .select('id, viewers, sender, forum')
-          .neq('sender', userId)
-          .inFilter('forum', forumIds);
-
-      final chatsList = (rawChats as List);
-      if (chatsList.isEmpty) return Result.success(0);
-
-      int unviewed = 0; // 3. Filter locally for messages not yet viewed by user
-      for (final row in chatsList) {
-        final viewers = row['viewers'];
-        if (viewers == null) {
-          unviewed++; // no viewers yet
-          continue;
-        }
-        if (viewers is List) {
-          if (!viewers.contains(userId)) {
-            unviewed++;
-          }
-        } else {
-          // Unexpected type: treat as unviewed to be safe
-          unviewed++;
-        }
-      }
-      debugPrint('Unviewed messages count: $unviewed');
-      return Result.success(unviewed);
-    } catch (e) {
-      debugPrint('Error fetching unviewed messages count: ${e.toString()}');
-      return Result.error("Failed to fetch count: ${e.toString()}");
-    }
+    return await _forumService.getUnreadMessageCount(userId);
   }
 
   Future<Result<bool>> markForumMessagesAsViewed({
@@ -321,49 +270,16 @@ class CommonProvider {
         'No internet connection. Please check your network and try again.',
       );
     }
-    try {
-      // Fetch ids of chats in this forum the user hasn't viewed yet
-      final rawChats = await supabase
-          .from('forum_chats')
-          .select('id, viewers, sender')
-          .eq('forum', forumId)
-          .neq('sender', userId);
 
-      final chatsList = (rawChats as List);
-      if (chatsList.isEmpty) {
-        return Result.success(true); // nothing to update
-      }
-      final toUpdate = <Map<String, dynamic>>[];
-      for (final row in chatsList) {
-        final viewers = row['viewers'];
-        if (viewers == null || (viewers is List && !viewers.contains(userId))) {
-          final id = row['id'];
-          if (id is int) {
-            toUpdate.add({
-              'id': id,
-              'viewers': viewers is List ? [...viewers, userId] : [userId],
-            });
-          }
-        }
-      }
-      if (toUpdate.isEmpty) return Result.success(true);
+    final result = await _forumService.markMessagesAsViewed(
+      userId: userId,
+      forumId: forumId,
+    );
 
-      // Loop updates (could be optimized by RPC or batching if needed)
-      for (final item in toUpdate) {
-        final id = item['id'];
-        final newViewers = item['viewers'];
-        try {
-          await supabase
-              .from('forum_chats')
-              .update({'viewers': newViewers})
-              .eq('id', id);
-        } catch (_) {
-          /* ignore individual failures */
-        }
-      }
+    if (result.isSuccess) {
       return Result.success(true);
-    } catch (e) {
-      return Result.error('Failed to mark viewed: $e');
+    } else {
+      return Result.error(result.error);
     }
   }
 

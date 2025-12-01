@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:paws_connect/core/extension/ext.dart';
 
 /// Reusable Network Image with loading, error, and fullscreen tap.
 class NetworkImageView extends StatelessWidget {
@@ -31,7 +32,7 @@ class NetworkImageView extends StatelessWidget {
             Center(
               child: InteractiveViewer(
                 child: CachedNetworkImage(
-                  imageUrl: imageUrl,
+                  imageUrl: imageUrl.transformedUrl,
                   fit: BoxFit.contain,
                   cacheKey: '${imageUrl}_fullscreen',
                 ),
@@ -58,7 +59,7 @@ class NetworkImageView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget child = CachedNetworkImage(
-      imageUrl: imageUrl,
+      imageUrl: imageUrl.transformedUrl,
       height: height,
       width: width,
       cacheKey: imageUrl,

@@ -33,6 +33,33 @@ class FundraisingProvider {
     }
   }
 
+  Future<Result<List<Fundraising>>> fetchActiveFundraisings() async {
+    final uri = Uri.parse(
+      '${FlavorConfig.instance.apiBaseUrl}/fundraising/active',
+    );
+
+    final response = await NetworkUtils.makeMobileOptimizedRequest(
+      uri: uri,
+      maxRetries: 2,
+      timeout: const Duration(seconds: 25),
+    );
+
+    if (response.statusCode == 200) {
+      List<Fundraising> fundraisings = [];
+      final data = jsonDecode(response.body);
+      data['data'].forEach((fundraisingData) {
+        fundraisings.add(FundraisingMapper.fromMap(fundraisingData));
+      });
+      return Result.success(fundraisings);
+    } else {
+      final data = jsonDecode(response.body);
+      return Result.error(
+        data['message'] ??
+            'Failed to fetch fundraisings. Server returned ${response.statusCode}',
+      );
+    }
+  }
+
   Future<Result<Fundraising>> fetchFundraisingById(int id) async {
     final uri = Uri.parse(
       '${FlavorConfig.instance.apiBaseUrl}/fundraising/$id',

@@ -9,6 +9,8 @@ class FundraisingRepository extends ChangeNotifier {
   FundraisingRepository(this._provider);
   bool get isLoading => _isLoading;
   bool _isLoading = false;
+  List<Fundraising>? _activeFundraisings;
+  List<Fundraising>? get activeFundraisings => _activeFundraisings;
   List<Fundraising>? _fundraisings;
   Fundraising? _fundraising;
   String? _errorMessage;
@@ -21,6 +23,21 @@ class FundraisingRepository extends ChangeNotifier {
     final result = await _provider.fetchFundraisings();
     if (result.isSuccess) {
       _fundraisings = result.value;
+      _isLoading = false;
+      notifyListeners();
+    } else {
+      _errorMessage = result.error;
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchActiveFundraisings() async {
+    _isLoading = true;
+    notifyListeners();
+    final result = await _provider.fetchActiveFundraisings();
+    if (result.isSuccess) {
+      _activeFundraisings = result.value;
       _isLoading = false;
       notifyListeners();
     } else {

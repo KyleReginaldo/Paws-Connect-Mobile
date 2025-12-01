@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:paws_connect/core/extension/ext.dart';
 import 'package:paws_connect/core/theme/paws_theme.dart';
 import 'package:paws_connect/core/widgets/button.dart';
 import 'package:paws_connect/core/widgets/text.dart';
@@ -40,6 +41,9 @@ class _UserHouseScreenState extends State<UserHouseScreen> {
   List<XFile> selectedImages = [];
 
   void listenToUserUpdates() {
+    debugPrint(
+      'UserHouseScreen: Setting up user updates listener for user ID: $USER_ID',
+    );
     userChannel = supabase.channel('public:users:id=eq.$USER_ID');
     userChannel
         ?.onPostgresChanges(
@@ -52,16 +56,24 @@ class _UserHouseScreenState extends State<UserHouseScreen> {
             value: USER_ID,
           ),
           callback: (payload) {
+            debugPrint(
+              'UserHouseScreen: User update received: ${payload.newRecord}',
+            );
             debugPrint('User update received: ${payload.newRecord}');
             if (!mounted) return;
-            final repo = context.read<ProfileRepository>();
-            repo.fetchUserProfile(USER_ID ?? '');
+            context.read<ProfileRepository>().fetchUserProfile(USER_ID ?? '');
           },
         )
         .subscribe();
+    debugPrint(
+      'UserHouseScreen: User updates listener subscribed successfully',
+    );
   }
 
   void uploadImages(List<XFile> images) async {
+    debugPrint(
+      'UserHouseScreen: Starting image upload for ${images.length} images',
+    );
     try {
       final result = await LoadingService.showWhileExecuting(
         context,
@@ -70,14 +82,17 @@ class _UserHouseScreenState extends State<UserHouseScreen> {
       );
 
       if (result.isError) {
+        debugPrint('UserHouseScreen: Failed to upload images: ${result.error}');
         EasyLoading.showError('Failed to upload images');
       } else {
+        debugPrint('UserHouseScreen: Images uploaded successfully');
         EasyLoading.showSuccess('Images uploaded successfully');
         setState(() {
           selectedImages.clear();
         });
       }
     } catch (e) {
+      debugPrint('UserHouseScreen: Exception during image upload: $e');
       EasyLoading.showError('Failed to upload images');
     }
   }
@@ -85,21 +100,26 @@ class _UserHouseScreenState extends State<UserHouseScreen> {
   @override
   void initState() {
     super.initState();
+    debugPrint('UserHouseScreen: UserHouseScreen initialized');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final repo = context.read<ProfileRepository>();
-      repo.fetchUserProfile(USER_ID ?? '');
+      debugPrint(
+        'UserHouseScreen: Fetching user profile for user ID: $USER_ID',
+      );
+      context.read<ProfileRepository>().fetchUserProfile(USER_ID ?? '');
       listenToUserUpdates();
     });
   }
 
   @override
   void dispose() {
+    debugPrint('UserHouseScreen: Disposing UserHouseScreen');
     userChannel?.unsubscribe();
     super.dispose();
   }
 
   void _showImagePickerBottomSheet() {
+    debugPrint('UserHouseScreen: Opening image picker bottom sheet');
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -137,15 +157,25 @@ class _UserHouseScreenState extends State<UserHouseScreen> {
                           label: 'Camera',
                           icon: Icons.camera_alt,
                           onPressed: () async {
+                            debugPrint(
+                              'UserHouseScreen: Camera button pressed',
+                            );
                             final XFile? image = await _picker.pickImage(
                               source: ImageSource.camera,
                               imageQuality: 80,
                             );
                             if (image != null) {
+                              debugPrint(
+                                'UserHouseScreen: Image captured from camera: ${image.path}',
+                              );
                               setModalState(() {
                                 selectedImages.add(image);
                               });
                               setState(() {});
+                            } else {
+                              debugPrint(
+                                'UserHouseScreen: Camera capture cancelled',
+                              );
                             }
                           },
                         ),
@@ -156,13 +186,23 @@ class _UserHouseScreenState extends State<UserHouseScreen> {
                           label: 'Gallery',
                           icon: Icons.photo_library,
                           onPressed: () async {
+                            debugPrint(
+                              'UserHouseScreen: Gallery button pressed',
+                            );
                             final List<XFile> images = await _picker
                                 .pickMultiImage(imageQuality: 80);
                             if (images.isNotEmpty) {
+                              debugPrint(
+                                'UserHouseScreen: Selected ${images.length} images from gallery',
+                              );
                               setModalState(() {
                                 selectedImages.addAll(images);
                               });
                               setState(() {});
+                            } else {
+                              debugPrint(
+                                'UserHouseScreen: Gallery selection cancelled',
+                              );
                             }
                           },
                         ),
@@ -209,6 +249,9 @@ class _UserHouseScreenState extends State<UserHouseScreen> {
                                   right: 4,
                                   child: GestureDetector(
                                     onTap: () {
+                                      debugPrint(
+                                        'UserHouseScreen: Removing image at index $index',
+                                      );
                                       setModalState(() {
                                         selectedImages.removeAt(index);
                                       });
@@ -243,6 +286,9 @@ class _UserHouseScreenState extends State<UserHouseScreen> {
                         onPressed: selectedImages.isEmpty
                             ? null
                             : () {
+                                debugPrint(
+                                  'UserHouseScreen: Uploading ${selectedImages.length} selected images',
+                                );
                                 Navigator.pop(context);
                                 uploadImages(selectedImages);
                               },
@@ -262,6 +308,14 @@ class _UserHouseScreenState extends State<UserHouseScreen> {
   @override
   Widget build(BuildContext context) {
     final user = context.select((ProfileRepository bloc) => bloc.userProfile);
+    debugPrint(
+      'UserHouseScreen: Building UserHouseScreen, user profile: ${user != null ? "loaded" : "null"}',
+    );
+    if (user?.houseImages != null) {
+      debugPrint(
+        'UserHouseScreen: User has ${user!.houseImages!.length} house images',
+      );
+    }
     return SafeArea(
       top: false,
       child: Scaffold(
@@ -315,6 +369,9 @@ class _UserHouseScreenState extends State<UserHouseScreen> {
                       final imageUrl = user.houseImages![index];
                       return GestureDetector(
                         onTap: () {
+                          debugPrint(
+                            'UserHouseScreen: Opening full screen view for image: $imageUrl',
+                          );
                           // Show full screen image
                           showDialog(
                             context: context,
@@ -326,7 +383,7 @@ class _UserHouseScreenState extends State<UserHouseScreen> {
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(12),
                                       child: Image.network(
-                                        imageUrl,
+                                        imageUrl.transformedUrl,
                                         fit: BoxFit.contain,
                                         loadingBuilder:
                                             (context, child, loadingProgress) {
@@ -411,7 +468,7 @@ class _UserHouseScreenState extends State<UserHouseScreen> {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(12),
                             child: Image.network(
-                              imageUrl,
+                              imageUrl.transformedUrl,
                               fit: BoxFit.cover,
                               loadingBuilder:
                                   (context, child, loadingProgress) {

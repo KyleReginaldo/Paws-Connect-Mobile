@@ -30,8 +30,8 @@ class PetMapper extends ClassMapperBase<Pet> {
     _$createdAt,
     key: r'created_at',
   );
-  static String _$name(Pet v) => v.name;
-  static const Field<Pet, String> _f$name = Field('name', _$name);
+  static String? _$name(Pet v) => v.name;
+  static const Field<Pet, String> _f$name = Field('name', _$name, opt: true);
   static String _$type(Pet v) => v.type;
   static const Field<Pet, String> _f$type = Field('type', _$type);
   static String _$breed(Pet v) => v.breed;
@@ -127,7 +127,11 @@ class PetMapper extends ClassMapperBase<Pet> {
     opt: true,
   );
   static PetAdoption? _$adopted(Pet v) => v.adopted;
-  static const Field<Pet, PetAdoption> _f$adopted = Field('adopted', _$adopted);
+  static const Field<Pet, PetAdoption> _f$adopted = Field(
+    'adopted',
+    _$adopted,
+    opt: true,
+  );
   static String? _$happinessImage(Pet v) => v.happinessImage;
   static const Field<Pet, String> _f$happinessImage = Field(
     'happinessImage',
@@ -340,7 +344,7 @@ class _PetCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Pet, $Out>
   $R call({
     int? id,
     DateTime? createdAt,
-    String? name,
+    Object? name = $none,
     String? type,
     String? breed,
     String? gender,
@@ -368,7 +372,7 @@ class _PetCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Pet, $Out>
     FieldCopyWithData({
       if (id != null) #id: id,
       if (createdAt != null) #createdAt: createdAt,
-      if (name != null) #name: name,
+      if (name != $none) #name: name,
       if (type != null) #type: type,
       if (breed != null) #breed: breed,
       if (gender != null) #gender: gender,
@@ -447,18 +451,27 @@ class PetAdoptionMapper extends ClassMapperBase<PetAdoption> {
   @override
   final String id = 'PetAdoption';
 
-  static int _$id(PetAdoption v) => v.id;
-  static const Field<PetAdoption, int> _f$id = Field('id', _$id);
-  static DateTime _$createdAt(PetAdoption v) => v.createdAt;
+  static int? _$id(PetAdoption v) => v.id;
+  static const Field<PetAdoption, int> _f$id = Field('id', _$id, opt: true);
+  static DateTime? _$createdAt(PetAdoption v) => v.createdAt;
   static const Field<PetAdoption, DateTime> _f$createdAt = Field(
     'createdAt',
     _$createdAt,
     key: r'created_at',
+    opt: true,
   );
-  static UserProfile _$user(PetAdoption v) => v.user;
-  static const Field<PetAdoption, UserProfile> _f$user = Field('user', _$user);
-  static String _$status(PetAdoption v) => v.status;
-  static const Field<PetAdoption, String> _f$status = Field('status', _$status);
+  static UserProfile? _$user(PetAdoption v) => v.user;
+  static const Field<PetAdoption, UserProfile> _f$user = Field(
+    'user',
+    _$user,
+    opt: true,
+  );
+  static String? _$status(PetAdoption v) => v.status;
+  static const Field<PetAdoption, String> _f$status = Field(
+    'status',
+    _$status,
+    opt: true,
+  );
 
   @override
   final MappableFields<PetAdoption> fields = const {
@@ -537,7 +550,7 @@ extension PetAdoptionValueCopy<$R, $Out>
 
 abstract class PetAdoptionCopyWith<$R, $In extends PetAdoption, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  UserProfileCopyWith<$R, UserProfile, UserProfile> get user;
+  UserProfileCopyWith<$R, UserProfile, UserProfile>? get user;
   $R call({int? id, DateTime? createdAt, UserProfile? user, String? status});
   PetAdoptionCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -551,18 +564,22 @@ class _PetAdoptionCopyWithImpl<$R, $Out>
   late final ClassMapperBase<PetAdoption> $mapper =
       PetAdoptionMapper.ensureInitialized();
   @override
-  UserProfileCopyWith<$R, UserProfile, UserProfile> get user =>
-      $value.user.copyWith.$chain((v) => call(user: v));
+  UserProfileCopyWith<$R, UserProfile, UserProfile>? get user =>
+      $value.user?.copyWith.$chain((v) => call(user: v));
   @override
-  $R call({int? id, DateTime? createdAt, UserProfile? user, String? status}) =>
-      $apply(
-        FieldCopyWithData({
-          if (id != null) #id: id,
-          if (createdAt != null) #createdAt: createdAt,
-          if (user != null) #user: user,
-          if (status != null) #status: status,
-        }),
-      );
+  $R call({
+    Object? id = $none,
+    Object? createdAt = $none,
+    Object? user = $none,
+    Object? status = $none,
+  }) => $apply(
+    FieldCopyWithData({
+      if (id != $none) #id: id,
+      if (createdAt != $none) #createdAt: createdAt,
+      if (user != $none) #user: user,
+      if (status != $none) #status: status,
+    }),
+  );
   @override
   PetAdoption $make(CopyWithData data) => PetAdoption(
     id: data.get(#id, or: $value.id),

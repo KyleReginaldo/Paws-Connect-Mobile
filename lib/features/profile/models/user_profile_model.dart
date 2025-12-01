@@ -1,7 +1,7 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:paws_connect/core/enum/user.enum.dart';
-import 'package:paws_connect/core/extension/int.ext.dart';
+import 'package:paws_connect/core/extension/ext.dart';
 
 import '../../../flavors/flavor_config.dart';
 
@@ -75,6 +75,7 @@ class UserIdentification with UserIdentificationMappable {
   final String? middleInitial;
   final String? address;
   final String? dateOfBirth;
+  final String? idType;
   final String status;
 
   UserIdentification(
@@ -86,6 +87,7 @@ class UserIdentification with UserIdentificationMappable {
     this.middleInitial,
     this.address,
     this.dateOfBirth,
+    this.idType,
     this.status,
   );
   String get transformedIdAttachmentUrl {

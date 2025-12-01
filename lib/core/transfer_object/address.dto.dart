@@ -6,6 +6,7 @@ class AddAddressDTO {
   final double latitude;
   final double longitude;
   final String user;
+  final bool? isDefault;
 
   AddAddressDTO({
     required this.street,
@@ -15,6 +16,7 @@ class AddAddressDTO {
     required this.latitude,
     required this.longitude,
     required this.user,
+    this.isDefault,
   });
 
   Map<String, dynamic> toJson() {
@@ -27,6 +29,7 @@ class AddAddressDTO {
       'longitude': longitude,
       'country': 'Philippines',
       'users': user,
+      'is_default': isDefault ?? false,
     };
   }
 }

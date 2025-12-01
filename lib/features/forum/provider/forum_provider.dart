@@ -1,47 +1,17 @@
-import 'dart:convert';
-import 'dart:io';
-
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:paws_connect/core/config/result.dart';
-import 'package:paws_connect/core/services/supabase_service.dart';
-import 'package:paws_connect/core/utils/network_utils.dart';
+import 'package:paws_connect/core/services/forum_service.dart';
 import 'package:paws_connect/features/forum/models/forum_model.dart';
 
-import '../../../flavors/flavor_config.dart';
-
 class ForumProvider {
-  Future<Result<List<Forum>>> fetchForums(String userId) async {
-    final response = await http.get(
-      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/forum/user/$userId'),
-    );
+  final ForumService _forumService = ForumService();
 
-    final data = jsonDecode(response.body);
-    if (response.statusCode == 200) {
-      List<Forum> forums = [];
-      data['data'].forEach((forum) {
-        forums.add(ForumMapper.fromMap(forum));
-      });
-      return Result.success(forums);
-    } else {
-      return Result.error(data['message'] ?? 'Failed to fetch forums');
-    }
+  Future<Result<List<Forum>>> fetchForums(String userId) async {
+    return await _forumService.fetchUserForums(userId);
   }
 
   Future<Result<Forum>> fetchForumById(int forumId, String userId) async {
-    final response = await http.get(
-      Uri.parse(
-        '${FlavorConfig.instance.apiBaseUrl}/forum/$forumId?userId=$userId',
-      ),
-    );
-
-    final data = jsonDecode(response.body);
-    if (response.statusCode == 200) {
-      return Result.success(ForumMapper.fromMap(data['data']));
-    } else {
-      return Result.error(data['message'] ?? 'Failed to fetch forums');
-    }
+    return await _forumService.fetchForumById(forumId, userId);
   }
 
   Future<Result<ForumMessage>> fetchForumChats(
@@ -49,139 +19,46 @@ class ForumProvider {
     int page = 1,
     int limit = 20,
   }) async {
-    try {
-      final uri =
-          Uri.parse(
-            '${FlavorConfig.instance.apiBaseUrl}/forum/$forumId/chats',
-          ).replace(
-            queryParameters: {
-              'page': page.toString(),
-              'limit': limit.toString(),
-            },
-          );
-
-      final response = await NetworkUtils.makeRequestWithRetry(
-        request: () => http
-            .get(uri, headers: {'Connection': 'keep-alive'})
-            .timeout(
-              const Duration(seconds: 30),
-              onTimeout: () => throw Exception('Request timeout'),
-            ),
-        maxRetries: 3,
-        retryDelay: const Duration(seconds: 2),
-      );
-
-      final data = jsonDecode(response.body);
-      if (response.statusCode == 200) {
-        return Result.success(ForumMessageMapper.fromMap(data['data']));
-      } else {
-        return Result.error(data['message'] ?? 'Failed to fetch forum chats');
-      }
-    } catch (e) {
-      debugPrint('Failed to fetch forum chats: $e');
-      return Result.error(NetworkUtils.getErrorMessage(e));
-    }
+    return await _forumService.fetchForumChats(
+      forumId,
+      page: page,
+      limit: limit,
+    );
   }
 
   Future<Result<List<AvailableUser>>> fetchAvailableUser(
     int forumId, {
     String? username,
   }) async {
-    try {
-      final uri =
-          Uri.parse(
-            '${FlavorConfig.instance.apiBaseUrl}/forum/$forumId/members/available',
-          ).replace(
-            queryParameters: {
-              if (username != null && username.isNotEmpty) 'search': username,
-            },
-          );
-      final response = await http.get(uri);
-
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 200) {
-        List<AvailableUser> users = [];
-        if (data['data'].isEmpty) {
-          return Result.error('No users found');
-        } else {
-          data['data'].forEach((user) {
-            users.add(AvailableUserMapper.fromMap(user));
-          });
-          return Result.success(users);
-        }
-      } else {
-        return Result.error(
-          data['message'] ?? 'Failed to fetch available users',
-        );
-      }
-    } catch (e) {
-      return Result.error('Something went wrong: $e');
-    }
+    return await _forumService.fetchAvailableUsers(
+      forumId,
+      searchUsername: username,
+    );
   }
 
   Future<Result<List<AvailableUser>>> fetchForumMembers(int forumId) async {
-    try {
-      final response = await supabase
-          .from('forum_members')
-          .select('''
-            id,
-            users!inner (
-              id,
-              username,
-              profile_image_link
-            )
-          ''')
-          .eq('forum', forumId)
-          .eq('status', 'approved');
-
-      final List<AvailableUser> members = [];
-      for (final row in response) {
-        final user = row['users'];
-        if (user != null) {
-          members.add(
-            AvailableUser(
-              id: user['id'],
-              username: user['username'],
-              profileImageLink: user['profile_image_link'],
-            ),
-          );
-        }
-      }
-
-      return Result.success(members);
-    } catch (e) {
-      debugPrint('Error fetching forum members: $e');
-      return Result.error('Failed to fetch forum members');
-    }
+    return await _forumService.fetchForumMembers(forumId);
   }
 
   Future<void> sendChat({
     required String sender,
-    required String message,
+    String? message,
     required int forumId,
     XFile? imageFile,
     int? repliedTo,
     List<String>? mentions,
   }) async {
-    String? imageUrl;
-    if (imageFile != null) {
-      imageUrl = await SupabaseService.uploadImage(imageFile);
-    }
-    debugPrint('Image URL: $imageUrl');
-    final response = await http.post(
-      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/forum/$forumId/chats'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'sender': sender,
-        'message': message,
-        if (imageUrl != null) 'image_url': imageUrl,
-        if (repliedTo != null) 'replied_to': repliedTo,
-        if (mentions != null && mentions.isNotEmpty) 'mentions': mentions,
-      }),
+    final result = await _forumService.sendChat(
+      sender: sender,
+      message: message,
+      forumId: forumId,
+      imageFile: imageFile,
+      repliedTo: repliedTo,
+      mentions: mentions,
     );
-    if (response.statusCode != 201) {
-      throw Exception('Failed to send message');
+
+    if (result.isError) {
+      throw Exception(result.error);
     }
   }
 
@@ -191,27 +68,15 @@ class ForumProvider {
     required bool private,
     XFile? forumImageFile,
   }) async {
-    String? forumImageUrl;
-    if (forumImageFile != null) {
-      final filePath =
-          '${DateTime.now().microsecondsSinceEpoch}_${forumImageFile.name}';
-      final storagePath = await supabase.storage
-          .from('files')
-          .upload(filePath, File(forumImageFile.path));
-      forumImageUrl = supabase.storage.from('').getPublicUrl(storagePath);
-    }
-    final response = await http.post(
-      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/forum'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        "created_by": userId,
-        "forum_name": forumName,
-        "private": private,
-        if (forumImageUrl != null) 'forum_image_url': forumImageUrl,
-      }),
+    final result = await _forumService.createForum(
+      userId: userId,
+      forumName: forumName,
+      private: private,
+      forumImageFile: forumImageFile,
     );
-    if (response.statusCode != 201) {
-      throw Exception('Failed to create forum');
+
+    if (result.isError) {
+      throw Exception(result.error);
     }
   }
 
@@ -221,36 +86,17 @@ class ForumProvider {
     bool? private,
     XFile? forumImageFile,
   }) async {
-    try {
-      String? forumImageUrl;
-      if (forumImageFile != null) {
-        final filePath =
-            '${DateTime.now().microsecondsSinceEpoch}_${forumImageFile.name}';
-        final storagePath = await supabase.storage
-            .from('files')
-            .upload(filePath, File(forumImageFile.path));
-        forumImageUrl = supabase.storage.from('').getPublicUrl(storagePath);
-      }
+    final result = await _forumService.updateForum(
+      forumId: forumId,
+      forumName: forumName,
+      private: private,
+      forumImageFile: forumImageFile,
+    );
 
-      final Map<String, dynamic> body = {
-        if (forumName != null) 'forum_name': forumName,
-        if (private != null) 'private': private,
-        if (forumImageUrl != null) 'forum_image_url': forumImageUrl,
-      };
-
-      final response = await http.put(
-        Uri.parse('${FlavorConfig.instance.apiBaseUrl}/forum/$forumId'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(body),
-      );
-      final data = jsonDecode(response.body);
-      if (response.statusCode == 200) {
-        return Result.success(data['message'] ?? 'Forum updated successfully');
-      } else {
-        return Result.error(data['message'] ?? 'Failed to update forum');
-      }
-    } catch (e) {
-      return Result.error('Something went wrong: $e');
+    if (result.isSuccess) {
+      return Result.success('Forum updated successfully');
+    } else {
+      return Result.error(result.error);
     }
   }
 
@@ -259,16 +105,21 @@ class ForumProvider {
     required int forumId,
     required List<String> memberIds,
   }) async {
-    final response = await http.post(
-      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/forum/$forumId/members'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({"added_by": userId, "members": memberIds}),
-    );
-    final data = jsonDecode(response.body);
-    if (response.statusCode == 201) {
-      return Result.success(data['message']);
-    } else {
-      return Result.error('Failed to add members');
+    try {
+      for (final memberId in memberIds) {
+        final result = await _forumService.addMemberToForum(
+          forumId: forumId,
+          userId: memberId,
+          inviterUserId: userId,
+        );
+
+        if (result.isError) {
+          return Result.error(result.error);
+        }
+      }
+      return Result.success('Members added successfully');
+    } catch (e) {
+      return Result.error('Failed to add members: $e');
     }
   }
 
@@ -277,17 +128,15 @@ class ForumProvider {
     required int forumMemberId,
     required String status,
   }) async {
-    final response = await http.put(
-      Uri.parse(
-        '${FlavorConfig.instance.apiBaseUrl}/forum/$forumId/members/$forumMemberId?status=$status',
-      ),
-      headers: {'Content-Type': 'application/json'},
+    final result = await _forumService.updateMemberStatus(
+      forumMemberId: forumMemberId,
+      status: status,
     );
-    final data = jsonDecode(response.body);
-    if (response.statusCode == 200) {
-      return Result.success(data['message']);
+
+    if (result.isSuccess) {
+      return Result.success('Member status updated successfully');
     } else {
-      return Result.error('Failed to add members');
+      return Result.error(result.error);
     }
   }
 
@@ -296,19 +145,16 @@ class ForumProvider {
     required int forumId,
     required String memberId,
   }) async {
-    final response = await http.post(
-      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/forum/$forumId/members'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        "added_by": invitedBy,
-        "members": [memberId],
-      }),
+    final result = await _forumService.addMemberToForum(
+      forumId: forumId,
+      userId: memberId,
+      inviterUserId: invitedBy,
     );
-    final data = jsonDecode(response.body);
-    if (response.statusCode == 201) {
-      return Result.success(data['message']);
+
+    if (result.isSuccess) {
+      return Result.success('Member invited successfully');
     } else {
-      return Result.error('Failed to add members');
+      return Result.error(result.error);
     }
   }
 
@@ -316,16 +162,17 @@ class ForumProvider {
     required int forumMemberId,
     required bool mute,
   }) async {
-    try {
-      await supabase
-          .from('forum_members')
-          .update({'mute': mute})
-          .eq('id', forumMemberId);
+    final result = await _forumService.toggleNotificationSettings(
+      forumMemberId: forumMemberId,
+      mute: mute,
+    );
+
+    if (result.isSuccess) {
       return Result.success(
         mute ? 'Notifications muted' : 'Notifications unmuted',
       );
-    } catch (e) {
-      return Result.error('Something went wrong: $e');
+    } else {
+      return Result.error(result.error);
     }
   }
 
@@ -335,22 +182,17 @@ class ForumProvider {
     required String reaction,
     required String userId,
   }) async {
-    try {
-      final response = await http.post(
-        Uri.parse(
-          '${FlavorConfig.instance.apiBaseUrl}/forum/$forumId/chats/$chatId/reactions',
-        ),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'reaction': reaction, 'user_id': userId}),
-      );
-      final data = jsonDecode(response.body);
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        return Result.success(data['message'] ?? 'Reaction added');
-      } else {
-        return Result.error(data['message'] ?? 'Failed to add reaction');
-      }
-    } catch (e) {
-      return Result.error('Something went wrong: $e');
+    final result = await _forumService.toggleReaction(
+      chatId: chatId,
+      userId: userId,
+      reaction: reaction,
+      isAdding: true,
+    );
+
+    if (result.isSuccess) {
+      return Result.success('Reaction added');
+    } else {
+      return Result.error(result.error);
     }
   }
 
@@ -360,21 +202,17 @@ class ForumProvider {
     required String reaction,
     required String userId,
   }) async {
-    try {
-      final response = await http.delete(
-        Uri.parse(
-          '${FlavorConfig.instance.apiBaseUrl}/forum/$forumId/chats/$chatId/reactions?reaction=$reaction&user_id=$userId',
-        ),
-        headers: {'Content-Type': 'application/json'},
-      );
-      final data = jsonDecode(response.body);
-      if (response.statusCode == 200) {
-        return Result.success(data['message'] ?? 'Reaction removed');
-      } else {
-        return Result.error(data['message'] ?? 'Failed to remove reaction');
-      }
-    } catch (e) {
-      return Result.error('Something went wrong: $e');
+    final result = await _forumService.toggleReaction(
+      chatId: chatId,
+      userId: userId,
+      reaction: reaction,
+      isAdding: false,
+    );
+
+    if (result.isSuccess) {
+      return Result.success('Reaction removed');
+    } else {
+      return Result.error(result.error);
     }
   }
 
@@ -391,22 +229,15 @@ class ForumProvider {
     required int forumId,
     required String userId,
   }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('${FlavorConfig.instance.apiBaseUrl}/forum/$forumId/quit'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'user_id': userId}),
-      );
+    final result = await _forumService.leaveForum(
+      forumId: forumId,
+      userId: userId,
+    );
 
-      final data = jsonDecode(response.body);
-      debugPrint('Quit Forum Response: $data');
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return Result.success(data['message'] ?? 'Successfully quit the forum');
-      } else {
-        return Result.error(data['error'] ?? 'Failed to quit forum');
-      }
-    } catch (e) {
-      return Result.error('Something went wrong: $e');
+    if (result.isSuccess) {
+      return Result.success('Successfully left the forum');
+    } else {
+      return Result.error(result.error);
     }
   }
 
@@ -425,21 +256,16 @@ class ForumProvider {
     required String userId,
     required String kickedBy,
   }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('${FlavorConfig.instance.apiBaseUrl}/forum/$forumId/kick'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'user_id': userId, 'kicked_by': kickedBy}),
-      );
+    final result = await _forumService.removeMemberFromForum(
+      forumId: forumId,
+      userId: userId,
+      removedBy: kickedBy,
+    );
 
-      final data = jsonDecode(response.body);
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return Result.success(data['message'] ?? 'Member kicked successfully');
-      } else {
-        return Result.error(data['message'] ?? 'Failed to kick member');
-      }
-    } catch (e) {
-      return Result.error('Something went wrong: $e');
+    if (result.isSuccess) {
+      return Result.success('Member removed successfully');
+    } else {
+      return Result.error(result.error);
     }
   }
 
@@ -448,21 +274,15 @@ class ForumProvider {
     required int chatId,
     required String sender,
   }) async {
-    try {
-      final response = await http.delete(
-        Uri.parse(
-          '${FlavorConfig.instance.apiBaseUrl}/forum/$forumId/chats/$chatId?sender=$sender',
-        ),
-      );
+    final result = await _forumService.deleteChat(
+      chatId: chatId,
+      userId: sender,
+    );
 
-      final data = jsonDecode(response.body);
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return Result.success(data['message'] ?? 'Chat deleted successfully');
-      } else {
-        return Result.error(data['error'] ?? 'Failed to delete chat');
-      }
-    } catch (e) {
-      return Result.error('Something went wrong: $e');
+    if (result.isSuccess) {
+      return Result.success('Chat deleted successfully');
+    } else {
+      return Result.error(result.error);
     }
   }
 }

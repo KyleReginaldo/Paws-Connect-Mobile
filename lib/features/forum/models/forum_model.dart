@@ -1,7 +1,7 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:dart_mappable/dart_mappable.dart';
 
-import '../../../core/extension/int.ext.dart';
+import '../../../core/extension/ext.dart';
 import '../../../flavors/flavor_config.dart';
 
 part 'forum_model.mapper.dart';

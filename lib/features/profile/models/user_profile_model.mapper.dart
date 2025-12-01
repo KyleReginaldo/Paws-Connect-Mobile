@@ -440,6 +440,12 @@ class UserIdentificationMapper extends ClassMapperBase<UserIdentification> {
     _$dateOfBirth,
     key: r'date_of_birth',
   );
+  static String? _$idType(UserIdentification v) => v.idType;
+  static const Field<UserIdentification, String> _f$idType = Field(
+    'idType',
+    _$idType,
+    key: r'id_type',
+  );
   static String _$status(UserIdentification v) => v.status;
   static const Field<UserIdentification, String> _f$status = Field(
     'status',
@@ -465,6 +471,7 @@ class UserIdentificationMapper extends ClassMapperBase<UserIdentification> {
     #middleInitial: _f$middleInitial,
     #address: _f$address,
     #dateOfBirth: _f$dateOfBirth,
+    #idType: _f$idType,
     #status: _f$status,
     #transformedIdAttachmentUrl: _f$transformedIdAttachmentUrl,
   };
@@ -479,6 +486,7 @@ class UserIdentificationMapper extends ClassMapperBase<UserIdentification> {
       data.dec(_f$middleInitial),
       data.dec(_f$address),
       data.dec(_f$dateOfBirth),
+      data.dec(_f$idType),
       data.dec(_f$status),
     );
   }
@@ -563,6 +571,7 @@ abstract class UserIdentificationCopyWith<
     String? middleInitial,
     String? address,
     String? dateOfBirth,
+    String? idType,
     String? status,
   });
   UserIdentificationCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
@@ -588,6 +597,7 @@ class _UserIdentificationCopyWithImpl<$R, $Out>
     Object? middleInitial = $none,
     Object? address = $none,
     Object? dateOfBirth = $none,
+    Object? idType = $none,
     String? status,
   }) => $apply(
     FieldCopyWithData({
@@ -599,6 +609,7 @@ class _UserIdentificationCopyWithImpl<$R, $Out>
       if (middleInitial != $none) #middleInitial: middleInitial,
       if (address != $none) #address: address,
       if (dateOfBirth != $none) #dateOfBirth: dateOfBirth,
+      if (idType != $none) #idType: idType,
       if (status != null) #status: status,
     }),
   );
@@ -612,6 +623,7 @@ class _UserIdentificationCopyWithImpl<$R, $Out>
     data.get(#middleInitial, or: $value.middleInitial),
     data.get(#address, or: $value.address),
     data.get(#dateOfBirth, or: $value.dateOfBirth),
+    data.get(#idType, or: $value.idType),
     data.get(#status, or: $value.status),
   );
 

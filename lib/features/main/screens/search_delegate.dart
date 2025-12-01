@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:paws_connect/core/supabase/client.dart';
@@ -16,6 +18,8 @@ class PetSearchDelegate extends SearchDelegate<Pet?> {
 
   static const _minQueryLength = 2;
   bool _requestedOnce = false; // avoid duplicate call right after clear
+  Timer? _debounce;
+  String _lastQuery = '';
 
   // Popular search suggestions
   static const List<String> _popularSearches = [
@@ -45,7 +49,8 @@ class PetSearchDelegate extends SearchDelegate<Pet?> {
 
   @override
   String? get searchFieldLabel => 'Search pets by name, breed, or type';
-
+  @override
+  TextStyle? get searchFieldStyle => const TextStyle(fontSize: 14); // hint + text size
   @override
   ThemeData appBarTheme(BuildContext context) {
     return Theme.of(context).copyWith(
@@ -54,7 +59,13 @@ class PetSearchDelegate extends SearchDelegate<Pet?> {
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,
+        titleTextStyle: TextStyle(
+          color: Colors.white,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
       ),
+
       inputDecorationTheme: const InputDecorationTheme(
         hintStyle: TextStyle(color: Colors.white70),
         border: InputBorder.none,
@@ -75,11 +86,8 @@ class PetSearchDelegate extends SearchDelegate<Pet?> {
             showSuggestions(context);
           },
         ),
+
       // Filter button
-      IconButton(
-        icon: const Icon(Icons.tune, color: Colors.white),
-        onPressed: () => _showFilterDialog(context),
-      ),
     ];
   }
 
@@ -91,17 +99,41 @@ class PetSearchDelegate extends SearchDelegate<Pet?> {
     );
   }
 
-  void _trigger() {
-    if (query.trim().length < _minQueryLength) {
+  void _trigger({bool force = false}) {
+    final q = query.trim();
+    if (q.length < _minQueryLength) {
       repo.clearSearch();
       return;
     }
-    repo.searchPets(query.trim(), userId: userId ?? USER_ID);
+    if (!force && q == _lastQuery) return; // avoid duplicate searches
+    _lastQuery = q;
+    // Kick off search; UI rebuilds via AnimatedBuilder listening to repo
+    unawaited(repo.searchPets(q, userId: userId ?? USER_ID));
+  }
+
+  // Cancel any pending debounced search
+  void _cancelDebounce() {
+    _debounce?.cancel();
+    _debounce = null;
+  }
+
+  // Debounce queries to reduce flicker and avoid race conditions
+  void _debouncedTrigger() {
+    final q = query.trim();
+    if (q.length < _minQueryLength) {
+      _cancelDebounce();
+      repo.clearSearch();
+      return;
+    }
+    _cancelDebounce();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      _trigger();
+    });
   }
 
   @override
   Widget buildResults(BuildContext context) {
-    _trigger();
+    _trigger(force: true);
     return _buildResultList(context, isResults: true);
   }
 
@@ -109,9 +141,13 @@ class PetSearchDelegate extends SearchDelegate<Pet?> {
   Widget buildSuggestions(BuildContext context) {
     if (!_requestedOnce && query.trim().length >= _minQueryLength) {
       _requestedOnce = true;
-      _trigger();
+      _debouncedTrigger();
     } else if (query.trim().length < _minQueryLength) {
       _requestedOnce = false;
+      _cancelDebounce();
+    } else {
+      // On each keystroke while above threshold, debounce
+      _debouncedTrigger();
     }
 
     // Show suggestions when no query or short query
@@ -123,55 +159,73 @@ class PetSearchDelegate extends SearchDelegate<Pet?> {
   }
 
   Widget _buildResultList(BuildContext context, {required bool isResults}) {
-    final searching = repo.isSearching;
-    final results = repo.searchResults;
-
-    if (query.trim().isEmpty) {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) {
       return _Hint(message: 'Start typing to search pets');
     }
-    if (query.trim().length < _minQueryLength) {
+    if (trimmed.length < _minQueryLength) {
       return _Hint(message: 'Type at least $_minQueryLength characters');
     }
-    if (searching && (results == null || results.isEmpty)) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-    if (results == null) {
-      return const SizedBox();
-    }
-    if (results.isEmpty) {
-      return _buildNoResultsView(context);
-    }
-    return Column(
-      children: [
-        // Results count
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          color: PawsColors.background,
-          child: Text(
-            '${results.length} pet${results.length == 1 ? '' : 's'} found',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: PawsColors.textSecondary),
-          ),
-        ),
-        Expanded(
-          child: ListView.separated(
-            itemCount: results.length,
-            separatorBuilder: (_, index) =>
-                const Divider(height: 1, indent: 72),
-            itemBuilder: (context, index) {
-              final pet = results[index];
-              return _buildPetListTile(context, pet);
-            },
-          ),
-        ),
-      ],
+
+    return AnimatedBuilder(
+      animation: repo,
+      builder: (context, _) {
+        final searching = repo.isSearching;
+        final results = repo.searchResults;
+        final err = repo.errorMessage;
+
+        if (searching && (results == null || results.isEmpty)) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        if ((results == null || results.isEmpty) && (err != null)) {
+          return _buildErrorView(context, err);
+        }
+
+        if (results == null) {
+          return const SizedBox();
+        }
+        if (results.isEmpty) {
+          return _buildNoResultsView(context);
+        }
+
+        return Column(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              color: PawsColors.background,
+              child: Text(
+                '${results.length} pet${results.length == 1 ? '' : 's'} found',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: PawsColors.textSecondary,
+                ),
+              ),
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  _trigger(force: true);
+                },
+                child: ListView.separated(
+                  itemCount: results.length,
+                  separatorBuilder: (_, index) =>
+                      const Divider(height: 1, indent: 72),
+                  itemBuilder: (context, index) {
+                    final pet = results[index];
+                    return _buildPetListTile(context, pet);
+                  },
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -183,13 +237,7 @@ class PetSearchDelegate extends SearchDelegate<Pet?> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Quick filters
-          Text(
-            'Quick Filters',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: PawsColors.textPrimary,
-            ),
-          ),
+          PawsText('Quick Filters', fontWeight: FontWeight.w500),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
@@ -208,14 +256,8 @@ class PetSearchDelegate extends SearchDelegate<Pet?> {
           ),
           const SizedBox(height: 24),
 
-          // Popular searches
-          Text(
-            'Popular Searches',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: PawsColors.textPrimary,
-            ),
-          ),
+          PawsText('Popular Searches', fontWeight: FontWeight.w500),
+
           const SizedBox(height: 12),
           ..._popularSearches.map((search) {
             return ListTile(
@@ -283,7 +325,7 @@ class PetSearchDelegate extends SearchDelegate<Pet?> {
         ),
       ),
       title: Text(
-        pet.name.isEmpty ? 'No name' : pet.name,
+        pet.name != null && pet.name!.isEmpty ? 'Unnamed Pet' : pet.name!,
         style: const TextStyle(
           fontWeight: FontWeight.w600,
           color: PawsColors.textPrimary,
@@ -338,15 +380,10 @@ class PetSearchDelegate extends SearchDelegate<Pet?> {
           ),
         ],
       ),
-      trailing: Icon(
-        (pet.isFavorite ?? false) ? Icons.favorite : Icons.favorite_border,
-        color: (pet.isFavorite ?? false)
-            ? PawsColors.error
-            : PawsColors.textSecondary,
-      ),
+
       onTap: () {
         close(context, pet);
-        context.router.push(PetDetailRoute(pet: pet));
+        context.router.push(PetDetailRoute(id: pet.id));
       },
     );
   }
@@ -399,32 +436,52 @@ class PetSearchDelegate extends SearchDelegate<Pet?> {
     );
   }
 
-  // Show filter dialog
-  void _showFilterDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Filter Options'),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
+  @override
+  void close(BuildContext context, Pet? result) {
+    _cancelDebounce();
+    super.close(context, result);
+  }
+
+  Widget _buildErrorView(BuildContext context, String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Filter functionality coming soon!'),
-            SizedBox(height: 16),
-            Text('You\'ll be able to filter by:'),
-            SizedBox(height: 8),
-            Text('• Pet type (Dog, Cat, etc.)'),
-            Text('• Age range'),
-            Text('• Size'),
-            Text('• Special needs'),
-            Text('• Location distance'),
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: PawsColors.error.withValues(alpha: 0.6),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Something went wrong',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: PawsColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: PawsColors.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () => _trigger(force: true),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: PawsColors.primary,
+                foregroundColor: Colors.white,
+              ),
+            ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
-          ),
-        ],
       ),
     );
   }

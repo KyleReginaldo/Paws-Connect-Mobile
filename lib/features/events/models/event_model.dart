@@ -3,7 +3,7 @@ import 'package:dart_mappable/dart_mappable.dart';
 import 'package:paws_connect/features/fundraising/models/fundraising_model.dart';
 import 'package:paws_connect/features/pets/models/pet_model.dart';
 
-import '../../../core/extension/int.ext.dart';
+import '../../../core/extension/ext.dart';
 import '../../../flavors/flavor_config.dart';
 
 part 'event_model.mapper.dart';

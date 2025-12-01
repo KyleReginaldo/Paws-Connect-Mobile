@@ -1,11 +1,13 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/components/components.dart';
 import 'package:paws_connect/core/supabase/client.dart';
-import 'package:paws_connect/features/favorite/repository/favorite_repository.dart';
+import 'package:paws_connect/features/favorite/provider/favorite_provider.dart';
+import 'package:paws_connect/features/pets/models/pet_model.dart';
 import 'package:provider/provider.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart' as shadcn;
 import 'package:shadcn_flutter/shadcn_flutter.dart' show RefreshTrigger;
@@ -36,12 +38,8 @@ class _PetScreenState extends State<PetScreen> {
   @override
   void initState() {
     super.initState();
-    // Defer fetching pets until after the first frame is drawn to avoid
-    // calling notifyListeners (which triggers widget rebuilds) during the
-    // ancestor widget build phase.
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Use read instead of watch to avoid registering this callback as a listener
-      // and to ensure we only call fetch once after mount.
       final repo = context.read<PetRepository>();
       repo.fetchPets(userId: USER_ID);
     });
@@ -63,7 +61,6 @@ class _PetScreenState extends State<PetScreen> {
           onResult: (success) {
             if (!mounted) return;
             if (success) {
-              // Refresh pets to reflect favorites after sign-in
               context.read<PetRepository>().fetchPets(userId: USER_ID);
             }
           },
@@ -72,23 +69,30 @@ class _PetScreenState extends State<PetScreen> {
       return;
     }
 
+    // Toggle repository cache (flips true/false with notifyListeners)
     final repo = context.read<PetRepository>();
-    // Avoid duplicate optimistic flip; FavoriteRepository manages it
+    repo.togglePetFavorite(petId);
+
     try {
-      await sl<FavoriteRepository>().toggleFavorite(petId);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            !isCurrentlyFavorite
-                ? 'Added to favorites'
-                : 'Removed from favorites',
-          ),
-        ),
-      );
+      final result = await FavoriteProvider().toggleFavorite(petId);
+      if (result.isSuccess) {
+        EasyLoading.showToast(
+          result.value,
+          duration: const Duration(seconds: 2),
+          toastPosition: EasyLoadingToastPosition.bottom,
+        );
+      } else {
+        // Revert on failure
+        repo.togglePetFavorite(petId);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: PawsText('Failed to update favorite')),
+          );
+        }
+      }
     } catch (e) {
-      // Rollback in case repository optimistic failed
-      repo.updatePetFavorite(petId, isCurrentlyFavorite);
+      // Revert on error
+      repo.togglePetFavorite(petId);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to update favorite')),
@@ -207,128 +211,36 @@ class _PetScreenState extends State<PetScreen> {
           : RefreshTrigger(
               onRefresh: () async {
                 final repo = context.read<PetRepository>();
-                repo.fetchPets(userId: USER_ID);
+                repo.fetchPetsWithFilters(userId: USER_ID);
               },
-              child: MasonryGridView.builder(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                gridDelegate:
-                    const SliverSimpleGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2, // or make this dynamic if you like
+              child: Consumer<PetRepository>(
+                builder: (context, value, child) {
+                  return MasonryGridView.builder(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
                     ),
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                itemCount: pets.length,
-                itemBuilder: (context, index) {
-                  final pet = pets[index];
-
-                  return Stack(
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          color: Colors.white,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 6,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
+                    gridDelegate:
+                        const SliverSimpleGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
                         ),
-                        clipBehavior: Clip.antiAlias,
-                        child: InkWell(
-                          onTap: () =>
-                              context.router.push(PetDetailRoute(pet: pet)),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Stack(
-                                children: [
-                                  AspectRatio(
-                                    aspectRatio: 4 / 3,
-                                    child: NetworkImageView(
-                                      pet.transformedPhotos.first,
-                                      fit: BoxFit.cover,
-                                      width: double.infinity,
-                                      enableTapToView: false,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(
-                                  12,
-                                  8,
-                                  12,
-                                  12,
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      spacing: 6,
-                                      children: [
-                                        PawsText(
-                                          pet.name.isEmpty
-                                              ? 'No name'
-                                              : pet.name.isEmpty
-                                              ? 'No name'
-                                              : pet.name.isEmpty
-                                              ? 'No name'
-                                              : pet.name,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        if (pet.adopted != null)
-                                          PawsText(
-                                            'ADOPTED',
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                            color: PawsColors.success,
-                                          ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 4),
-                                    PawsText(
-                                      pet.breed,
-                                      fontSize: 12,
-                                      color: PawsColors.textSecondary,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    itemCount: value.pets?.length ?? 0,
+                    itemBuilder: (context, index) {
+                      if (value.pets == null) {
+                        return const SizedBox.shrink();
+                      }
+                      final pet = value.pets![index];
+                      return _PetCard(
+                        key: ValueKey(pet.id),
+                        pet: pet,
+                        onFavoriteToggle: _toggleFavorite,
+                        isFavorite: context.watch<PetRepository>().isFavorite(
+                          pet.id,
                         ),
-                      ),
-                      Positioned(
-                        top: 10,
-                        right: 10,
-                        child: IconButton.filled(
-                          style: ButtonStyle().copyWith(
-                            backgroundColor: WidgetStatePropertyAll(
-                              PawsColors.primary.withValues(alpha: 0.2),
-                            ),
-                          ),
-                          onPressed: () =>
-                              _toggleFavorite(pet.id, pet.isFavorite ?? false),
-                          icon: Icon(
-                            pet.isFavorite ?? false
-                                ? Icons.favorite
-                                : Icons.favorite_border,
-                            color: PawsColors.primary,
-                          ),
-                        ),
-                      ),
-                    ],
+                      );
+                    },
                   );
                 },
               ),
@@ -436,6 +348,143 @@ class _PetScreenState extends State<PetScreen> {
   }
 }
 
+class _PetCard extends StatefulWidget {
+  final Pet pet;
+  final bool isFavorite;
+  final Function(int petId, bool isCurrentlyFavorite) onFavoriteToggle;
+
+  const _PetCard({
+    super.key,
+    required this.pet,
+    required this.isFavorite,
+    required this.onFavoriteToggle,
+  });
+
+  @override
+  State<_PetCard> createState() => _PetCardState();
+}
+
+class _PetCardState extends State<_PetCard> {
+  late bool isFav;
+
+  @override
+  void initState() {
+    super.initState();
+    isFav = widget.isFavorite;
+  }
+
+  @override
+  void didUpdateWidget(_PetCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Sync local state when isFavorite parameter changes from repository
+    if (oldWidget.isFavorite != widget.isFavorite) {
+      setState(() {
+        isFav = widget.isFavorite;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 6,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () => context.router.push(PetDetailRoute(id: widget.pet.id)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AspectRatio(
+                  aspectRatio: 4 / 3,
+                  child: NetworkImageView(
+                    widget.pet.transformedPhotos.first,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    enableTapToView: false,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        spacing: 6,
+                        children: [
+                          Expanded(
+                            child: PawsText(
+                              widget.pet.name?.isEmpty ?? true
+                                  ? 'Unnamed Pet'
+                                  : widget.pet.name!,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (widget.pet.adopted != null)
+                            PawsText(
+                              'ADOPTED',
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: PawsColors.success,
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      PawsText(
+                        widget.pet.breed,
+                        fontSize: 12,
+                        color: PawsColors.textSecondary,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        Positioned(
+          top: 10,
+          right: 10,
+          child: IconButton.filled(
+            style: ButtonStyle().copyWith(
+              backgroundColor: WidgetStatePropertyAll(
+                isFav
+                    ? PawsColors.primary
+                    : PawsColors.primary.withValues(alpha: 0.2),
+              ),
+            ),
+            onPressed: () {
+              setState(() => isFav = !isFav);
+              widget.onFavoriteToggle(widget.pet.id, !isFav);
+            },
+            icon: Icon(
+              isFav ? Icons.favorite : Icons.favorite_border,
+              color: isFav ? Colors.white : PawsColors.primary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _QuickFiltersBar extends StatelessWidget {
   final PetRepository repo;
   const _QuickFiltersBar({required this.repo});
@@ -473,6 +522,12 @@ class _QuickFiltersBar extends StatelessWidget {
         selected: repo.isVaccinated == true,
         onTap: () => _toggleVaccinated(context),
       ),
+      _QuickChip(
+        label: 'Adopted',
+        icon: LucideIcons.heart,
+        selected: repo.isAdopted == true,
+        onTap: () => _toggleAdopted(context),
+      ),
       if (repo.hasActiveFilters)
         TextButton.icon(
           onPressed: () {
@@ -481,7 +536,8 @@ class _QuickFiltersBar extends StatelessWidget {
             r.updateGenderFilter(null);
             r.updateSizeFilter(null);
             r.updateVaccinatedFilter(null);
-            r.fetchPetsWithFilters();
+            r.updateAdoptedFilter(null);
+            r.fetchPetsWithFilters(userId: USER_ID);
           },
           icon: const Icon(Icons.clear, size: 16),
           label: const Text('Clear'),
@@ -501,21 +557,28 @@ class _QuickFiltersBar extends StatelessWidget {
     final r = context.read<PetRepository>();
     final newValue = r.selectedType == type ? null : type;
     r.updateTypeFilter(newValue);
-    r.fetchPetsWithFilters();
+    r.fetchPetsWithFilters(userId: USER_ID);
   }
 
   void _toggleGender(BuildContext context, String gender) {
     final r = context.read<PetRepository>();
     final newValue = r.selectedGender == gender ? null : gender;
     r.updateGenderFilter(newValue);
-    r.fetchPetsWithFilters();
+    r.fetchPetsWithFilters(userId: USER_ID);
   }
 
   void _toggleVaccinated(BuildContext context) {
     final r = context.read<PetRepository>();
     final newValue = r.isVaccinated == true ? null : true;
     r.updateVaccinatedFilter(newValue);
-    r.fetchPetsWithFilters();
+    r.fetchPetsWithFilters(userId: USER_ID);
+  }
+
+  void _toggleAdopted(BuildContext context) {
+    final r = context.read<PetRepository>();
+    final newValue = r.isAdopted == true ? null : true;
+    r.updateAdoptedFilter(newValue);
+    r.fetchPetsWithFilters(userId: USER_ID);
   }
 }
 
@@ -590,6 +653,7 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
   late String? selectedGender;
   late String? selectedSize;
   late bool? isVaccinated;
+  late bool? isAdopted;
 
   @override
   void initState() {
@@ -598,6 +662,7 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
     selectedGender = widget.repository.selectedGender;
     selectedSize = widget.repository.selectedSize;
     isVaccinated = widget.repository.isVaccinated;
+    isAdopted = widget.repository.isAdopted;
   }
 
   @override
@@ -607,14 +672,12 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
         selectedType != null ||
         selectedGender != null ||
         selectedSize != null ||
-        isVaccinated != null;
+        isVaccinated != null ||
+        isAdopted != null;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Premium drag handle with sophisticated glow
-
-        // Enhanced header with animation
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
           child: Row(
@@ -700,7 +763,6 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
           ),
         ),
 
-        // Elegant divider with gradient
         Container(
           height: 1,
           margin: const EdgeInsets.symmetric(horizontal: 24),
@@ -716,7 +778,6 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
         ),
         const SizedBox(height: 20),
 
-        // Filter Content with better spacing
         Flexible(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -769,7 +830,24 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
                 _buildShadcnFilterSection(
                   'Vaccination Status',
                   Icons.medical_services_outlined,
-                  _buildShadcnToggleGroup(),
+                  _buildShadcnToggleGroup(
+                    value: isVaccinated,
+                    onChanged: (newValue) =>
+                        setState(() => isVaccinated = newValue),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                _buildShadcnFilterSection(
+                  'Adoption Status',
+                  Icons.favorite_border,
+                  _buildShadcnToggleGroup(
+                    value: isAdopted,
+                    onChanged: (newValue) =>
+                        setState(() => isAdopted = newValue),
+                    yesLabel: 'Adopted',
+                    noLabel: 'Available',
+                  ),
                 ),
                 const SizedBox(height: 10),
               ],
@@ -777,7 +855,6 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
           ),
         ),
 
-        // Modern bottom actions
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -831,6 +908,7 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
       selectedGender = null;
       selectedSize = null;
       isVaccinated = null;
+      isAdopted = null;
     });
   }
 
@@ -839,9 +917,10 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
     widget.repository.updateGenderFilter(selectedGender);
     widget.repository.updateSizeFilter(selectedSize);
     widget.repository.updateVaccinatedFilter(isVaccinated);
+    widget.repository.updateAdoptedFilter(isAdopted);
 
     Navigator.pop(context);
-    widget.repository.fetchPetsWithFilters();
+    widget.repository.fetchPetsWithFilters(userId: USER_ID);
   }
 
   Widget _buildShadcnFilterSection(
@@ -951,30 +1030,33 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
     );
   }
 
-  Widget _buildShadcnToggleGroup() {
+  Widget _buildShadcnToggleGroup({
+    required bool? value,
+    required Function(bool?) onChanged,
+    String yesLabel = 'Yes',
+    String noLabel = 'No',
+  }) {
     final theme = shadcn.Theme.of(context);
     return Row(
       children: [
         Expanded(
           child: GestureDetector(
-            onTap: () => setState(
-              () => isVaccinated = isVaccinated == true ? null : true,
-            ),
+            onTap: () => onChanged(value == true ? null : true),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeInOutCubic,
               padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
-                gradient: isVaccinated == true
+                gradient: value == true
                     ? LinearGradient(
                         colors: [Colors.green.shade600, Colors.green.shade500],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       )
                     : null,
-                color: isVaccinated == true ? null : Colors.transparent,
+                color: value == true ? null : Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
-                boxShadow: isVaccinated == true
+                boxShadow: value == true
                     ? [
                         BoxShadow(
                           color: Colors.green.withValues(alpha: 0.3),
@@ -990,28 +1072,26 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 200),
                     child: Icon(
-                      isVaccinated == true
-                          ? LucideIcons.check
-                          : LucideIcons.circle,
-                      key: ValueKey(isVaccinated == true),
+                      value == true ? LucideIcons.check : LucideIcons.circle,
+                      key: ValueKey(value == true),
                       size: 18,
-                      color: isVaccinated == true
+                      color: value == true
                           ? Colors.white
                           : theme.colorScheme.mutedForeground,
                     ),
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Yes',
+                    yesLabel,
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight: isVaccinated == true
+                      fontWeight: value == true
                           ? FontWeight.w700
                           : FontWeight.w500,
-                      color: isVaccinated == true
+                      color: value == true
                           ? Colors.white
                           : theme.colorScheme.foreground,
-                      letterSpacing: isVaccinated == true ? 0.2 : 0,
+                      letterSpacing: value == true ? 0.2 : 0,
                     ),
                   ),
                 ],
@@ -1022,24 +1102,22 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
         const SizedBox(width: 4),
         Expanded(
           child: GestureDetector(
-            onTap: () => setState(
-              () => isVaccinated = isVaccinated == false ? null : false,
-            ),
+            onTap: () => onChanged(value == false ? null : false),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOutCubic,
               padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
-                gradient: isVaccinated == false
+                gradient: value == false
                     ? LinearGradient(
                         colors: [Colors.red.shade600, Colors.red.shade500],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       )
                     : null,
-                color: isVaccinated == false ? null : Colors.transparent,
+                color: value == false ? null : Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
-                boxShadow: isVaccinated == false
+                boxShadow: value == false
                     ? [
                         BoxShadow(
                           color: Colors.red.withValues(alpha: 0.3),
@@ -1055,28 +1133,26 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 200),
                     child: Icon(
-                      isVaccinated == false
-                          ? LucideIcons.x
-                          : LucideIcons.circle,
-                      key: ValueKey(isVaccinated == false),
+                      value == false ? LucideIcons.x : LucideIcons.circle,
+                      key: ValueKey(value == false),
                       size: 18,
-                      color: isVaccinated == false
+                      color: value == false
                           ? Colors.white
                           : theme.colorScheme.mutedForeground,
                     ),
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'No',
+                    noLabel,
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight: isVaccinated == false
+                      fontWeight: value == false
                           ? FontWeight.w700
                           : FontWeight.w500,
-                      color: isVaccinated == false
+                      color: value == false
                           ? Colors.white
                           : theme.colorScheme.foreground,
-                      letterSpacing: isVaccinated == false ? 0.2 : 0,
+                      letterSpacing: value == false ? 0.2 : 0,
                     ),
                   ),
                 ],

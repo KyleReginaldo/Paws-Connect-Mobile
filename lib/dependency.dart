@@ -2,6 +2,8 @@ import 'package:get_it/get_it.dart';
 import 'package:paws_connect/core/provider/common_provider.dart';
 import 'package:paws_connect/core/provider/image_provider.dart';
 import 'package:paws_connect/core/repository/common_repository.dart';
+import 'package:paws_connect/core/services/forum_service.dart';
+import 'package:paws_connect/core/services/user_settings_service.dart';
 import 'package:paws_connect/features/adoption/repository/adoption_repository.dart';
 import 'package:paws_connect/features/auth/provider/auth_provider.dart';
 import 'package:paws_connect/features/auth/repository/auth_repository.dart';
@@ -15,21 +17,35 @@ import 'package:paws_connect/features/forum/repository/forum_repository.dart';
 import 'package:paws_connect/features/fundraising/provider/fundraising_provider.dart';
 import 'package:paws_connect/features/fundraising/repository/fundraising_repository.dart';
 import 'package:paws_connect/features/google_map/provider/address_provider.dart';
+import 'package:paws_connect/features/main/repository/home_repository.dart';
+import 'package:paws_connect/features/main/repository/position_repository.dart';
 import 'package:paws_connect/features/notifications/provider/notification_provider.dart';
 import 'package:paws_connect/features/notifications/repository/notification_repository.dart';
 import 'package:paws_connect/features/pets/provider/pet_provider.dart';
+import 'package:paws_connect/features/posts/repository/posts_repository.dart';
 import 'package:paws_connect/features/profile/provider/profile_provider.dart';
 import 'package:paws_connect/features/profile/repository/image_repository.dart';
 import 'package:paws_connect/features/profile/repository/profile_repository.dart';
+import 'package:paws_connect/features/settings/provider/user_settings_provider.dart';
+import 'package:paws_connect/features/settings/repository/user_settings_repository.dart';
 
 import 'features/adoption/provider/adoption_provider.dart';
 import 'features/favorite/repository/favorite_repository.dart';
 import 'features/google_map/repository/address_repository.dart';
 import 'features/pets/repository/pet_repository.dart';
+import 'features/posts/provider/posts_provider.dart';
 
 final sl = GetIt.instance;
 
 Future<void> init() async {
+  // Core services
+  sl.registerLazySingleton(() => ForumService());
+  sl.registerLazySingleton(() => UserSettingsService());
+  // Ensure repositories that hold UI state survive hot reloads
+  sl.registerLazySingleton<PositionRepository>(() => PositionRepository());
+  sl.registerLazySingleton<HomeRepository>(() => HomeRepository());
+
+  // Providers and repositories
   sl.registerLazySingleton(() => AuthProvider());
   sl.registerLazySingleton(() => AuthRepository(sl()));
   sl.registerLazySingleton(() => PetProvider());
@@ -56,4 +72,9 @@ Future<void> init() async {
   sl.registerLazySingleton(() => EventProvider());
   sl.registerLazySingleton(() => EventRepository(sl()));
   sl.registerLazySingleton(() => ImageProvider());
+  sl.registerLazySingleton(() => UserSettingsProvider());
+  sl.registerLazySingleton(() => UserSettingsRepository(sl()));
+  sl.registerLazySingleton(() => PostsProvider());
+
+  sl.registerLazySingleton(() => PostsRepository(provider: sl()));
 }

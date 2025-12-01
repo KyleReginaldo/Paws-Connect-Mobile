@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:paws_connect/features/forum/provider/forum_provider.dart';
 
@@ -39,6 +41,15 @@ class ForumRepository extends ChangeNotifier {
 
   List<String> get pendingChats => _pendingChats;
   final ForumProvider _provider;
+  Timer? _debounceTimer;
+
+  // Debounce notifyListeners to prevent excessive rebuilds
+  void _debouncedNotifyListeners() {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 16), () {
+      notifyListeners();
+    });
+  }
 
   ForumRepository(this._provider);
 
@@ -149,7 +160,7 @@ class ForumRepository extends ChangeNotifier {
       _hasMoreChats = result.value.chats.length == _pageLimit;
       _errorMessage = ''; // Clear any previous errors
     }
-    notifyListeners();
+    _debouncedNotifyListeners();
   }
 
   Future<void> loadMoreChats(int forumId) async {
@@ -182,10 +193,11 @@ class ForumRepository extends ChangeNotifier {
       _hasMoreChats = false;
     }
 
-    notifyListeners();
+    _debouncedNotifyListeners();
   }
 
   void reset() {
+    _debounceTimer?.cancel();
     _forums = [];
     _forum = null;
     _forumChats = [];

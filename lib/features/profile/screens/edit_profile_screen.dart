@@ -4,6 +4,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:paws_connect/core/enum/user.enum.dart';
+import 'package:paws_connect/core/extension/ext.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/features/profile/repository/image_repository.dart';
 import 'package:paws_connect/features/profile/repository/profile_repository.dart';
@@ -39,7 +40,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
   final _paymentMethodController = TextEditingController();
 
   bool _isLoading = false;
@@ -68,13 +68,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _originalProfile = profile;
     _usernameController.text = profile.username;
     _emailController.text = profile.email;
-    _phoneController.text = profile.phoneNumber;
     _paymentMethodController.text = profile.paymentMethod ?? '';
 
     // Listen for changes
     _usernameController.addListener(_onFieldChanged);
     _emailController.addListener(_onFieldChanged);
-    _phoneController.addListener(_onFieldChanged);
     _paymentMethodController.addListener(_onFieldChanged);
   }
 
@@ -83,7 +81,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final hasChanges =
         _usernameController.text != _originalProfile?.username ||
         _emailController.text != _originalProfile?.email ||
-        _phoneController.text != _originalProfile?.phoneNumber ||
         _paymentMethodController.text !=
             (_originalProfile?.paymentMethod ?? '') ||
         imageRepo.hasImageChanged;
@@ -98,7 +95,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         final newHasChanges =
             _usernameController.text != _originalProfile?.username ||
             _emailController.text != _originalProfile?.email ||
-            _phoneController.text != _originalProfile?.phoneNumber ||
             _paymentMethodController.text !=
                 (_originalProfile?.paymentMethod ?? '') ||
             imageRepo2.hasImageChanged;
@@ -193,7 +189,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     _usernameController.dispose();
     _emailController.dispose();
-    _phoneController.dispose();
     _paymentMethodController.dispose();
     super.dispose();
   }
@@ -314,8 +309,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                             )
                                           : ClipOval(
                                               child: CachedNetworkImage(
-                                                imageUrl:
-                                                    user.profileImageLink!,
+                                                imageUrl: user
+                                                    .profileImageLink!
+                                                    .transformedUrl,
                                                 fit: BoxFit.cover,
                                                 width: 100,
                                                 height: 100,
@@ -436,28 +432,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             },
                           ),
                           const SizedBox(height: 16),
-
-                          // Phone Number
-                          const PawsText(
-                            'Phone Number(cannot change)',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: PawsColors.textPrimary,
-                          ),
-                          const SizedBox(height: 6),
-                          PawsTextField(
-                            controller: _phoneController,
-                            hint: 'Enter your phone number',
-                            readOnly: true,
-
-                            keyboardType: TextInputType.phone,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Phone number is required';
-                              }
-                              return null;
-                            },
-                          ),
                         ],
                       ),
                     ),

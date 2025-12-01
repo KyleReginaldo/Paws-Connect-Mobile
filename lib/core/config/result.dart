@@ -5,7 +5,7 @@ class Result<T> {
   Result.success([this._value]) : _error = null;
   Result.error([this._error]) : _value = null;
 
-  bool get isSuccess => _value != null;
+  bool get isSuccess => _error == null;
   bool get isError => _error != null;
 
   T get value => _value!;

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart' hide Notification;
+import 'package:paws_connect/core/repository/common_repository.dart';
+import 'package:paws_connect/core/supabase/client.dart';
+import 'package:paws_connect/dependency.dart';
 import 'package:paws_connect/features/notifications/models/notification_model.dart';
 import 'package:paws_connect/features/notifications/provider/notification_provider.dart';
 
@@ -152,6 +155,10 @@ class NotificationRepository extends ChangeNotifier {
     if (changed) {
       _unreadCount = 0;
       notifyListeners();
+      // Update global notification badge count immediately
+      try {
+        sl<CommonRepository>().getNotificationCount(userId);
+      } catch (_) {}
     }
     try {
       await provider.markAllViewed(userId);
@@ -170,6 +177,13 @@ class NotificationRepository extends ChangeNotifier {
         _notifications[i] = n.copyWith(isViewed: true);
         if (_unreadCount > 0) _unreadCount -= 1;
         notifyListeners();
+        // Update global notification badge count immediately
+        final uid = USER_ID;
+        if (uid != null && uid.isNotEmpty) {
+          try {
+            sl<CommonRepository>().getNotificationCount(uid);
+          } catch (_) {}
+        }
         break;
       }
     }

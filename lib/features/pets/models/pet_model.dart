@@ -1,6 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:dart_mappable/dart_mappable.dart';
-import 'package:paws_connect/core/extension/int.ext.dart';
+import 'package:paws_connect/core/extension/ext.dart';
 import 'package:paws_connect/features/profile/models/user_profile_model.dart';
 
 import '../../../flavors/flavor_config.dart';
@@ -11,7 +11,7 @@ part 'pet_model.mapper.dart';
 class Pet with PetMappable {
   int id;
   DateTime createdAt;
-  String name;
+  String? name;
   String type;
   String breed;
   String gender;
@@ -39,7 +39,7 @@ class Pet with PetMappable {
   Pet({
     required this.id,
     required this.createdAt,
-    required this.name,
+    this.name,
     required this.type,
     required this.breed,
     required this.gender,
@@ -61,7 +61,7 @@ class Pet with PetMappable {
     required this.color,
     this.isFavorite,
     this.adoption,
-    required this.adopted,
+    this.adopted,
     this.happinessImage,
   });
 
@@ -84,17 +84,12 @@ class Pet with PetMappable {
 
 @MappableClass(caseStyle: CaseStyle.snakeCase)
 class PetAdoption with PetAdoptionMappable {
-  final int id;
-  final DateTime createdAt;
-  final UserProfile user;
-  final String status;
+  final int? id;
+  final DateTime? createdAt;
+  final UserProfile? user;
+  final String? status;
 
-  PetAdoption({
-    required this.id,
-    required this.createdAt,
-    required this.user,
-    required this.status,
-  });
+  PetAdoption({this.id, this.createdAt, this.user, this.status});
 }
 
 @MappableClass(caseStyle: CaseStyle.snakeCase)

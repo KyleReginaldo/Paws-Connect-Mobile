@@ -2,7 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:paws_connect/core/components/components.dart';
-import 'package:paws_connect/core/extension/int.ext.dart';
+import 'package:paws_connect/core/extension/ext.dart';
 import 'package:paws_connect/dependency.dart';
 import 'package:paws_connect/features/fundraising/models/fundraising_model.dart';
 import 'package:paws_connect/features/fundraising/repository/fundraising_repository.dart';
@@ -33,17 +33,14 @@ class _FundraisingScreenState extends State<FundraisingScreen>
   final List<String> tabs = ['All', 'ONGOING', 'COMPLETE'];
 
   late TabController _tabController;
+  int currentIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: tabs.length, vsync: this);
-    // Defer fetching pets until after the first frame is drawn to avoid
-    // calling notifyListeners (which triggers widget rebuilds) during the
-    // ancestor widget build phase.
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Use read instead of watch to avoid registering this callback as a listener
-      // and to ensure we only call fetch once after mount.
       final repo = context.read<FundraisingRepository>();
       repo.fetchFundraisings();
     });
@@ -61,10 +58,8 @@ class _FundraisingScreenState extends State<FundraisingScreen>
     final isLoading = context.watch<FundraisingRepository>().isLoading;
     final errorMessage = context.watch<FundraisingRepository>().errorMessage;
 
-    // Show error message with retry option for network errors
     if (errorMessage != null && !isLoading && mounted) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        // Clear the error message first to prevent repeated showing
         context.read<FundraisingRepository>().clearErrorMessage();
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -97,7 +92,6 @@ class _FundraisingScreenState extends State<FundraisingScreen>
       ),
       body: Column(
         children: [
-          // Custom Tab Bar Container
           Container(
             color: Colors.white,
             child: Column(
@@ -107,13 +101,15 @@ class _FundraisingScreenState extends State<FundraisingScreen>
                     horizontal: 16,
                     vertical: 8,
                   ),
-                  // decoration: BoxDecoration(
-                  //   color: Colors.grey[100],
-                  //   borderRadius: BorderRadius.circular(25),
-                  // ),
+
                   child: TabBar(
                     controller: _tabController,
                     isScrollable: true,
+                    onTap: (value) {
+                      setState(() {
+                        currentIndex = value;
+                      });
+                    },
                     indicator: BoxDecoration(
                       borderRadius: BorderRadius.circular(25),
                       color: PawsColors.primary,
@@ -138,16 +134,23 @@ class _FundraisingScreenState extends State<FundraisingScreen>
                       fontWeight: FontWeight.w500,
                     ),
                     dividerColor: Colors.transparent,
-                    // tabAlignment: TabAlignment.start,
+
                     padding: const EdgeInsets.symmetric(horizontal: 8),
-                    tabs: tabs.map((tab) => _buildCustomTab(tab)).toList(),
+                    tabs: tabs.map((tab) {
+                      final index = tabs.indexOf(tab);
+
+                      final color = index == currentIndex
+                          ? Colors.white
+                          : PawsColors.textSecondary;
+                      return _buildCustomTab(tab, color);
+                    }).toList(),
                   ),
                 ),
                 Container(height: 1, color: Colors.grey[200]),
               ],
             ),
           ),
-          // Tab Content
+
           Expanded(
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -171,6 +174,8 @@ class _FundraisingScreenState extends State<FundraisingScreen>
                           ),
                         )
                       : TabBarView(
+                          physics: NeverScrollableScrollPhysics(),
+
                           controller: _tabController,
                           children: tabs.map((status) {
                             final filteredFundraisings =
@@ -188,13 +193,13 @@ class _FundraisingScreenState extends State<FundraisingScreen>
     );
   }
 
-  Widget _buildCustomTab(String label) {
+  Widget _buildCustomTab(String label, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: PawsText(
         label.capitalize(),
         fontSize: 12,
-
+        color: color,
         fontWeight: FontWeight.w600,
       ),
     );
@@ -276,8 +281,8 @@ class _FundraisingScreenState extends State<FundraisingScreen>
                 child: Padding(
                   padding: const EdgeInsets.all(8),
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Image
                       Container(
                         width: 80,
                         height: 80,
@@ -304,7 +309,7 @@ class _FundraisingScreenState extends State<FundraisingScreen>
                               ),
                       ),
                       const SizedBox(width: 8),
-                      // Content
+
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -354,6 +359,31 @@ class _FundraisingScreenState extends State<FundraisingScreen>
                               fontSize: 12,
                               color: PawsColors.textSecondary,
                             ),
+                            // Sorry message for incomplete campaigns
+                            if (fundraising.status.toUpperCase() ==
+                                    'COMPLETE' &&
+                                fundraising.raisedAmount <
+                                    fundraising.targetAmount) ...[
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: Colors.orange.withValues(alpha: 0.3),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: PawsText(
+                                  "Thank you to everyone who has supported our campaign! While we didn't reach our goal of ${fundraising.targetAmount.displayMoney()}, we are grateful for the ${fundraising.raisedAmount.displayMoney()} raised, which will still help us ${fundraising.title.toLowerCase()}. We might take a little longer to reach the full target, but every bit helps and we are optimistic about continuing this mission. You can still support us by donating to our general fund or sharing our cause with your friends and family. Together, we can make a difference!",
+                                  fontSize: 11,
+                                  color: Colors.orange[800],
+                                  maxLines: 4,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),

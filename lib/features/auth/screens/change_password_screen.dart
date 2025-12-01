@@ -7,6 +7,7 @@ import 'package:paws_connect/features/auth/provider/auth_provider.dart';
 import 'package:paws_connect/features/profile/repository/profile_repository.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/theme/paws_theme.dart';
 import '../../../core/widgets/button.dart';
 import '../../../dependency.dart';
 
@@ -33,9 +34,81 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final _currentPassword = TextEditingController();
   final _newPassword = TextEditingController();
   final _confirmPassword = TextEditingController();
-
   bool _loading = false;
   String? _error;
+
+  // Password validation state
+  bool hasMinLength = false;
+  bool hasUpperCase = false;
+  bool hasLowerCase = false;
+  bool hasNumber = false;
+  bool hasSpecialChar = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Add password validation listener
+    _newPassword.addListener(() {
+      _validatePassword(_newPassword.text);
+    });
+  }
+
+  void _validatePassword(String value) {
+    final min = value.length >= 8;
+    final upper = RegExp(r'[A-Z]').hasMatch(value);
+    final lower = RegExp(r'[a-z]').hasMatch(value);
+    final number = RegExp(r'[0-9]').hasMatch(value);
+    final special = RegExp(r'[!@#\$%^&*]').hasMatch(value);
+
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() {
+        hasMinLength = min;
+        hasUpperCase = upper;
+        hasLowerCase = lower;
+        hasNumber = number;
+        hasSpecialChar = special;
+      });
+    });
+  }
+
+  Widget _buildPasswordRequirement(String text, bool ok) {
+    return Row(
+      children: [
+        Icon(
+          ok ? Icons.check_circle : Icons.cancel,
+          size: 16,
+          color: ok ? Colors.green : Colors.redAccent,
+        ),
+        const SizedBox(width: 8),
+        PawsText(
+          text,
+          color: ok ? PawsColors.textSecondary : Colors.redAccent,
+          fontSize: 13,
+        ),
+      ],
+    );
+  }
+
+  String? _validateNewPasswordField(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'New password is required';
+    }
+
+    final v = value.trim();
+    final okMin = v.length >= 8;
+    final okUpper = RegExp(r'[A-Z]').hasMatch(v);
+    final okLower = RegExp(r'[a-z]').hasMatch(v);
+    final okNum = RegExp(r'[0-9]').hasMatch(v);
+    final okSpec = RegExp(r'[!@#\$%^&*]').hasMatch(v);
+
+    if (!(okMin && okUpper && okLower && okNum && okSpec)) {
+      return 'Password does not meet all requirements';
+    }
+    return null;
+  }
 
   Future<void> _handleChangePassword() async {
     if (!_formKey.currentState!.validate()) return;
@@ -129,16 +202,56 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   hint: 'New Password',
                   controller: _newPassword,
                   obscureText: true,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'New password is required';
-                    }
-                    if (value.trim().length < 8) {
-                      return 'Password must be at least 8 characters';
-                    }
-                    return null;
-                  },
+                  validator: _validateNewPasswordField,
                 ),
+                const SizedBox(height: 8),
+
+                // Password requirements indicator
+                if (_newPassword.text.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: PawsColors.border),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        PawsText(
+                          'Password Requirements:',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: PawsColors.textPrimary,
+                        ),
+                        const SizedBox(height: 8),
+                        _buildPasswordRequirement(
+                          'At least 8 characters',
+                          hasMinLength,
+                        ),
+                        const SizedBox(height: 4),
+                        _buildPasswordRequirement(
+                          'One uppercase letter (A-Z)',
+                          hasUpperCase,
+                        ),
+                        const SizedBox(height: 4),
+                        _buildPasswordRequirement(
+                          'One lowercase letter (a-z)',
+                          hasLowerCase,
+                        ),
+                        const SizedBox(height: 4),
+                        _buildPasswordRequirement(
+                          'One number (0-9)',
+                          hasNumber,
+                        ),
+                        const SizedBox(height: 4),
+                        _buildPasswordRequirement(
+                          'One special character (!@#\$%^&*)',
+                          hasSpecialChar,
+                        ),
+                      ],
+                    ),
+                  ),
                 const SizedBox(height: 16),
 
                 // Confirm password

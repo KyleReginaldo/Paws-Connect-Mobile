@@ -1,6 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
-import 'package:paws_connect/core/extension/int.ext.dart';
+import 'package:paws_connect/core/extension/ext.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/core/widgets/text.dart';
 import 'package:paws_connect/features/donation/repository/donation_repository.dart';
@@ -47,31 +47,39 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
           style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
         ),
       ),
-      body: ListView.builder(
-        padding: EdgeInsets.all(16),
-        itemCount: donations?.length ?? 0,
-        itemBuilder: (context, index) {
-          final donation = donations![index];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: ListTile(
-              tileColor: Colors.white,
+      body: donations != null && donations.isNotEmpty
+          ? ListView.builder(
+              padding: EdgeInsets.all(16),
+              itemCount: donations.length,
+              itemBuilder: (context, index) {
+                final donation = donations[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    tileColor: Colors.white,
 
-              title: PawsText(donation.fundraising),
-              subtitle: PawsText(
-                timeago.format(donation.donatedAt),
-                fontSize: 12,
+                    title: PawsText(donation.fundraising),
+                    subtitle: PawsText(
+                      timeago.format(donation.donatedAt),
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
+                    trailing: PawsText(
+                      donation.amount.displayMoney(),
+                      fontWeight: FontWeight.bold,
+                      color: PawsColors.success,
+                    ),
+                  ),
+                );
+              },
+            )
+          : Center(
+              child: PawsText(
+                'No donation found.',
+                fontSize: 14,
                 color: Colors.grey,
               ),
-              trailing: PawsText(
-                donation.amount.displayMoney(),
-                fontWeight: FontWeight.bold,
-                color: PawsColors.success,
-              ),
             ),
-          );
-        },
-      ),
     );
   }
 }

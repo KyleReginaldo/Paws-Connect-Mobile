@@ -6,6 +6,7 @@ class FlavorConfig {
   final String supabaseUrl;
   final String supabaseServiceRoleKey;
   final String appName;
+  final String logoUrl;
 
   static FlavorConfig? _instance;
   FlavorConfig._({
@@ -14,6 +15,7 @@ class FlavorConfig {
     required this.supabaseUrl,
     required this.supabaseServiceRoleKey,
     required this.appName,
+    required this.logoUrl,
   });
 
   factory FlavorConfig({
@@ -22,6 +24,7 @@ class FlavorConfig {
     required String supabaseUrl,
     required String supabaseServiceRoleKey,
     required String appName,
+    required String logoUrl,
   }) {
     _instance ??= FlavorConfig._(
       flavor: flavor,
@@ -29,6 +32,7 @@ class FlavorConfig {
       supabaseUrl: supabaseUrl,
       supabaseServiceRoleKey: supabaseServiceRoleKey,
       appName: appName,
+      logoUrl: logoUrl,
     );
     return _instance!;
   }

@@ -2,7 +2,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:paws_connect/core/components/components.dart';
-import 'package:paws_connect/core/extension/int.ext.dart';
+import 'package:paws_connect/core/extension/ext.dart';
 import 'package:paws_connect/core/router/app_route.gr.dart';
 import 'package:paws_connect/features/fundraising/models/fundraising_model.dart';
 import 'package:timeago/timeago.dart' as timeago;

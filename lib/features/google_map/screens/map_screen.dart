@@ -9,6 +9,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/provider/common_provider.dart';
 import 'package:paws_connect/core/theme/paws_theme.dart';
+import 'package:paws_connect/core/widgets/button.dart';
 import 'package:paws_connect/core/widgets/text_field.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -722,28 +723,15 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
           const SizedBox(height: 32),
 
           // Save button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                if (_addressFormKey.currentState?.validate() ?? false) {
-                  _handleAddAddress();
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: PawsColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text(
-                'Save Address',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-            ),
+          PawsElevatedButton(
+            label: 'Save Address',
+            onPressed: () {
+              if (_addressFormKey.currentState?.validate() ?? false) {
+                _handleAddAddress();
+              }
+            },
           ),
+
           const SizedBox(height: 20),
         ],
       ),

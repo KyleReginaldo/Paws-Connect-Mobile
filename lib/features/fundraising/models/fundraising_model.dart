@@ -1,9 +1,10 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:dart_mappable/dart_mappable.dart';
-import 'package:paws_connect/core/extension/int.ext.dart';
+import 'package:paws_connect/core/extension/ext.dart';
 
 import '../../../core/hooks/mapping.hooks.dart';
 import '../../../flavors/flavor_config.dart';
+import 'payment_info_model.dart';
 
 part 'fundraising_model.mapper.dart';
 
@@ -27,6 +28,8 @@ class Fundraising with FundraisingMappable {
   final String? facebookLink;
   final String? qrCode;
   final String? gcashNumber;
+  final List<PaymentInfo>? bankAccounts;
+  final List<PaymentInfo>? eWallets;
 
   Fundraising({
     required this.id,
@@ -45,6 +48,8 @@ class Fundraising with FundraisingMappable {
     this.facebookLink,
     this.qrCode,
     this.gcashNumber,
+    this.bankAccounts,
+    this.eWallets,
   });
   String? get transformedQrCode {
     if (FlavorConfig.isDevelopment()) {

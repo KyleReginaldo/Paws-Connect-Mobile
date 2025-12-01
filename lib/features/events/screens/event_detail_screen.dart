@@ -184,23 +184,17 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   }
 
   Future<void> joinEventOperation() async {
-    final error = await context.read<EventRepository>().joinEvent(
+    await context.read<EventRepository>().joinEvent(
       eventId: widget.id,
       userId: USER_ID!,
     );
-    if (error != null) {
-      throw Exception(error);
-    }
   }
 
   Future<void> leaveEventOperation() async {
-    final error = await context.read<EventRepository>().leaveEvent(
+    await context.read<EventRepository>().leaveEvent(
       eventId: widget.id,
       userId: USER_ID!,
     );
-    if (error != null) {
-      throw Exception(error);
-    }
   }
 
   Future<void> leaveEvent() async {
@@ -781,6 +775,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                               onTap: () {
                                 showModalBottomSheet(
                                   context: context,
+                                  backgroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(),
                                   builder: (_) {
                                     return SuggestionModal(

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/components/media/network_image_view.dart';
-import 'package:paws_connect/core/extension/int.ext.dart';
+import 'package:paws_connect/core/extension/ext.dart';
 import 'package:paws_connect/core/theme/paws_theme.dart';
 import 'package:paws_connect/core/widgets/text.dart';
 import 'package:paws_connect/features/adoption/repository/adoption_repository.dart';
@@ -101,6 +101,8 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
                 const SizedBox(height: 16),
                 _buildHouseholdDetailsCard(adoption),
                 const SizedBox(height: 16),
+                _buildAdoptionDetailsCard(adoption),
+                const SizedBox(height: 16),
                 _buildPetDetailsCard(adoption.pets),
                 const SizedBox(height: 20),
               ],
@@ -177,7 +179,7 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
                   children: [
                     Expanded(
                       child: PawsText(
-                        adoption.pets.name,
+                        adoption.pets.name ?? "Unnamed Pet",
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -312,34 +314,128 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
       icon: LucideIcons.house,
       child: Column(
         children: [
-          _buildInfoRow('Type of Residence', adoption.typeOfResidence),
+          _buildInfoRow(
+            'Type of Residence',
+            adoption.typeOfResidence ?? 'Not specified',
+          ),
           const SizedBox(height: 12),
-          _buildInfoRow('Is Renting', adoption.isRenting ? 'Yes' : 'No'),
+          _buildInfoRow(
+            'Is Renting',
+            adoption.isRenting != null
+                ? (adoption.isRenting! ? 'Yes' : 'No')
+                : 'Not specified',
+          ),
           const SizedBox(height: 12),
           _buildInfoRow(
             'Household Members',
-            adoption.numberOfHouseholdMembers.toString(),
+            adoption.numberOfHouseholdMembers?.toString() ?? 'Not specified',
           ),
           const SizedBox(height: 12),
           _buildInfoRow(
             'Has Children',
-            adoption.hasChildrenInHome ? 'Yes' : 'No',
+            adoption.hasChildrenInHome != null
+                ? (adoption.hasChildrenInHome! ? 'Yes' : 'No')
+                : 'Not specified',
           ),
           const SizedBox(height: 12),
           _buildInfoRow(
             'Has Other Pets',
-            adoption.hasOtherPetsInHome ? 'Yes' : 'No',
+            adoption.hasOtherPetsInHome != null
+                ? (adoption.hasOtherPetsInHome! ? 'Yes' : 'No')
+                : 'Not specified',
           ),
           const SizedBox(height: 12),
           _buildInfoRow(
             'Has Outdoor Space',
-            adoption.haveOutdoorSpace ? 'Yes' : 'No',
+            adoption.haveOutdoorSpace != null
+                ? (adoption.haveOutdoorSpace! ? 'Yes' : 'No')
+                : 'Not specified',
           ),
-          if (adoption.isRenting) ...[
+          if (adoption.isRenting == true) ...[
             const SizedBox(height: 12),
             _buildInfoRow(
               'Landlord Permission',
-              adoption.havePermissionFromLandlord ? 'Yes' : 'No',
+              adoption.havePermissionFromLandlord != null
+                  ? (adoption.havePermissionFromLandlord! ? 'Yes' : 'No')
+                  : 'Not specified',
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAdoptionDetailsCard(Adoption adoption) {
+    // Only show if at least one new field has data
+    final hasAdoptionDetails =
+        adoption.reasonForAdopting?.isNotEmpty == true ||
+        adoption.willingToVisitShelter != null ||
+        adoption.willingToVisitAgain != null ||
+        adoption.adoptingForSelf != null ||
+        adoption.howCanYouGiveFurReverHome?.isNotEmpty == true ||
+        adoption.whereDidYouHearAboutUs?.isNotEmpty == true;
+
+    if (!hasAdoptionDetails) {
+      return const SizedBox.shrink();
+    }
+
+    return _buildCard(
+      title: 'Adoption Details',
+      icon: LucideIcons.clipboard,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (adoption.reasonForAdopting?.isNotEmpty == true) ...[
+            _buildInfoRow('Reason for Adopting', adoption.reasonForAdopting!),
+            if (adoption.adoptingForSelf != null ||
+                adoption.willingToVisitShelter != null ||
+                adoption.willingToVisitAgain != null ||
+                adoption.howCanYouGiveFurReverHome?.isNotEmpty == true ||
+                adoption.whereDidYouHearAboutUs?.isNotEmpty == true)
+              const SizedBox(height: 12),
+          ],
+          if (adoption.adoptingForSelf != null) ...[
+            _buildInfoRow(
+              'Adopting for Self',
+              adoption.adoptingForSelf! ? 'Yes' : 'No',
+            ),
+            if (adoption.willingToVisitShelter != null ||
+                adoption.willingToVisitAgain != null ||
+                adoption.howCanYouGiveFurReverHome?.isNotEmpty == true ||
+                adoption.whereDidYouHearAboutUs?.isNotEmpty == true)
+              const SizedBox(height: 12),
+          ],
+          if (adoption.willingToVisitShelter != null) ...[
+            _buildInfoRow(
+              'Willing to Visit Shelter',
+              adoption.willingToVisitShelter! ? 'Yes' : 'No',
+            ),
+            if (adoption.willingToVisitAgain != null ||
+                adoption.howCanYouGiveFurReverHome?.isNotEmpty == true ||
+                adoption.whereDidYouHearAboutUs?.isNotEmpty == true)
+              const SizedBox(height: 12),
+          ],
+          if (adoption.willingToVisitAgain != null) ...[
+            _buildInfoRow(
+              'Willing to Visit Again',
+              adoption.willingToVisitAgain! ? 'Yes' : 'No',
+            ),
+            if (adoption.howCanYouGiveFurReverHome?.isNotEmpty == true ||
+                adoption.whereDidYouHearAboutUs?.isNotEmpty == true)
+              const SizedBox(height: 12),
+          ],
+          if (adoption.howCanYouGiveFurReverHome?.isNotEmpty == true) ...[
+            _buildInfoRow(
+              'How Give Fur-ever Home',
+              adoption.howCanYouGiveFurReverHome!,
+            ),
+            if (adoption.whereDidYouHearAboutUs?.isNotEmpty == true)
+              const SizedBox(height: 12),
+          ],
+          if (adoption.whereDidYouHearAboutUs?.isNotEmpty == true) ...[
+            _buildInfoRow(
+              'Where Heard About Us',
+              adoption.whereDidYouHearAboutUs!,
             ),
           ],
         ],
@@ -355,13 +451,13 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
         children: [
           _buildInfoRow(
             'Name',
-            pet.name.isEmpty
-                ? 'No name'
-                : pet.name.isEmpty
-                ? 'No name'
-                : pet.name.isEmpty
-                ? 'No name'
-                : pet.name,
+            pet.name?.isEmpty ?? true
+                ? 'Unnamed Pet'
+                : pet.name?.isEmpty ?? true
+                ? 'Unnamed Pet'
+                : pet.name?.isEmpty ?? true
+                ? 'Unnamed Pet'
+                : pet.name ?? 'Unnamed Pet',
           ),
           const SizedBox(height: 12),
           _buildInfoRow('Breed', pet.breed),

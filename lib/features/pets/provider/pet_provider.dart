@@ -20,6 +20,7 @@ class PetProvider {
     bool? isVaccinated,
     bool? isSpayedOrNeutered,
     bool? isTrained,
+    bool? isAdopted,
     String? healthStatus,
     String? requestStatus,
     String? goodWith,
@@ -35,6 +36,9 @@ class PetProvider {
     if (ageMax != null) queryParams['age_max'] = ageMax.toString();
     if (isVaccinated != null) {
       queryParams['is_vaccinated'] = isVaccinated.toString();
+    }
+    if (isAdopted != null) {
+      queryParams['is_adopted'] = isAdopted.toString();
     }
     if (isSpayedOrNeutered != null) {
       queryParams['is_spayed_or_neutured'] = isSpayedOrNeutered.toString();

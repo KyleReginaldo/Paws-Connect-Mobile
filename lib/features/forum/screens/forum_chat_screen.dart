@@ -17,6 +17,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/components/components.dart';
 import '../../../core/repository/common_repository.dart';
 import '../../../core/router/app_route.gr.dart';
+import '../../../core/services/chat_visibility_service.dart';
+import '../../../core/services/notification_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/theme/paws_theme.dart';
 import '../../../core/widgets/text.dart';
@@ -69,6 +71,8 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
           widget.forumId,
           USER_ID ?? "",
         );
+        // Mark this forum as currently being viewed to suppress chat notifications
+        ChatVisibilityService.enterForum(widget.forumId);
       }
     });
   }
@@ -164,6 +168,9 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     });
   }
 
+  DateTime _lastUpdateTime = DateTime.now();
+  static const Duration _updateThrottle = Duration(milliseconds: 300);
+
   void listenToChanges() {
     chatChannel
         .onPostgresChanges(
@@ -177,9 +184,13 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
           ),
           callback: (payload) {
             if (mounted) {
-              context.read<ForumRepository>().setForumChats(widget.forumId);
-
-              _markNewMessagesAsViewed();
+              // Throttle real-time updates to prevent excessive rebuilds
+              final now = DateTime.now();
+              if (now.difference(_lastUpdateTime) >= _updateThrottle) {
+                _lastUpdateTime = now;
+                context.read<ForumRepository>().setForumChats(widget.forumId);
+                _markNewMessagesAsViewed();
+              }
             }
           },
         )
@@ -192,6 +203,8 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     _controller.removeListener(_onReactionChanged);
     _messageController.dispose();
     _scrollController.dispose();
+    // Clear active forum view state when leaving screen
+    ChatVisibilityService.exitForum();
     super.dispose();
   }
 
@@ -377,7 +390,7 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
       if (result.isError) {
         _handleReactionError(isAdding, result.error);
       } else {
-        _handleReactionSuccess(isAdding, reaction);
+        await _handleReactionSuccess(isAdding, reaction, chatId);
       }
     } catch (e) {
       debugPrint('Error sending reaction to backend: $e');
@@ -397,12 +410,74 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     }
   }
 
-  void _handleReactionSuccess(bool isAdding, String reaction) {
+  Future<void> _handleReactionSuccess(
+    bool isAdding,
+    String reaction,
+    int chatId,
+  ) async {
     debugPrint(
       'Successfully ${isAdding ? 'added' : 'removed'} reaction: $reaction',
     );
+
+    // Send notification only when adding reactions (not removing)
+    if (isAdding) {
+      await _sendReactionNotification(chatId, reaction);
+    }
+
     if (mounted) {
       context.read<ForumRepository>().setForumChats(widget.forumId);
+    }
+  }
+
+  Future<void> _sendReactionNotification(int chatId, String reaction) async {
+    try {
+      final userId = USER_ID;
+      if (userId == null || userId.isEmpty) return;
+
+      // Find the message that was reacted to
+      final repo = context.read<ForumRepository>();
+      final forumChats = repo.forumChats;
+      final targetMessage = forumChats.firstWhere(
+        (chat) => chat.id == chatId,
+        orElse: () => ForumChat(
+          id: 0,
+          message: '',
+          sentAt: DateTime.now(),
+          sender: '',
+          users: null,
+        ),
+      );
+
+      if (targetMessage.id == 0 || targetMessage.sender == userId) {
+        // Don't send notification if message not found or user reacted to their own message
+        return;
+      }
+
+      // Get current user info
+      final currentUser = _forumMembers.firstWhere(
+        (user) => user.id == userId,
+        orElse: () => AvailableUser(id: '', username: 'Unknown User'),
+      );
+
+      if (currentUser.username.isNotEmpty) {
+        // Send the reaction notification
+        final result = await NotificationService.sendForumReactionNotification(
+          recipientId: targetMessage.sender,
+          reactorName: currentUser.username,
+          reaction: reaction,
+          originalMessage: targetMessage.message,
+          forumId: widget.forumId,
+          chatId: chatId,
+        );
+
+        if (result) {
+          debugPrint('✅ Reaction notification sent successfully');
+        } else {
+          debugPrint('❌ Failed to send reaction notification');
+        }
+      }
+    } catch (e) {
+      debugPrint('Error sending reaction notification: $e');
     }
   }
 
@@ -416,11 +491,22 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     return result;
   }
 
+  // Cache processed reactions to avoid reprocessing unchanged data
+  final Map<String, Map<String, List<String>>> _processedReactions = {};
+
   void _initializeReactions(List<ForumChat> chats) {
     for (final chat in chats) {
+      final chatId = chat.id.toString();
       if (chat.reactions != null && chat.reactions!.isNotEmpty) {
         final reactions = _convertReactions(chat.reactions);
-        _addReactionsToController(chat.id.toString(), reactions);
+
+        // Only update reactions if they've actually changed
+        final previousReactions = _processedReactions[chatId];
+        if (previousReactions == null ||
+            reactions.toString() != previousReactions.toString()) {
+          _processedReactions[chatId] = reactions;
+          _addReactionsToController(chatId, reactions);
+        }
       }
     }
   }
@@ -431,6 +517,7 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
   ) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        // Batch reaction updates to reduce controller notifications
         for (final entry in reactions.entries) {
           _controller.addReaction(chatId, entry.key);
         }
@@ -445,11 +532,14 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
   }
 
   void _initializeMessageKeys(List<ForumChat> forumChats) {
+    // Only create keys for new messages to avoid unnecessary operations
+    final existingKeys = _chatKeys.keys.toSet();
     for (ForumChat chat in forumChats) {
-      _chatKeys.putIfAbsent(chat.id.toString(), () {
+      final keyString = chat.id.toString();
+      if (!existingKeys.contains(keyString)) {
+        _chatKeys[keyString] = GlobalKey();
         debugPrint('Creating GlobalKey for message ID: ${chat.id}');
-        return GlobalKey();
-      });
+      }
     }
   }
 
@@ -490,9 +580,11 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
   }
 
   void _sendMessage() {
-    if (_messageController.text.trim().isEmpty || _isSendingMessage) return;
-
     final message = _messageController.text.trim();
+
+    // Allow sending if there's either text or an image
+    if ((message.isEmpty && _imageFile == null) || _isSendingMessage) return;
+
     final mentionUUIDs = _extractMentionsFromMessage(message);
 
     if (mentionUUIDs.isNotEmpty) {
@@ -506,23 +598,30 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
 
     _messageController.clear();
 
-    context.read<ForumRepository>().addPendingChat(message);
+    // Add pending chat with appropriate content
+    final pendingContent = message.isNotEmpty
+        ? message
+        : (_imageFile != null ? 'Image' : '');
+    context.read<ForumRepository>().addPendingChat(pendingContent);
     _scrollToBottom();
 
     setState(() {
       _isSendingMessage = true;
     });
     _markMessagesAsViewed();
-    _performSendMessage(message);
+    _performSendMessage(_imageFile != null ? "Sent an image" : message);
   }
 
   Future<void> _performSendMessage(String message) async {
     try {
       final mentions = _extractMentionsFromMessage(message);
 
+      // If no message but there's an image, send empty string (the backend should handle this)
+      final messageToSend = message.isNotEmpty ? message : "";
+
       await ForumProvider().sendChat(
         sender: USER_ID ?? '',
-        message: message,
+        message: messageToSend,
         forumId: widget.forumId,
         imageFile: _imageFile,
         repliedTo: replyTo?.id,
@@ -602,6 +701,14 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
 
   final Map<String, GlobalKey> _chatKeys = {};
 
+  bool _listEquals<T>(List<T> a, List<T> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     final repo = context.watch<ForumRepository>();
@@ -634,13 +741,21 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
       });
     }
 
-    _forumMembers = (forum?.members ?? []).map((e) {
+    // Memoize forum members conversion to prevent unnecessary recalculations
+    final newForumMembers = (forum?.members ?? []).map((e) {
       return AvailableUser(
         id: e.id,
         username: e.username,
         profileImageLink: e.profileImageLink,
       );
     }).toList();
+
+    // Only update if members have actually changed
+    if (_forumMembers.length != newForumMembers.length ||
+        !_listEquals(_forumMembers, newForumMembers)) {
+      _forumMembers = newForumMembers;
+    }
+
     if (forumChats.isNotEmpty) {
       _processMessages(forumChats);
     }

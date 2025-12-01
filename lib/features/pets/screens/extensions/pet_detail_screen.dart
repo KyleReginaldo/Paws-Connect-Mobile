@@ -1,9 +1,10 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/components/components.dart';
 import 'package:paws_connect/core/enum/user.enum.dart';
+import 'package:paws_connect/core/extension/ext.dart';
 import 'package:paws_connect/core/services/loading_service.dart';
 import 'package:paws_connect/core/services/supabase_service.dart';
 import 'package:paws_connect/core/supabase/client.dart';
@@ -12,7 +13,6 @@ import 'package:paws_connect/core/widgets/button.dart';
 import 'package:paws_connect/core/widgets/text.dart';
 import 'package:paws_connect/dependency.dart';
 import 'package:paws_connect/features/adoption/provider/adoption_provider.dart';
-import 'package:paws_connect/features/favorite/repository/favorite_repository.dart';
 import 'package:paws_connect/features/pets/models/pet_model.dart';
 import 'package:paws_connect/features/pets/provider/pet_provider.dart';
 import 'package:paws_connect/features/pets/repository/pet_repository.dart';
@@ -23,11 +23,13 @@ import 'package:shadcn_flutter/shadcn_flutter.dart' show RefreshTrigger;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/router/app_route.gr.dart';
+import '../../../../core/session/session_manager.dart';
+import '../../../favorite/provider/favorite_provider.dart';
 
 @RoutePage()
 class PetDetailScreen extends StatefulWidget implements AutoRouteWrapper {
-  final Pet pet;
-  const PetDetailScreen({super.key, required this.pet});
+  final int id;
+  const PetDetailScreen({super.key, required this.id});
 
   @override
   State<PetDetailScreen> createState() => _PetDetailScreenState();
@@ -47,9 +49,10 @@ class PetDetailScreen extends StatefulWidget implements AutoRouteWrapper {
 class _PetDetailScreenState extends State<PetDetailScreen> {
   late PageController _pageController;
   int _currentPage = 0;
-  // Realtime channels for this pet's changes and its adoptions
+
   late RealtimeChannel petChannel;
   late RealtimeChannel pollChannel;
+  late RealtimeChannel favoritesChannel;
 
   late RealtimeChannel adoptionChannel;
 
@@ -59,15 +62,14 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
     _pageController = PageController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       sl<ProfileRepository>().fetchUserProfile(USER_ID ?? "");
-      context.read<PetRepository>().fetchPetById(widget.pet.id);
-      context.read<PetRepository>().getPoll(widget.pet.id);
+      context.read<PetRepository>().fetchPetById(widget.id, userId: USER_ID);
+      context.read<PetRepository>().getPoll(widget.id);
       _initializeRealtime();
     });
   }
 
   void _initializeRealtime() {
-    // Listen for updates on this specific pet row
-    petChannel = supabase.channel('public:pets:id=eq.${widget.pet.id}');
+    petChannel = supabase.channel('public:pets:id=eq.${widget.id}');
     petChannel
         .onPostgresChanges(
           event: PostgresChangeEvent.all,
@@ -76,15 +78,18 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
           filter: PostgresChangeFilter(
             type: PostgresChangeFilterType.eq,
             column: 'id',
-            value: widget.pet.id,
+            value: widget.id,
           ),
           callback: (_) {
             if (!mounted) return;
-            context.read<PetRepository>().fetchPetById(widget.pet.id);
+            context.read<PetRepository>().fetchPetById(
+              widget.id,
+              userId: USER_ID,
+            );
           },
         )
         .subscribe();
-    pollChannel = supabase.channel('public:poll:pet=eq.${widget.pet.id}');
+    pollChannel = supabase.channel('public:poll:pet=eq.${widget.id}');
     pollChannel
         .onPostgresChanges(
           event: PostgresChangeEvent.all,
@@ -93,19 +98,36 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
           filter: PostgresChangeFilter(
             type: PostgresChangeFilterType.eq,
             column: 'pet',
-            value: widget.pet.id,
+            value: widget.id,
           ),
           callback: (_) {
             if (!mounted) return;
-            context.read<PetRepository>().getPoll(widget.pet.id);
+            context.read<PetRepository>().getPoll(widget.id);
+          },
+        )
+        .subscribe();
+    favoritesChannel = supabase.channel('public:favorites:pet=eq.${widget.id}');
+    favoritesChannel
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'favorites',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'pet',
+            value: widget.id,
+          ),
+          callback: (_) {
+            if (!mounted) return;
+            context.read<PetRepository>().fetchPetById(
+              widget.id,
+              userId: USER_ID,
+            );
           },
         )
         .subscribe();
 
-    // Listen for adoption applications/changes for this pet
-    adoptionChannel = supabase.channel(
-      'public:adoption:pet=eq.${widget.pet.id}',
-    );
+    adoptionChannel = supabase.channel('public:adoption:pet=eq.${widget.id}');
     adoptionChannel
         .onPostgresChanges(
           event: PostgresChangeEvent.all,
@@ -114,21 +136,20 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
           filter: PostgresChangeFilter(
             type: PostgresChangeFilterType.eq,
             column: 'pet',
-            value: widget.pet.id,
+            value: widget.id,
           ),
           callback: (_) {
             if (!mounted) return;
-            context.read<PetRepository>().fetchPetById(widget.pet.id);
+            context.read<PetRepository>().fetchPetById(
+              widget.id,
+              userId: USER_ID,
+            );
           },
         )
         .subscribe();
   }
 
-  // Friendly formatters
-  // _formatDateTime removed in favor of _formatAddedAt
-
   String _formatAddedAt(DateTime dt) {
-    // Friendly date like: Oct 20, 2025 · 3:42 PM
     const months = [
       'Jan',
       'Feb',
@@ -148,18 +169,16 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
   }
 
   Future<void> cancelAdoption() async {
-    // Execute API call while showing loading; this expects a Future, not a callback
     final result = await LoadingService.showWhileExecuting(
       context,
       AdoptionProvider().cancelAdoption(
         userId: USER_ID ?? '',
-        petId: widget.pet.id,
+        petId: widget.id,
       ),
     );
 
     if (!mounted) return;
 
-    // Show feedback and refresh pet data
     if (result.isError) {
       ScaffoldMessenger.of(
         context,
@@ -170,7 +189,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
           content: Text('Adoption application cancelled successfully'),
         ),
       );
-      context.read<PetRepository>().fetchPetById(widget.pet.id);
+      context.read<PetRepository>().fetchPetById(widget.id, userId: USER_ID);
     }
   }
 
@@ -186,7 +205,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
           surfaceTintColor: Colors.white,
           title: const Text('Cancel adoption?'),
           content: Text(
-            'Are you sure you want to cancel your adoption application for ${widget.pet.name.isEmpty ? 'No name' : widget.pet.name}? This action cannot be undone.',
+            'Are you sure you want to cancel your adoption application. This action cannot be undone.',
           ),
           actions: [
             TextButton(
@@ -207,14 +226,13 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
       await cancelAdoption();
     }
   }
-  // Deprecated row layout kept removed in favor of card grid UI
 
   Widget _buildDetailsGrid(Pet pet) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final double totalWidth = constraints.maxWidth;
         const double spacing = 12;
-        // 2 columns by default on phones
+
         final double tileWidth = (totalWidth - spacing) / 2;
 
         Widget tile(
@@ -387,7 +405,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
 
         final health = [
           boolTile(Icons.health_and_safety, 'Vaccinated', pet.isVaccinated),
-          // Use gender-aware label for spay/neuter
+
           () {
             final genderLower = pet.gender.toLowerCase();
             final label = genderLower.contains('female')
@@ -407,7 +425,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
             Icons.verified,
             'Adopted',
             pet.adopted != null
-                ? 'Yes${pet.adopted!.user.userIdentification != null ? ' by ${pet.adopted!.user.userIdentification!.firstName} ${pet.adopted!.user.userIdentification!.lastName}' : ''}'
+                ? 'Yes${pet.adopted!.user?.userIdentification != null ? ' by ${pet.adopted!.user!.userIdentification!.firstName} ${pet.adopted!.user!.userIdentification!.lastName}' : ''}'
                 : 'No',
           ),
           tile(
@@ -437,7 +455,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
     final genderLower = pet.gender.toLowerCase();
     if (genderLower.contains('male')) genderIcon = Icons.male;
     if (genderLower.contains('female')) genderIcon = Icons.female;
-    // Gender-aware spay/neuter text
+
     final String spayNeuterText = pet.isSpayedOrNeutured
         ? (genderLower.contains('female')
               ? 'Spayed'
@@ -450,7 +468,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
               ? 'Not Neutered'
               : 'Intact');
 
-    Widget attr(IconData icon, String label) {
+    Widget attr(IconData icon, String label, {Color? color = Colors.cyan}) {
       return Expanded(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -459,13 +477,31 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: PawsColors.primary.withValues(alpha: 0.10),
+                color: label == 'Female'
+                    ? Colors.pinkAccent.withValues(alpha: 0.10)
+                    : label == 'Male'
+                    ? Colors.blue.withValues(alpha: 0.10)
+                    : color?.withValues(alpha: 0.10) ??
+                          PawsColors.primary.withValues(alpha: 0.10),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 22, color: PawsColors.primary),
+              child: Icon(
+                icon,
+                size: 22,
+                color: label == 'Female'
+                    ? Colors.pinkAccent
+                    : label == 'Male'
+                    ? Colors.blue
+                    : color ?? PawsColors.primary,
+              ),
             ),
             const SizedBox(height: 6),
-            PawsText(label, fontSize: 12, color: PawsColors.textPrimary),
+            PawsText(
+              label,
+              fontSize: 12,
+              color: PawsColors.textPrimary,
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       );
@@ -489,13 +525,18 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          attr(genderIcon, pet.gender),
           attr(
             Icons.health_and_safety,
             pet.isVaccinated ? 'Vaccinated' : 'Not Vaccinated',
+            color: pet.isVaccinated ? Colors.green : Colors.blue,
           ),
-          attr(genderIcon, pet.gender),
-          attr(Icons.verified, spayNeuterText),
-          attr(Icons.monitor_weight, pet.weight),
+          attr(
+            Icons.verified,
+            spayNeuterText,
+            color: pet.isSpayedOrNeutured ? Colors.green : Colors.blue,
+          ),
+          attr(Icons.monitor_weight, pet.weight, color: Colors.yellow.shade600),
         ],
       ),
     );
@@ -503,7 +544,6 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
 
   @override
   void dispose() {
-    // Unsubscribe realtime channels
     petChannel.unsubscribe();
     adoptionChannel.unsubscribe();
     pollChannel.unsubscribe();
@@ -513,7 +553,6 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
 
   void toggleFavorite() async {
     if (USER_ID == null || (USER_ID?.isEmpty ?? true)) {
-      // Not signed in; navigate to sign in
       if (!mounted) return;
       context.router.push(
         SignInRoute(
@@ -526,18 +565,28 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
       return;
     }
 
-    final current = widget.pet.isFavorite ?? false;
-    setState(() => widget.pet.isFavorite = !current);
+    // Optimistic update
     try {
-      await sl<FavoriteRepository>().toggleFavorite(widget.pet.id);
+      final result = await FavoriteProvider().toggleFavorite(widget.id);
+      if (result.isSuccess) {
+        EasyLoading.showToast(
+          result.value,
+          duration: const Duration(seconds: 2),
+          toastPosition: EasyLoadingToastPosition.bottom,
+        );
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: PawsText('Failed to update favorite')),
+          );
+        }
+      }
     } catch (_) {
       if (!mounted) return;
-      // Rollback on failure
-      setState(() => widget.pet.isFavorite = current);
+      // Revert on failure
     }
   }
 
-  // Helper method to format date
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
@@ -553,7 +602,6 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
     }
   }
 
-  // Helper method to get status color
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
@@ -569,7 +617,6 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
     }
   }
 
-  // Helper method to format status
   String _formatStatus(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
@@ -672,9 +719,73 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
     final user = context.select(
       (ProfileRepository profileRepo) => profileRepo.userProfile,
     );
-    final pet =
-        context.select((PetRepository petRepo) => petRepo.pet) ?? widget.pet;
-    // Attributes card shows key facts in a compact row
+    final pet = context.select((PetRepository petRepo) => petRepo.pet);
+    final isLoading = context.select(
+      (PetRepository petRepo) => petRepo.isLoading,
+    );
+    final errorMessage = context.select(
+      (PetRepository petRepo) => petRepo.errorMessage,
+    );
+
+    // Show a lightweight loading state until the pet is fetched
+    if (pet == null) {
+      return SafeArea(
+        top: false,
+        child: Scaffold(
+          extendBodyBehindAppBar: true,
+          appBar: AppBar(
+            foregroundColor: Colors.white,
+            title: const Text(
+              'Pet Details',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            centerTitle: true,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+          ),
+          body: Center(
+            child: isLoading
+                ? const CircularProgressIndicator()
+                : errorMessage != null
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: PawsColors.error,
+                      ),
+                      const SizedBox(height: 16),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: PawsText(
+                          errorMessage,
+                          textAlign: TextAlign.center,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () {
+                          context.read<PetRepository>().fetchPetById(
+                            widget.id,
+                            userId: USER_ID,
+                          );
+                        },
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  )
+                : const SizedBox.shrink(),
+          ),
+        ),
+      );
+    }
+
     return SafeArea(
       top: false,
       child: Scaffold(
@@ -695,8 +806,11 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
         ),
         body: RefreshTrigger(
           onRefresh: () async {
-            context.read<PetRepository>().fetchPetById(widget.pet.id);
-            context.read<PetRepository>().getPoll(widget.pet.id);
+            context.read<PetRepository>().fetchPetById(
+              widget.id,
+              userId: USER_ID,
+            );
+            context.read<PetRepository>().getPoll(widget.id);
           },
           child: SizedBox(
             height: MediaQuery.sizeOf(context).height,
@@ -714,9 +828,11 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         PawsText(
-                          pet.name.isEmpty ? 'No name' : pet.name,
+                          pet.name != null && pet.name!.isEmpty
+                              ? 'Unnamed Pet'
+                              : pet.name!,
                           fontSize: 18,
-                          color: pet.name.isEmpty
+                          color: pet.name!.isEmpty
                               ? PawsColors.textSecondary
                               : PawsColors.textPrimary,
                         ),
@@ -738,8 +854,8 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                         ),
                         SizedBox(height: 8),
 
-                        if ((pet.name.isEmpty) && USER_ID != null)
-                          _PollCard(petId: widget.pet.id),
+                        if ((pet.name?.isEmpty ?? true) && USER_ID != null)
+                          _PollCard(petId: widget.id),
                         SizedBox(height: 18),
                         _buildAttributesCard(pet),
                         SizedBox(height: 8),
@@ -773,16 +889,16 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                               ? pet.description
                               : 'No description available',
                           textStyle: TextStyle(
-                            fontSize: 16,
-                            color: PawsColors.textPrimary,
+                            fontSize: 14,
+                            color: PawsColors.textSecondary,
                             fontWeight: FontWeight.w400,
+                            overflow: TextOverflow.ellipsis,
                           ),
                           animationDuration: Duration(milliseconds: 200),
                           seeMoreText: "See More",
-
                           seeMoreStyle: TextStyle(
                             fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w500,
                             color: PawsColors.primary,
                           ),
                           seeLessText: "See Less",
@@ -804,29 +920,27 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                                 spacing: 5,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  PawsText('☺️'),
                                   PawsText(
-                                    '${pet.name.isEmpty ? 'No name' : pet.name} has been adopted!',
+                                    '${pet.name?.isEmpty ?? true ? 'Unnamed Pet' : pet.name!} has been adopted! ☺️',
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                     color: PawsColors.success,
                                   ),
-                                  PawsText('☺️'),
                                 ],
                               ),
                               Row(
                                 spacing: 8,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  PawsText('🎉'),
-
                                   PawsText(
-                                    'by ${pet.adopted!.user.username}',
+                                    pet.adopted != null &&
+                                            pet.adopted!.user != null
+                                        ? 'By ${pet.adopted!.user?.userIdentification != null ? pet.adopted!.user!.userIdentification!.firstName : 'a loving owner'}'
+                                        : 'By a loving owner',
                                     fontSize: 15,
                                     fontWeight: FontWeight.w500,
                                     color: PawsColors.success,
                                   ),
-                                  PawsText('🎉'),
                                 ],
                               ),
                             ],
@@ -834,7 +948,6 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                           SizedBox(height: 8),
                         ],
 
-                        // Adoptions Section
                         if (pet.adopted == null &&
                             pet.adoption != null &&
                             pet.adoption!.isNotEmpty) ...[
@@ -886,19 +999,20 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                                 ),
                                 child: Row(
                                   children: [
-                                    // User Avatar
                                     CircleAvatar(
                                       radius: 20,
                                       backgroundColor: PawsColors.primary
                                           .withValues(alpha: 0.1),
                                       backgroundImage:
-                                          adoption.user.profileImageLink != null
+                                          adoption.user?.profileImageLink !=
+                                              null
                                           ? NetworkImage(
-                                              adoption.user.profileImageLink!,
+                                              adoption.user!.profileImageLink!,
                                             )
                                           : null,
                                       child:
-                                          adoption.user.profileImageLink == null
+                                          adoption.user?.profileImageLink ==
+                                              null
                                           ? Icon(
                                               LucideIcons.user,
                                               color: PawsColors.primary,
@@ -914,22 +1028,23 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           PawsText(
-                                            adoption.user.username,
+                                            adoption.user?.username ??
+                                                'Unknown',
                                             fontSize: 14,
                                             fontWeight: FontWeight.w500,
                                             color: PawsColors.textPrimary,
                                           ),
                                           SizedBox(height: 2),
-                                          PawsText(
-                                            'Applied ${_formatDate(adoption.createdAt)}',
-                                            fontSize: 12,
-                                            color: PawsColors.textSecondary,
-                                          ),
+                                          if (adoption.createdAt != null)
+                                            PawsText(
+                                              'Applied ${_formatDate(adoption.createdAt!)}',
+                                              fontSize: 12,
+                                              color: PawsColors.textSecondary,
+                                            ),
                                         ],
                                       ),
                                     ),
 
-                                    // Status Badge
                                     Container(
                                       padding: EdgeInsets.symmetric(
                                         horizontal: 8,
@@ -937,15 +1052,19 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                                       ),
                                       decoration: BoxDecoration(
                                         color: _getStatusColor(
-                                          adoption.status,
+                                          adoption.status ?? 'pending',
                                         ).withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                       child: PawsText(
-                                        _formatStatus(adoption.status),
+                                        _formatStatus(
+                                          adoption.status ?? 'pending',
+                                        ),
                                         fontSize: 11,
                                         fontWeight: FontWeight.w500,
-                                        color: _getStatusColor(adoption.status),
+                                        color: _getStatusColor(
+                                          adoption.status ?? 'pending',
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -954,8 +1073,8 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                             },
                           ),
                           SizedBox(height: 8),
-                        ] else if (widget.pet.adopted == null &&
-                            widget.pet.adoption != null) ...[
+                        ] else if (pet.adopted == null &&
+                            pet.adoption != null) ...[
                           Divider(thickness: 2, color: PawsColors.border),
                           SizedBox(height: 8),
                           Row(
@@ -976,7 +1095,6 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                           SizedBox(height: 8),
                         ],
 
-                        // All details section
                         Divider(thickness: 2, color: PawsColors.border),
                         SizedBox(height: 8),
                         Row(
@@ -1012,55 +1130,102 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (user == null)
-                PawsText(
-                  'You need to be signed in to adopt a pet.',
-                  fontSize: 12,
-                  color: PawsColors.error,
-                ),
-              if (user?.status == UserStatus.PENDING ||
-                  user?.status == UserStatus.INDEFINITE)
-                PawsText(
-                  'You need to be a fully verified user to adopt a pet.',
-                  fontSize: 12,
-                  color: PawsColors.error,
-                ),
+                PawsElevatedButton(
+                  label: 'Sign in to Adopt',
+                  borderRadius: 25,
+                  onPressed: () {
+                    context.router.push(
+                      SignInRoute(
+                        onResult: (success) async {
+                          if (!success) return;
+                          await SessionManager.bootstrapAfterSignIn(
+                            eager: false,
+                          );
+                          sl<ProfileRepository>().fetchUserProfile(
+                            USER_ID ?? "",
+                          );
+                          if (mounted) {
+                            context.read<PetRepository>().fetchPetById(
+                              widget.id,
+                              userId: USER_ID,
+                            );
+                            context.read<PetRepository>().getPoll(widget.id);
 
-              PawsElevatedButton(
-                label:
-                    (pet.adopted == null &&
-                        (pet.adoption ?? []).any((e) => e.user.id == USER_ID))
-                    ? 'Cancel Adoption'
-                    : 'Adopt Now',
-                backgroundColor:
-                    (!(pet.adoption ?? []).any((e) => e.user.id == USER_ID)) &&
-                        pet.adopted == null &&
-                        user != null &&
-                        user.status == UserStatus.FULLY_VERIFIED
-                    ? PawsColors.primary
-                    : (pet.adopted == null &&
-                          (pet.adoption ?? []).any((e) => e.user.id == USER_ID))
-                    ? PawsColors.error
-                    : PawsColors.disabled,
-                onPressed:
-                    (pet.adopted == null &&
-                        (pet.adoption ?? []).any((e) => e.user.id == USER_ID))
-                    // User already applied -> confirm then cancel
-                    ? () => _confirmCancelAdoption()
-                    // Else if eligible -> allow adoption
-                    : ((!(pet.adoption ?? []).any(
-                            (e) => e.user.id == USER_ID,
-                          )) &&
-                          pet.adopted == null &&
-                          user != null &&
-                          user.status == UserStatus.FULLY_VERIFIED)
-                    ? () {
+                            setState(() {});
+                          }
+                        },
+                      ),
+                    );
+                  },
+                ),
+              if (user != null && pet.adopted == null)
+                PawsElevatedButton(
+                  label:
+                      (pet.adopted == null &&
+                          (pet.adoption ?? []).any(
+                            (e) => e.user?.id == USER_ID,
+                          ))
+                      ? 'Cancel Adoption'
+                      : user.status == UserStatus.FULLY_VERIFIED ||
+                            user.status == UserStatus.SEMI_VERIFIED
+                      ? 'Adopt Now'
+                      : user.userIdentification != null
+                      ? 'Check Verification Status'
+                      : 'Apply for Verification to Adopt',
+                  backgroundColor: () {
+                    if (pet.adopted == null &&
+                        (pet.adoption ?? []).any(
+                          (e) => e.user?.id == USER_ID,
+                        )) {
+                      return PawsColors.error;
+                    }
+                    if ((user.status == UserStatus.FULLY_VERIFIED ||
+                            user.status == UserStatus.SEMI_VERIFIED) &&
+                        !(pet.adoption ?? []).any(
+                          (e) => e.user?.id == USER_ID,
+                        ) &&
+                        pet.adopted == null) {
+                      return PawsColors.primary;
+                    }
+
+                    if (user.userIdentification != null) {
+                      return Colors.orange;
+                    }
+
+                    return PawsColors.secondary;
+                  }(),
+                  icon: user.status.name.icon,
+                  onPressed: () {
+                    if (pet.adopted == null &&
+                        (pet.adoption ?? []).any(
+                          (e) => e.user?.id == USER_ID,
+                        )) {
+                      _confirmCancelAdoption();
+                      return;
+                    }
+
+                    if (user.status == UserStatus.FULLY_VERIFIED ||
+                        user.status == UserStatus.SEMI_VERIFIED) {
+                      if (!(pet.adoption ?? []).any(
+                            (e) => e.user?.id == USER_ID,
+                          ) &&
+                          pet.adopted == null) {
                         context.router.push(
-                          CreateAdoptionRoute(petId: widget.pet.id),
+                          CreateAdoptionRoute(petId: widget.id),
                         );
                       }
-                    : null,
-                borderRadius: 25,
-              ),
+                      return;
+                    }
+
+                    if (user.userIdentification != null) {
+                      context.router.push(ProfileRoute(id: USER_ID ?? ''));
+                      return;
+                    }
+
+                    context.router.push(SetUpVerificationRoute());
+                  },
+                  borderRadius: 25,
+                ),
             ],
           ),
         ),
@@ -1089,7 +1254,7 @@ class _PollCardState extends State<_PollCard> {
   }
 
   Future<void> _vote(Poll poll) async {
-    if (_votingPollId != null) return; // prevent multi-tap
+    if (_votingPollId != null) return;
     setState(() => _votingPollId = poll.id);
     try {
       await supabase.rpc(

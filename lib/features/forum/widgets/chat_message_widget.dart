@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chat_reactions/flutter_chat_reactions.dart'
     as chat_reactions;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:paws_connect/core/extension/ext.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 import '../../../core/components/components.dart';
@@ -12,7 +13,7 @@ import '../../../core/utils/mention_parser.dart';
 import '../../../core/widgets/text.dart';
 import '../models/forum_model.dart';
 
-class ChatMessageWidget extends StatelessWidget {
+class ChatMessageWidget extends StatefulWidget {
   final ForumChat chat;
   final bool isCurrentUser;
   final bool showAvatar;
@@ -47,36 +48,48 @@ class ChatMessageWidget extends StatelessWidget {
   });
 
   @override
+  State<ChatMessageWidget> createState() => _ChatMessageWidgetState();
+}
+
+class _ChatMessageWidgetState extends State<ChatMessageWidget> with AutomaticKeepAliveClientMixin {
+  List<Viewer>? _cachedViewers;
+  String? _lastAllChatsHash;
+  
+  @override
+  bool get wantKeepAlive => true;
+  
+  @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     int reactionCount = 0;
-    chat.reactions?.forEach((reaction) {
+    widget.chat.reactions?.forEach((reaction) {
       reactionCount += reaction.users.length;
     });
 
-    final filteredViewers = _getViewersForMessage();
+    final filteredViewers = _getViewersForMessageCached();
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Column(
-        crossAxisAlignment: isCurrentUser
+        crossAxisAlignment: widget.isCurrentUser
             ? CrossAxisAlignment.end
             : CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: isCurrentUser
+            mainAxisAlignment: widget.isCurrentUser
                 ? MainAxisAlignment.end
                 : MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              if (!isCurrentUser) ...[
-                showAvatar
+              if (!widget.isCurrentUser) ...[
+                widget.showAvatar
                     ? Stack(
                         children: [
                           UserAvatar(
-                            imageUrl: chat.users?.profileImageLink,
-                            initials: chat.users?.username,
+                            imageUrl: widget.chat.users?.profileImageLink,
+                            initials: widget.chat.users?.username,
                             size: 32,
-                            borderColor: chat.users?.isActive ?? false
+                            borderColor: widget.chat.users?.isActive ?? false
                                 ? Colors.green
                                 : Colors.grey,
                             borderWidth: 2,
@@ -86,7 +99,7 @@ class ChatMessageWidget extends StatelessWidget {
                             right: 0,
                             child: CircleAvatar(
                               radius: 4,
-                              backgroundColor: chat.users?.isActive ?? false
+                              backgroundColor: widget.chat.users?.isActive ?? false
                                   ? Colors.green
                                   : Colors.grey,
                             ),
@@ -97,54 +110,54 @@ class ChatMessageWidget extends StatelessWidget {
                 const SizedBox(width: 8),
               ],
               GestureDetector(
-                onLongPress: onLongPress,
-                onDoubleTap: onDoubleTap,
+                onLongPress: widget.onLongPress,
+                onDoubleTap: widget.onDoubleTap,
                 child: Column(
-                  crossAxisAlignment: isCurrentUser
+                  crossAxisAlignment: widget.isCurrentUser
                       ? CrossAxisAlignment.end
                       : CrossAxisAlignment.start,
                   children: [
-                    if (chat.repliedTo != null)
+                    if (widget.chat.repliedTo != null)
                       ReplyIndicator(
-                        repliedMessage: chat.repliedTo!,
-                        onTap: () => onReplyToTapped?.call(chat.repliedTo!.id),
+                        repliedMessage: widget.chat.repliedTo!,
+                        onTap: () => widget.onReplyToTapped?.call(widget.chat.repliedTo!.id),
                       ),
                     chat_reactions.ChatMessageWrapper(
-                      key: messageKey,
-                      messageId: chat.id.toString(),
-                      controller: controller,
-                      config: config,
-                      onReactionAdded: onReactionAdded,
-                      onReactionRemoved: onReactionRemoved,
-                      onMenuItemTapped: (menu) => onMenuItemTapped(menu.label),
+                      key: widget.messageKey,
+                      messageId: widget.chat.id.toString(),
+                      controller: widget.controller,
+                      config: widget.config,
+                      onReactionAdded: widget.onReactionAdded,
+                      onReactionRemoved: widget.onReactionRemoved,
+                      onMenuItemTapped: (menu) => widget.onMenuItemTapped(menu.label),
                       child: Stack(
                         clipBehavior: Clip.none,
                         children: [
                           ChatBubble(
-                            isMe: isCurrentUser,
-                            color: isCurrentUser
+                            isMe: widget.isCurrentUser,
+                            color: widget.isCurrentUser
                                 ? PawsColors.primary
                                 : PawsColors.border,
-                            messageWarning: chat.messageWarning,
+                            messageWarning: widget.chat.messageWarning,
                             child: MessageContent(
-                              chat: chat,
-                              isCurrentUser: isCurrentUser,
-                              showAvatar: showAvatar,
+                              chat: widget.chat,
+                              isCurrentUser: widget.isCurrentUser,
+                              showAvatar: widget.showAvatar,
                             ),
                           ),
 
-                          if (chat.reactions != null &&
-                              chat.reactions!.isNotEmpty)
+                          if (widget.chat.reactions != null &&
+                              widget.chat.reactions!.isNotEmpty)
                             MessageReactions(
-                              reactions: chat.reactions!,
-                              isCurrentUser: isCurrentUser,
+                              reactions: widget.chat.reactions!,
+                              isCurrentUser: widget.isCurrentUser,
                               reactionCount: reactionCount,
-                              currentUserId: currentUserId,
+                              currentUserId: widget.currentUserId,
                               onReactionTapped: (reaction, hasCurrentUser) {
                                 if (hasCurrentUser) {
-                                  onReactionRemoved(reaction.emoji);
+                                  widget.onReactionRemoved(reaction.emoji);
                                 } else {
-                                  onReactionAdded(reaction.emoji);
+                                  widget.onReactionAdded(reaction.emoji);
                                 }
                               },
                             ),
@@ -154,13 +167,13 @@ class ChatMessageWidget extends StatelessWidget {
                   ],
                 ),
               ),
-              if (isCurrentUser) const SizedBox(width: 8),
+              if (widget.isCurrentUser) const SizedBox(width: 8),
             ],
           ),
           if (filteredViewers.isNotEmpty) ...{
             SizedBox(height: 8),
             Container(
-              margin: isCurrentUser
+              margin: widget.isCurrentUser
                   ? const EdgeInsets.only(right: 8)
                   : const EdgeInsets.only(left: 40),
               height: 24,
@@ -184,7 +197,7 @@ class ChatMessageWidget extends StatelessWidget {
                     width: width,
                     child: WidgetStack(
                       positions: RestrictedPositions(
-                        align: isCurrentUser
+                        align: widget.isCurrentUser
                             ? StackAlign.right
                             : StackAlign.left,
                         maxCoverage: (uniqueViewers.length > 5) ? 0.7 : 0.9,
@@ -197,6 +210,7 @@ class ChatMessageWidget extends StatelessWidget {
                         final hasImage =
                             viewer.profileImage != null &&
                             viewer.profileImage!.isNotEmpty;
+                        debugPrint('image url: ${viewer.profileImage}');
                         return Container(
                           key: ValueKey('viewer-${viewer.id}'),
                           width: 24,
@@ -208,11 +222,27 @@ class ChatMessageWidget extends StatelessWidget {
                               width: 1.5,
                             ),
                           ),
-                          clipBehavior: Clip.antiAlias,
+                          clipBehavior: Clip.hardEdge,
                           child: hasImage
-                              ? Image.network(
-                                  viewer.profileImage!,
-                                  fit: BoxFit.cover,
+                              ? ClipOval(
+                                  child: Image.network(
+                                    viewer.profileImage!.transformedUrl,
+                                    fit: BoxFit.cover,
+                                    // Add loading optimization
+                                    loadingBuilder: (context, child, progress) {
+                                      if (progress == null) return child;
+                                      return Container(
+                                        color: Colors.grey[300],
+                                        child: const SizedBox(),
+                                      );
+                                    },
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Image.asset(
+                                        'assets/images/user.png',
+                                        fit: BoxFit.cover,
+                                      );
+                                    },
+                                  ),
                                 )
                               : Image.asset(
                                   'assets/images/user.png',
@@ -231,26 +261,38 @@ class ChatMessageWidget extends StatelessWidget {
     );
   }
 
+  /// Cached version of _getViewersForMessage to avoid recalculation
+  List<Viewer> _getViewersForMessageCached() {
+    final currentHash = widget.allChats.map((c) => '${c.id}-${c.viewers?.length ?? 0}').join(',');
+    
+    if (_lastAllChatsHash != currentHash) {
+      _lastAllChatsHash = currentHash;
+      _cachedViewers = _getViewersForMessage();
+    }
+    
+    return _cachedViewers ?? [];
+  }
+
   /// Filter viewers to show only those who have seen up to this message but not beyond
   /// This creates the Messenger-like behavior where each viewer's avatar appears
   /// only on the last message they've seen
   List<Viewer> _getViewersForMessage() {
-    if (chat.viewers == null || chat.viewers!.isEmpty) {
+    if (widget.chat.viewers == null || widget.chat.viewers!.isEmpty) {
       return [];
     }
 
     final List<Viewer> result = [];
 
     // Sort chats by timestamp (newest first, which is how they're usually ordered)
-    final sortedChats = List<ForumChat>.from(allChats)
+    final sortedChats = List<ForumChat>.from(widget.allChats)
       ..sort((a, b) => b.sentAt.compareTo(a.sentAt));
 
     // Find the index of current message
-    final currentMessageIndex = sortedChats.indexWhere((c) => c.id == chat.id);
+    final currentMessageIndex = sortedChats.indexWhere((c) => c.id == widget.chat.id);
     if (currentMessageIndex == -1) return [];
 
     // For each viewer of the current message, check if they appear in any newer message
-    for (final viewer in chat.viewers!) {
+    for (final viewer in widget.chat.viewers!) {
       bool appearsInNewerMessage = false;
 
       // Check all messages newer than current message (lower index means newer)
@@ -359,20 +401,21 @@ class MessageContent extends StatelessWidget {
               fit: BoxFit.cover,
             ),
           ),
-        RichText(
-          text: MentionParser.parseMessage(
-            text: chat.message,
-            baseStyle: TextStyle(
-              fontSize: 14,
-              color: isCurrentUser ? Colors.white : PawsColors.textPrimary,
+        if (chat.message != 'Sent an image')
+          RichText(
+            text: MentionParser.parseMessage(
+              text: chat.message,
+              baseStyle: TextStyle(
+                fontSize: 14,
+                color: isCurrentUser ? Colors.white : PawsColors.textPrimary,
+              ),
+              mentionColor: isCurrentUser ? Colors.white : Colors.black,
+              onMentionTapped: (username) {
+                // Handle mention tap - could show user profile or scroll to their message
+                debugPrint('Mentioned user tapped: $username');
+              },
             ),
-            mentionColor: isCurrentUser ? Colors.white : Colors.black,
-            onMentionTapped: (username) {
-              // Handle mention tap - could show user profile or scroll to their message
-              debugPrint('Mentioned user tapped: $username');
-            },
           ),
-        ),
         const SizedBox(height: 4),
         PawsText(
           timeago.format(chat.sentAt),

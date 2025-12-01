@@ -1,7 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:paws_connect/core/components/components.dart';
-import 'package:paws_connect/core/extension/int.ext.dart';
+import 'package:paws_connect/core/extension/ext.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/core/theme/paws_theme.dart';
 import 'package:paws_connect/core/widgets/text.dart';
@@ -49,68 +49,76 @@ class _AdoptionHistoryScreenState extends State<AdoptionHistoryScreen> {
           style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
         ),
       ),
-      body: ListView.builder(
-        padding: EdgeInsets.all(16),
-        itemCount: adoptions?.length ?? 0,
-        itemBuilder: (context, index) {
-          final adoption = adoptions![index];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: ListTile(
-              onTap: () {
-                context.router.push(AdoptionDetailRoute(id: adoption.id));
-              },
-              tileColor: Colors.white,
-              leading: Stack(
-                children: [
-                  UserAvatar(
-                    imageUrl: adoption.pets.transformedPhotos.first,
-                    initials: adoption.pets.name,
-                    size: 32,
-                  ),
-                  if (adoption.pets.adopted != null)
-                    Positioned(
-                      top: -2,
-                      right: -2,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
+      body: adoptions != null && adoptions.isNotEmpty
+          ? ListView.builder(
+              padding: EdgeInsets.all(16),
+              itemCount: adoptions.length,
+              itemBuilder: (context, index) {
+                final adoption = adoptions[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    onTap: () {
+                      context.router.push(AdoptionDetailRoute(id: adoption.id));
+                    },
+                    tileColor: Colors.white,
+                    leading: Stack(
+                      children: [
+                        UserAvatar(
+                          imageUrl: adoption.pets.transformedPhotos.first,
+                          initials: adoption.pets.name,
+                          size: 32,
                         ),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          color: PawsColors.success,
-                        ),
-                        child: PawsText(
-                          'ADOPTED',
-                          fontSize: 8,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
+                        if (adoption.pets.adopted != null)
+                          Positioned(
+                            top: -2,
+                            right: -2,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                color: PawsColors.success,
+                              ),
+                              child: PawsText(
+                                'ADOPTED',
+                                fontSize: 8,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                ],
-              ),
-              title: Row(
-                spacing: 10,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  PawsText(adoption.pets.name),
-                  PawsText(
-                    timeago.format(adoption.createdAt),
-                    fontSize: 12,
-                    color: Colors.grey,
+                    title: Row(
+                      spacing: 10,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        PawsText(adoption.pets.name ?? "Unnamed Pet"),
+                        PawsText(
+                          timeago.format(adoption.createdAt),
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ],
+                    ),
+                    subtitle: PawsText(
+                      adoption.status.capitalize(),
+                      color: adoption.status.color,
+                    ),
                   ),
-                ],
-              ),
-              subtitle: PawsText(
-                adoption.status.capitalize(),
-                color: adoption.status.color,
+                );
+              },
+            )
+          : Center(
+              child: PawsText(
+                'No adoption found.',
+                fontSize: 14,
+                color: Colors.grey,
               ),
             ),
-          );
-        },
-      ),
     );
   }
 }

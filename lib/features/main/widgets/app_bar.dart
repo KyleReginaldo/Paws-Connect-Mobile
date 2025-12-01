@@ -7,6 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/components/components.dart';
 import 'package:paws_connect/core/repository/common_repository.dart';
 import 'package:paws_connect/core/router/app_route.gr.dart';
+import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/core/theme/paws_theme.dart';
 import 'package:paws_connect/features/google_map/models/address_model.dart';
 import 'package:paws_connect/features/profile/models/user_profile_model.dart';
@@ -22,6 +23,8 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final GlobalKey? locationButtonKey;
   final GlobalKey? notificationsButtonKey;
   final GlobalKey? profileButtonKey;
+  final String? currentLocationAddress;
+  final bool isLoadingLocation;
 
   const HomeAppBar({
     super.key,
@@ -32,10 +35,13 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.locationButtonKey,
     this.notificationsButtonKey,
     this.profileButtonKey,
+    this.currentLocationAddress,
+    this.isLoadingLocation = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('Building HomeAppBar with address: ${address?.fullAddress}');
     return AppBar(
       surfaceTintColor: Colors.white,
       backgroundColor: PawsColors.primary,
@@ -48,20 +54,35 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
         child: Row(
           spacing: 4,
           children: [
-            Icon(LucideIcons.mapPin, size: 24, color: Colors.white),
+            isLoadingLocation
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Icon(LucideIcons.mapPin, size: 24, color: Colors.white),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   PawsText(
-                    address?.city != null
-                        ? address?.city ?? 'Current location'
+                    USER_ID == null
+                        ? 'Location'
+                        : currentLocationAddress != null
+                        ? 'Current Location'
+                        : address?.city != null
+                        ? address?.city ?? 'Saved Location'
                         : 'Location',
                     fontSize: 12,
                     color: Colors.white,
                   ),
                   PawsText(
-                    address?.fullAddress ?? 'Add address',
+                    USER_ID == null
+                        ? 'Tap to set location'
+                        : address?.fullAddress ?? 'Tap to set location',
                     fontSize: 15,
                     color: Colors.white,
                     fontWeight: FontWeight.w500,

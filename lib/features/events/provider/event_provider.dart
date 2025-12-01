@@ -97,9 +97,7 @@ class EventProvider {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return Result.success(
-          data['message'] ?? 'Successfully joined the event!',
-        );
+        return Result.success('Successfully joined the event!');
       } else {
         return Result.error(
           data['message'] ??

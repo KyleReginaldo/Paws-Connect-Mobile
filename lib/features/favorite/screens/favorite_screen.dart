@@ -1,9 +1,11 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:paws_connect/core/components/components.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/dependency.dart';
 import 'package:paws_connect/features/favorite/provider/favorite_provider.dart';
+import 'package:paws_connect/features/pets/repository/pet_repository.dart';
 import 'package:provider/provider.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart' show RefreshTrigger;
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -57,7 +59,6 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
             value: USER_ID ?? "",
           ),
           callback: (payload) {
-            // Check if widget is still mounted before accessing context
             if (mounted) {
               context.read<FavoriteRepository>().getFavorites(USER_ID ?? "");
             }
@@ -66,24 +67,34 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
         .subscribe();
   }
 
-  void _removeFavorite(int favoriteId) async {
-    final result = await FavoriteProvider().removeFavorite(favoriteId);
+  void toggleFavorite(int petId) async {
+    final result = await FavoriteProvider().toggleFavorite(petId);
     if (result.isError) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(result.error)));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: PawsText(result.error),
+            backgroundColor: PawsColors.error,
+          ),
+        );
+      }
     } else {
-      if (!mounted) return;
-      context.read<FavoriteRepository>().getFavorites(USER_ID ?? "");
+      if (mounted) {
+        sl<FavoriteRepository>().removeFavoriteLocally(petId);
+        sl<PetRepository>().togglePetFavorite(petId);
+        context.read<FavoriteRepository>().getFavorites(USER_ID ?? "");
+      }
+
+      EasyLoading.showToast(
+        result.value,
+        duration: const Duration(seconds: 2),
+        toastPosition: EasyLoadingToastPosition.bottom,
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final favorites = context.select(
-      (FavoriteRepository repo) => repo.favorites,
-    );
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -92,170 +103,186 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
         ),
         centerTitle: true,
       ),
-      body: favorites == null || favorites.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset('assets/images/empty_fav_pet.png', width: 120),
-                  PawsText(
-                    "No favorites found",
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+      body: Consumer<FavoriteRepository>(
+        builder: (context, value, child) {
+          final favorites = value.favorites;
+          return favorites == null || favorites.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/images/empty_fav_pet.png',
+                        width: 120,
+                      ),
+                      PawsText(
+                        "No favorites found",
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      PawsText("All of your favorite pets will appear here."),
+                    ],
                   ),
-                  PawsText("All of your favorite pets will appear here."),
-                ],
-              ),
-            )
-          : RefreshTrigger(
-              onRefresh: () async {
-                context.read<FavoriteRepository>().getFavorites(USER_ID ?? "");
-              },
-              child: SizedBox(
-                width: double.infinity,
-                height: double.infinity,
-                child: SingleChildScrollView(
-                  physics: AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final double maxWidth = constraints.maxWidth;
-                      // minimal desired item width (adjustable)
-                      const double minItemWidth = 160;
-                      const double spacing = 12;
-                      final int columns = (maxWidth / (minItemWidth + spacing))
-                          .floor()
-                          .clamp(1, 4);
-                      final double itemWidth =
-                          (maxWidth - (columns - 1) * spacing) / columns;
+                )
+              : RefreshTrigger(
+                  onRefresh: () async {
+                    context.read<FavoriteRepository>().getFavorites(
+                      USER_ID ?? "",
+                    );
+                  },
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: double.infinity,
+                    child: SingleChildScrollView(
+                      physics: AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final double maxWidth = constraints.maxWidth;
+                          // minimal desired item width (adjustable)
+                          const double minItemWidth = 160;
+                          const double spacing = 12;
+                          final int columns =
+                              (maxWidth / (minItemWidth + spacing))
+                                  .floor()
+                                  .clamp(1, 4);
+                          final double itemWidth =
+                              (maxWidth - (columns - 1) * spacing) / columns;
 
-                      return Wrap(
-                        spacing: spacing,
-                        runSpacing: spacing,
-                        children: List.generate(favorites.length, (index) {
-                          final favorite = favorites[index];
-                          final pet = favorite.pet;
-                          return SizedBox(
-                            width: itemWidth,
-                            child: Stack(
-                              children: [
-                                Card(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  clipBehavior: Clip.antiAlias,
-                                  elevation: 2,
-                                  child: InkWell(
-                                    onTap: () {
-                                      context.router.push(
-                                        PetDetailRoute(pet: pet),
-                                      );
-                                    },
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        // Image area with fixed aspect ratio
-                                        Stack(
+                          return Wrap(
+                            spacing: spacing,
+                            runSpacing: spacing,
+                            children: List.generate(favorites.length, (index) {
+                              final favorite = favorites[index];
+                              final pet = favorite.pet;
+                              return SizedBox(
+                                width: itemWidth,
+                                child: Stack(
+                                  children: [
+                                    Card(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      clipBehavior: Clip.antiAlias,
+                                      elevation: 2,
+                                      child: InkWell(
+                                        onTap: () {
+                                          context.router.push(
+                                            PetDetailRoute(id: pet.id),
+                                          );
+                                        },
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            AspectRatio(
-                                              aspectRatio: 4 / 3,
-                                              child: NetworkImageView(
-                                                pet.transformedPhotos.first,
-                                                fit: BoxFit.cover,
-                                                width: double.infinity,
-                                                enableTapToView: false,
-                                              ),
-                                            ),
-                                            if (pet.adopted != null)
-                                              Positioned(
-                                                top: 8,
-                                                right: 8,
-                                                child: Container(
-                                                  padding: EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 4,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          12,
-                                                        ),
-                                                    color: PawsColors.success,
-                                                  ),
-                                                  child: PawsText(
-                                                    'ADOPTED',
-                                                    fontSize: 11,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: Colors.white,
+                                            // Image area with fixed aspect ratio
+                                            Stack(
+                                              children: [
+                                                AspectRatio(
+                                                  aspectRatio: 4 / 3,
+                                                  child: NetworkImageView(
+                                                    pet.transformedPhotos.first,
+                                                    fit: BoxFit.cover,
+                                                    width: double.infinity,
+                                                    enableTapToView: false,
                                                   ),
                                                 ),
+                                                if (pet.adopted != null)
+                                                  Positioned(
+                                                    top: 8,
+                                                    right: 8,
+                                                    child: Container(
+                                                      padding:
+                                                          EdgeInsets.symmetric(
+                                                            horizontal: 8,
+                                                            vertical: 4,
+                                                          ),
+                                                      decoration: BoxDecoration(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              12,
+                                                            ),
+                                                        color:
+                                                            PawsColors.success,
+                                                      ),
+                                                      child: PawsText(
+                                                        'ADOPTED',
+                                                        fontSize: 11,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                            // Text content
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.fromLTRB(
+                                                    12,
+                                                    8,
+                                                    12,
+                                                    12,
+                                                  ),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  PawsText(
+                                                    pet.name ?? 'Unnamed Pet',
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w600,
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  PawsText(
+                                                    pet.breed,
+                                                    fontSize: 12,
+                                                    color: PawsColors
+                                                        .textSecondary,
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ],
                                               ),
+                                            ),
                                           ],
                                         ),
-                                        // Text content
-                                        Padding(
-                                          padding: const EdgeInsets.fromLTRB(
-                                            12,
-                                            8,
-                                            12,
-                                            12,
-                                          ),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              PawsText(
-                                                pet.name.isEmpty
-                                                    ? 'No name'
-                                                    : pet.name,
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w600,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              const SizedBox(height: 4),
-                                              PawsText(
-                                                pet.breed,
-                                                fontSize: 12,
-                                                color: PawsColors.textSecondary,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ],
-                                          ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 5,
+                                      right: 5,
+                                      child: IconButton(
+                                        onPressed: () {
+                                          toggleFavorite(pet.id);
+                                        },
+                                        icon: Icon(
+                                          Icons.favorite,
+                                          color: PawsColors.primary,
                                         ),
-                                      ],
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ),
-                                Positioned(
-                                  top: 5,
-                                  right: 5,
-                                  child: IconButton(
-                                    onPressed: () {
-                                      _removeFavorite(favorite.id);
-                                    },
-                                    icon: Icon(
-                                      Icons.favorite,
-                                      color: PawsColors.primary,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                              );
+                            }),
                           );
-                        }),
-                      );
-                    },
+                        },
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ),
+                );
+        },
+      ),
     );
   }
 }

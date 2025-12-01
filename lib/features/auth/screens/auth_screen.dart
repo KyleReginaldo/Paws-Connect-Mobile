@@ -11,6 +11,7 @@ import 'package:paws_connect/features/auth/repository/auth_repository.dart';
 import 'package:paws_connect/features/main/screens/extension/terms_and_condition.dart'
     show TermsContent;
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/config/result.dart';
 import '../../../core/router/app_route.gr.dart';
@@ -235,7 +236,44 @@ class _SignInScreenState extends State<SignInScreen>
         email.text = widget.email ?? '';
         password.text = widget.password ?? '';
       });
+      _loadRememberedCredentials();
     });
+
+    // Load remembered credentials
+  }
+
+  Future<void> _loadRememberedCredentials() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final rememberedEmail = prefs.getString('remembered_email') ?? '';
+      final shouldRemember = prefs.getBool('remember_me') ?? false;
+      debugPrint('email: $rememberedEmail, rememberMe: $shouldRemember');
+      if (shouldRemember && rememberedEmail.isNotEmpty) {
+        if (mounted) {
+          setState(() {
+            email.text = rememberedEmail.trim();
+            rememberMe = shouldRemember;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading remembered credentials: $e');
+    }
+  }
+
+  Future<void> _saveRememberedCredentials() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (rememberMe) {
+        await prefs.setString('remembered_email', email.text.trim());
+        await prefs.setBool('remember_me', true);
+      } else {
+        await prefs.remove('remembered_email');
+        await prefs.setBool('remember_me', false);
+      }
+    } catch (e) {
+      debugPrint('Error saving remembered credentials: $e');
+    }
   }
 
   @override
@@ -314,16 +352,22 @@ class _SignInScreenState extends State<SignInScreen>
         password: password.text.trim(),
       );
 
-      if (result.isError) {
+      if (result.isError && mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(result.error)));
         return;
       }
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Sign in successful')));
+      // Save remembered credentials if sign in is successful
+      await _saveRememberedCredentials();
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Sign in successful')));
+      }
+
       await SessionManager.bootstrapAfterSignIn(eager: false);
       if (!_didSignalResult) {
         _didSignalResult = true;
@@ -349,7 +393,7 @@ class _SignInScreenState extends State<SignInScreen>
         phoneNumber: '+63${phoneNumber.text.trim()}',
       );
 
-      if (result.isError) {
+      if (result.isError && mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(result.error)));
@@ -357,9 +401,11 @@ class _SignInScreenState extends State<SignInScreen>
       }
 
       // Account created, attempt automatic sign-in
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Account created! Signing you in...')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Account created! Signing you in...')),
+        );
+      }
 
       // TutorialService removed; proceed with normal sign-in attempts
 
@@ -385,7 +431,7 @@ class _SignInScreenState extends State<SignInScreen>
             widget.onResult?.call(true);
           }
           if (mounted) {
-            print('🎯 AUTH: Navigating to MainRoute');
+            debugPrint('🎯 AUTH: Navigating to MainRoute');
             context.router.replaceAll([MainRoute()]);
           }
           return;
@@ -402,7 +448,7 @@ class _SignInScreenState extends State<SignInScreen>
           ),
         ),
       );
-      print('🎯 AUTH: Auto sign-in failed; navigating to MainRoute');
+      debugPrint('🎯 AUTH: Auto sign-in failed; navigating to MainRoute');
       context.router.replaceAll([MainRoute()]);
     } finally {
       if (mounted) setState(() => isLoading = false);
@@ -657,8 +703,13 @@ class _SignInScreenState extends State<SignInScreen>
                                           ],
                                         ),
                                       ),
-                                      const PawsTextButton(
+                                      PawsTextButton(
                                         label: 'Forgot password?',
+                                        onPressed: () {
+                                          context.router.push(
+                                            ForgotPasswordRoute(),
+                                          );
+                                        },
                                       ),
                                     ],
                                   ),

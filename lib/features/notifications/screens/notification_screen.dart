@@ -2,8 +2,10 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:paws_connect/core/repository/common_repository.dart';
 import 'package:paws_connect/core/router/app_route.gr.dart';
 import 'package:paws_connect/core/supabase/client.dart';
+import 'package:paws_connect/core/widgets/text.dart';
 import 'package:paws_connect/dependency.dart';
 import 'package:paws_connect/features/notifications/provider/notification_provider.dart';
 import 'package:provider/provider.dart';
@@ -117,6 +119,11 @@ class _NotificationScreenState extends State<NotificationScreen>
         repo.clearNotificationIds();
         repo.refreshNotifications(_cachedUserId!);
 
+        // Refresh global badge count as removed items may affect unread total
+        try {
+          sl<CommonRepository>().getNotificationCount(_cachedUserId!);
+        } catch (_) {}
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('notification(s) removed'),
@@ -167,34 +174,13 @@ class _NotificationScreenState extends State<NotificationScreen>
       appBar: AppBar(
         title: Consumer<NotificationRepository>(
           builder: (context, repo, _) {
-            final hasUnread = repo.unreadCount > 0;
             return Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
+                const PawsText(
                   'Notifications',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                 ),
-                if (hasUnread) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${repo.unreadCount}',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onPrimary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
               ],
             );
           },
@@ -205,43 +191,35 @@ class _NotificationScreenState extends State<NotificationScreen>
             builder: (context, repo, _) {
               final notificationIds = repo.notificationIds;
               final notifications = repo.notifications;
-              final hasUnread = repo.unreadCount > 0;
 
               if (notificationIds.isNotEmpty) {
-                return Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      tooltip: 'Remove selected',
-                      icon: const Icon(LucideIcons.trash),
-                      onPressed: () =>
-                          _removeNotifications(ids: notificationIds),
-                    ),
-                    Checkbox(
-                      value:
-                          notificationIds.length == notifications.length &&
-                          notifications.isNotEmpty,
-                      onChanged: (value) {
-                        if (value == true) {
-                          repo.selectAllNotificationIds();
-                        } else {
-                          repo.clearNotificationIds();
-                        }
-                      },
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  ],
-                );
-              } else if (hasUnread) {
-                return IconButton(
-                  tooltip: 'Mark all as read',
-                  icon: const Icon(LucideIcons.checkCheck),
-                  onPressed: () {
-                    if (_cachedUserId != null) {
-                      repo.markAllViewed(_cachedUserId!);
-                    }
-                  },
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        tooltip: 'Remove selected',
+                        icon: const Icon(LucideIcons.trash, size: 16),
+                        onPressed: () =>
+                            _removeNotifications(ids: notificationIds),
+                      ),
+                      Checkbox(
+                        value:
+                            notificationIds.length == notifications.length &&
+                            notifications.isNotEmpty,
+                        onChanged: (value) {
+                          if (value == true) {
+                            repo.selectAllNotificationIds();
+                          } else {
+                            repo.clearNotificationIds();
+                          }
+                        },
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ],
+                  ),
                 );
               }
               return const SizedBox.shrink();

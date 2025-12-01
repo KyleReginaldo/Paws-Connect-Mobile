@@ -33,54 +33,105 @@ class AdoptionMapper extends ClassMapperBase<Adoption> {
   );
   static UserProfile _$users(Adoption v) => v.users;
   static const Field<Adoption, UserProfile> _f$users = Field('users', _$users);
-  static String _$typeOfResidence(Adoption v) => v.typeOfResidence;
+  static String? _$typeOfResidence(Adoption v) => v.typeOfResidence;
   static const Field<Adoption, String> _f$typeOfResidence = Field(
     'typeOfResidence',
     _$typeOfResidence,
     key: r'type_of_residence',
+    opt: true,
   );
-  static bool _$isRenting(Adoption v) => v.isRenting;
+  static bool? _$isRenting(Adoption v) => v.isRenting;
   static const Field<Adoption, bool> _f$isRenting = Field(
     'isRenting',
     _$isRenting,
     key: r'is_renting',
+    opt: true,
   );
-  static bool _$havePermissionFromLandlord(Adoption v) =>
+  static bool? _$havePermissionFromLandlord(Adoption v) =>
       v.havePermissionFromLandlord;
   static const Field<Adoption, bool> _f$havePermissionFromLandlord = Field(
     'havePermissionFromLandlord',
     _$havePermissionFromLandlord,
     key: r'have_permission_from_landlord',
+    opt: true,
   );
-  static bool _$haveOutdoorSpace(Adoption v) => v.haveOutdoorSpace;
+  static bool? _$haveOutdoorSpace(Adoption v) => v.haveOutdoorSpace;
   static const Field<Adoption, bool> _f$haveOutdoorSpace = Field(
     'haveOutdoorSpace',
     _$haveOutdoorSpace,
     key: r'have_outdoor_space',
+    opt: true,
   );
-  static int _$numberOfHouseholdMembers(Adoption v) =>
+  static int? _$numberOfHouseholdMembers(Adoption v) =>
       v.numberOfHouseholdMembers;
   static const Field<Adoption, int> _f$numberOfHouseholdMembers = Field(
     'numberOfHouseholdMembers',
     _$numberOfHouseholdMembers,
     key: r'number_of_household_members',
+    opt: true,
   );
-  static bool _$hasChildrenInHome(Adoption v) => v.hasChildrenInHome;
+  static bool? _$hasChildrenInHome(Adoption v) => v.hasChildrenInHome;
   static const Field<Adoption, bool> _f$hasChildrenInHome = Field(
     'hasChildrenInHome',
     _$hasChildrenInHome,
     key: r'has_children_in_home',
+    opt: true,
   );
-  static bool _$hasOtherPetsInHome(Adoption v) => v.hasOtherPetsInHome;
+  static bool? _$hasOtherPetsInHome(Adoption v) => v.hasOtherPetsInHome;
   static const Field<Adoption, bool> _f$hasOtherPetsInHome = Field(
     'hasOtherPetsInHome',
     _$hasOtherPetsInHome,
     key: r'has_other_pets_in_home',
+    opt: true,
   );
   static String _$status(Adoption v) => v.status;
   static const Field<Adoption, String> _f$status = Field('status', _$status);
   static Pet _$pets(Adoption v) => v.pets;
   static const Field<Adoption, Pet> _f$pets = Field('pets', _$pets);
+  static String? _$reasonForAdopting(Adoption v) => v.reasonForAdopting;
+  static const Field<Adoption, String> _f$reasonForAdopting = Field(
+    'reasonForAdopting',
+    _$reasonForAdopting,
+    key: r'reason_for_adopting',
+    opt: true,
+  );
+  static bool? _$willingToVisitShelter(Adoption v) => v.willingToVisitShelter;
+  static const Field<Adoption, bool> _f$willingToVisitShelter = Field(
+    'willingToVisitShelter',
+    _$willingToVisitShelter,
+    key: r'willing_to_visit_shelter',
+    opt: true,
+  );
+  static bool? _$willingToVisitAgain(Adoption v) => v.willingToVisitAgain;
+  static const Field<Adoption, bool> _f$willingToVisitAgain = Field(
+    'willingToVisitAgain',
+    _$willingToVisitAgain,
+    key: r'willing_to_visit_again',
+    opt: true,
+  );
+  static bool? _$adoptingForSelf(Adoption v) => v.adoptingForSelf;
+  static const Field<Adoption, bool> _f$adoptingForSelf = Field(
+    'adoptingForSelf',
+    _$adoptingForSelf,
+    key: r'adopting_for_self',
+    opt: true,
+  );
+  static String? _$howCanYouGiveFurReverHome(Adoption v) =>
+      v.howCanYouGiveFurReverHome;
+  static const Field<Adoption, String> _f$howCanYouGiveFurReverHome = Field(
+    'howCanYouGiveFurReverHome',
+    _$howCanYouGiveFurReverHome,
+    key: r'how_can_you_give_fur_rever_home',
+    opt: true,
+  );
+  static String? _$whereDidYouHearAboutUs(Adoption v) =>
+      v.whereDidYouHearAboutUs;
+  static const Field<Adoption, String> _f$whereDidYouHearAboutUs = Field(
+    'whereDidYouHearAboutUs',
+    _$whereDidYouHearAboutUs,
+    key: r'where_did_you_hear_about_us',
+    opt: true,
+  );
 
   @override
   final MappableFields<Adoption> fields = const {
@@ -96,6 +147,12 @@ class AdoptionMapper extends ClassMapperBase<Adoption> {
     #hasOtherPetsInHome: _f$hasOtherPetsInHome,
     #status: _f$status,
     #pets: _f$pets,
+    #reasonForAdopting: _f$reasonForAdopting,
+    #willingToVisitShelter: _f$willingToVisitShelter,
+    #willingToVisitAgain: _f$willingToVisitAgain,
+    #adoptingForSelf: _f$adoptingForSelf,
+    #howCanYouGiveFurReverHome: _f$howCanYouGiveFurReverHome,
+    #whereDidYouHearAboutUs: _f$whereDidYouHearAboutUs,
   };
 
   static Adoption _instantiate(DecodingData data) {
@@ -112,6 +169,12 @@ class AdoptionMapper extends ClassMapperBase<Adoption> {
       hasOtherPetsInHome: data.dec(_f$hasOtherPetsInHome),
       status: data.dec(_f$status),
       pets: data.dec(_f$pets),
+      reasonForAdopting: data.dec(_f$reasonForAdopting),
+      willingToVisitShelter: data.dec(_f$willingToVisitShelter),
+      willingToVisitAgain: data.dec(_f$willingToVisitAgain),
+      adoptingForSelf: data.dec(_f$adoptingForSelf),
+      howCanYouGiveFurReverHome: data.dec(_f$howCanYouGiveFurReverHome),
+      whereDidYouHearAboutUs: data.dec(_f$whereDidYouHearAboutUs),
     );
   }
 
@@ -187,6 +250,12 @@ abstract class AdoptionCopyWith<$R, $In extends Adoption, $Out>
     bool? hasOtherPetsInHome,
     String? status,
     Pet? pets,
+    String? reasonForAdopting,
+    bool? willingToVisitShelter,
+    bool? willingToVisitAgain,
+    bool? adoptingForSelf,
+    String? howCanYouGiveFurReverHome,
+    String? whereDidYouHearAboutUs,
   });
   AdoptionCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -210,31 +279,47 @@ class _AdoptionCopyWithImpl<$R, $Out>
     int? id,
     DateTime? createdAt,
     UserProfile? users,
-    String? typeOfResidence,
-    bool? isRenting,
-    bool? havePermissionFromLandlord,
-    bool? haveOutdoorSpace,
-    int? numberOfHouseholdMembers,
-    bool? hasChildrenInHome,
-    bool? hasOtherPetsInHome,
+    Object? typeOfResidence = $none,
+    Object? isRenting = $none,
+    Object? havePermissionFromLandlord = $none,
+    Object? haveOutdoorSpace = $none,
+    Object? numberOfHouseholdMembers = $none,
+    Object? hasChildrenInHome = $none,
+    Object? hasOtherPetsInHome = $none,
     String? status,
     Pet? pets,
+    Object? reasonForAdopting = $none,
+    Object? willingToVisitShelter = $none,
+    Object? willingToVisitAgain = $none,
+    Object? adoptingForSelf = $none,
+    Object? howCanYouGiveFurReverHome = $none,
+    Object? whereDidYouHearAboutUs = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
       if (createdAt != null) #createdAt: createdAt,
       if (users != null) #users: users,
-      if (typeOfResidence != null) #typeOfResidence: typeOfResidence,
-      if (isRenting != null) #isRenting: isRenting,
-      if (havePermissionFromLandlord != null)
+      if (typeOfResidence != $none) #typeOfResidence: typeOfResidence,
+      if (isRenting != $none) #isRenting: isRenting,
+      if (havePermissionFromLandlord != $none)
         #havePermissionFromLandlord: havePermissionFromLandlord,
-      if (haveOutdoorSpace != null) #haveOutdoorSpace: haveOutdoorSpace,
-      if (numberOfHouseholdMembers != null)
+      if (haveOutdoorSpace != $none) #haveOutdoorSpace: haveOutdoorSpace,
+      if (numberOfHouseholdMembers != $none)
         #numberOfHouseholdMembers: numberOfHouseholdMembers,
-      if (hasChildrenInHome != null) #hasChildrenInHome: hasChildrenInHome,
-      if (hasOtherPetsInHome != null) #hasOtherPetsInHome: hasOtherPetsInHome,
+      if (hasChildrenInHome != $none) #hasChildrenInHome: hasChildrenInHome,
+      if (hasOtherPetsInHome != $none) #hasOtherPetsInHome: hasOtherPetsInHome,
       if (status != null) #status: status,
       if (pets != null) #pets: pets,
+      if (reasonForAdopting != $none) #reasonForAdopting: reasonForAdopting,
+      if (willingToVisitShelter != $none)
+        #willingToVisitShelter: willingToVisitShelter,
+      if (willingToVisitAgain != $none)
+        #willingToVisitAgain: willingToVisitAgain,
+      if (adoptingForSelf != $none) #adoptingForSelf: adoptingForSelf,
+      if (howCanYouGiveFurReverHome != $none)
+        #howCanYouGiveFurReverHome: howCanYouGiveFurReverHome,
+      if (whereDidYouHearAboutUs != $none)
+        #whereDidYouHearAboutUs: whereDidYouHearAboutUs,
     }),
   );
   @override
@@ -263,6 +348,27 @@ class _AdoptionCopyWithImpl<$R, $Out>
     ),
     status: data.get(#status, or: $value.status),
     pets: data.get(#pets, or: $value.pets),
+    reasonForAdopting: data.get(
+      #reasonForAdopting,
+      or: $value.reasonForAdopting,
+    ),
+    willingToVisitShelter: data.get(
+      #willingToVisitShelter,
+      or: $value.willingToVisitShelter,
+    ),
+    willingToVisitAgain: data.get(
+      #willingToVisitAgain,
+      or: $value.willingToVisitAgain,
+    ),
+    adoptingForSelf: data.get(#adoptingForSelf, or: $value.adoptingForSelf),
+    howCanYouGiveFurReverHome: data.get(
+      #howCanYouGiveFurReverHome,
+      or: $value.howCanYouGiveFurReverHome,
+    ),
+    whereDidYouHearAboutUs: data.get(
+      #whereDidYouHearAboutUs,
+      or: $value.whereDidYouHearAboutUs,
+    ),
   );
 
   @override

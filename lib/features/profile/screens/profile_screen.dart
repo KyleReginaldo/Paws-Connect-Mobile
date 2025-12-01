@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:paws_connect/core/enum/user.enum.dart';
+import 'package:paws_connect/core/extension/ext.dart';
 import 'package:paws_connect/core/repository/common_repository.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/core/widgets/button.dart';
@@ -23,6 +24,7 @@ import '../../../core/widgets/global_confirm_dialog.dart';
 import '../../../core/widgets/text.dart';
 import '../../../dependency.dart';
 import '../../auth/repository/auth_repository.dart';
+import '../../settings/repository/user_settings_repository.dart';
 
 @RoutePage()
 class ProfileScreen extends StatefulWidget implements AutoRouteWrapper {
@@ -41,6 +43,7 @@ class ProfileScreen extends StatefulWidget implements AutoRouteWrapper {
         ChangeNotifierProvider.value(value: sl<AdoptionRepository>()),
         ChangeNotifierProvider.value(value: sl<DonationRepository>()),
         ChangeNotifierProvider.value(value: sl<CommonRepository>()),
+        ChangeNotifierProvider.value(value: sl<UserSettingsRepository>()),
       ],
       child: this,
     );
@@ -116,6 +119,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
           ),
           centerTitle: true,
+          actions: [
+            IconButton(
+              onPressed: () {
+                context.router.push(UserSettingsRoute());
+              },
+              icon: Icon(LucideIcons.settings),
+            ),
+          ],
         ),
         body: isLoading
             ? const Center(child: CircularProgressIndicator())
@@ -152,7 +163,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       )
                                     : ClipOval(
                                         child: CachedNetworkImage(
-                                          imageUrl: visited!.profileImageLink!,
+                                          imageUrl: visited!
+                                              .profileImageLink!
+                                              .transformedUrl,
                                           fit: BoxFit.cover,
                                           width: 100,
                                           height: 100,
@@ -323,7 +336,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     await SessionManager.signOutAndClear();
                                     if (!mounted) return;
                                     await OneSignal.logout();
-                                    context.router.replaceAll([MainRoute()]);
+                                    // Just close the profile screen after sign-out
+                                    // The app will handle the signed-out state naturally
+                                    context.router.maybePop();
                                   },
                                   cancelLabel: 'Cancel',
                                 );

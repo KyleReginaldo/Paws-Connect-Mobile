@@ -91,13 +91,23 @@
                     android:scheme="https"
                     android:host="paws-connect-rho.vercel.app"
                     android:pathPrefix="/signin" />
+                <data
+                    android:scheme="https"
+                    android:host="paws-connect-rho.vercel.app"
+                    android:pathPrefix="/pet-details" />
+                <data
+                    android:scheme="https"
+                    android:host="paws-connect-rho.vercel.app"
+                    android:pathPrefix="/adopt" />
 
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="pawsconnect" />
+                <data
+                    android:scheme="pawsconnect"
+                    android:host="open" />
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

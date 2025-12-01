@@ -271,26 +271,27 @@ class _ForumSettingsScreenState extends State<ForumSettingsScreen> {
       return Scaffold(
         appBar: AppBar(
           actions: [
-            IconButton(
-              onPressed: () {
-                showGlobalConfirmDialog(
-                  context,
-                  title: 'Leave Forum',
-                  message: 'Are you sure you want to leave this forum?',
-                  confirmLabel: 'Leave',
-                  cancelLabel: 'Cancel',
-                ).then((value) {
-                  if (value == true) {
-                    leaveForum(forum.id);
-                  }
-                });
-              },
-              icon: Icon(
-                LucideIcons.doorOpen,
-                size: 24,
-                color: PawsColors.error,
+            if (forum.id != 1)
+              IconButton(
+                onPressed: () {
+                  showGlobalConfirmDialog(
+                    context,
+                    title: 'Leave Forum',
+                    message: 'Are you sure you want to leave this forum?',
+                    confirmLabel: 'Leave',
+                    cancelLabel: 'Cancel',
+                  ).then((value) {
+                    if (value == true) {
+                      leaveForum(forum.id);
+                    }
+                  });
+                },
+                icon: Icon(
+                  LucideIcons.doorOpen,
+                  size: 24,
+                  color: PawsColors.error,
+                ),
               ),
-            ),
           ],
         ),
         body: isLoading

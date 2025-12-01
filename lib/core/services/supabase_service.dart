@@ -19,7 +19,7 @@ class SupabaseService {
 
       final imageUrl = supabase.storage.from('').getPublicUrl(response);
       debugPrint('Uploaded image URL: $imageUrl');
-      return imageUrl;
+      return imageUrl.replaceAll('10.0.2.2', '127.0.0.1');
     } catch (e) {
       print('Error uploading image: $e');
       return null;

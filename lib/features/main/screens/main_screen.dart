@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:paws_connect/core/repository/common_repository.dart';
+import 'package:paws_connect/core/services/chat_visibility_service.dart';
+import 'package:paws_connect/core/services/notification_service.dart';
 import 'package:paws_connect/core/services/supabase_service.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/dependency.dart';
@@ -48,6 +50,10 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     print('🎯 MAIN SCREEN: initState called');
+
+    // Initialize app as being in foreground
+    NotificationService.setAppForegroundState(true);
+
     handleOneSignalLogin();
     if (!_oneSignalListenerInitialized) {
       initPlatformState();
@@ -83,6 +89,12 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       // Load user data
       sl<CommonRepository>().getMessageCount(userId);
       sl<CommonRepository>().getNotificationCount(userId);
+
+      // Re-subscribe realtime channels with the correct USER_ID
+      try {
+        _notificationsChannel?.unsubscribe();
+      } catch (_) {}
+      _initNotificationsRealtime();
     }
   }
 
@@ -110,8 +122,13 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   }
 
   void _initNotificationsRealtime() {
+    final uid = USER_ID;
+    if (uid == null || uid.isEmpty) {
+      return; // defer until USER_ID is available
+    }
+
     _notificationsChannel = supabase.channel(
-      'public:notifications:user=eq.$USER_ID',
+      'public:notifications:user=eq.$uid',
     );
     _notificationsChannel!
         .onPostgresChanges(
@@ -121,12 +138,11 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
           filter: PostgresChangeFilter(
             type: PostgresChangeFilterType.eq,
             column: 'user',
-            value: USER_ID ?? "",
+            value: uid,
           ),
           callback: (_) {
             if (!mounted) return;
-            final userId = USER_ID;
-            if (userId == null || userId.isEmpty) return;
+            final userId = uid;
             final now = DateTime.now();
 
             if (now.difference(_lastRealtimeRefresh).inMilliseconds < 300) {
@@ -147,6 +163,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   }
 
   Future<void> initPlatformState() async {
+    // Handle notification taps
     OneSignal.Notifications.addClickListener((event) {
       try {
         final json = event.notification.jsonRepresentation();
@@ -176,7 +193,38 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
           });
         }
       } catch (e) {
-        debugPrint('$e');
+        debugPrint('Error notif checker: $e');
+      }
+    });
+
+    // Ensure notifications are shown while app is in foreground,
+    // except when the user is currently viewing the relevant forum chat.
+    OneSignal.Notifications.addForegroundWillDisplayListener((event) {
+      try {
+        final additional = event.notification.additionalData ?? {};
+        final type = additional['type'];
+        final forumIdStr = additional['forumId']?.toString();
+        final forumId = forumIdStr != null ? int.tryParse(forumIdStr) : null;
+
+        // Suppress chat notifications if currently viewing the same forum chat
+        if (type == 'forum_chat' &&
+            forumId != null &&
+            ChatVisibilityService.isViewingForum(forumId)) {
+          event.preventDefault();
+          debugPrint(
+            '🔕 Suppressed foreground chat notif for forumId=$forumId',
+          );
+          return;
+        }
+
+        // By default, show notifications in foreground
+        event.preventDefault();
+        event.notification.display();
+      } catch (e) {
+        // If something goes wrong, still try to display the notification
+        event.preventDefault();
+        event.notification.display();
+        debugPrint('Foreground display handler error: $e');
       }
     });
   }
@@ -214,6 +262,20 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         return;
       }
     }
+    if (route.contains('events') && segments.length > 2) {
+      final eventId = int.tryParse(segments[2]);
+      if (eventId != null && mounted) {
+        context.router.navigate(EventDetailRoute(id: eventId));
+        return;
+      }
+    }
+    if (route.contains('pets') && segments.length > 2) {
+      final petId = int.tryParse(segments[2]);
+      if (petId != null && mounted) {
+        context.router.navigate(PetDetailRoute(id: petId));
+        return;
+      }
+    }
 
     if (mounted) {
       context.router.pushPath(route);
@@ -227,16 +289,22 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     switch (state) {
       case AppLifecycleState.resumed:
         setToActive();
+        // Update NotificationService about app foreground state
+        NotificationService.setAppForegroundState(true);
         print('🟢 MainScreen: User is ACTIVE - App in foreground');
         break;
 
       case AppLifecycleState.paused:
         setToInactive();
+        // Update NotificationService about app background state
+        NotificationService.setAppForegroundState(false);
         print('🟡 MainScreen: User is INACTIVE - App in background');
         break;
 
       case AppLifecycleState.inactive:
         setToInactive();
+        // Update NotificationService about app background state
+        NotificationService.setAppForegroundState(false);
         print(
           '🟠 MainScreen: User is INACTIVE - App inactive (call/switching)',
         );
@@ -244,11 +312,15 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
       case AppLifecycleState.detached:
         setToInactive();
+        // Update NotificationService about app background state
+        NotificationService.setAppForegroundState(false);
         print('🔴 MainScreen: User is INACTIVE - App detached');
         break;
 
       case AppLifecycleState.hidden:
         setToInactive();
+        // Update NotificationService about app background state
+        NotificationService.setAppForegroundState(false);
         print('⚫ MainScreen: User is INACTIVE - App hidden');
         break;
     }
@@ -278,7 +350,13 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     final mesCount = context.watch<CommonRepository>().messageCount;
     return AutoTabsScaffold(
       // homeIndex: 4,
-      routes: [HomeRoute(), FundraisingRoute(), PetRoute(), ForumRoute()],
+      routes: [
+        HomeRoute(),
+        FundraisingRoute(),
+        PostsRoute(),
+        PetRoute(),
+        ForumRoute(),
+      ],
       bottomNavigationBuilder: (_, tabsRouter) {
         if (mounted && widget.initialIndex != null && !_hasSetInitialIndex) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -296,27 +374,33 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
           selectedItemColor: PawsColors.primary,
           unselectedItemColor: PawsColors.disabled,
           type: BottomNavigationBarType.fixed,
-          showUnselectedLabels: false,
-          showSelectedLabels: false,
+          selectedFontSize: 13,
+          unselectedFontSize: 13,
+          showUnselectedLabels: true,
+          showSelectedLabels: true,
           onTap: tabsRouter.setActiveIndex,
           items: [
             BottomNavigationBarItem(
-              label: '',
+              label: 'Home',
               icon: Icon(LucideIcons.house, key: TutorialKeys.homeTabKey),
             ),
             BottomNavigationBarItem(
-              label: '',
+              label: 'Fundraising',
               icon: Icon(
                 LucideIcons.heartHandshake,
                 key: TutorialKeys.fundraisingTabKey,
               ),
             ),
             BottomNavigationBarItem(
-              label: '',
+              label: 'Feed',
+              icon: Icon(LucideIcons.pawPrint),
+            ),
+            BottomNavigationBarItem(
+              label: 'Pets',
               icon: Icon(LucideIcons.dog, key: TutorialKeys.petsTabKey),
             ),
             BottomNavigationBarItem(
-              label: '',
+              label: 'Forum',
               icon: Stack(
                 key: TutorialKeys.forumTabKey,
                 clipBehavior: Clip.none,

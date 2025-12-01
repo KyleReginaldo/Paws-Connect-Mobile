@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:paws_connect/core/guard/auth.guard.dart';
+import 'package:paws_connect/core/guard/user.guard.dart';
 import 'package:paws_connect/core/router/app_route.gr.dart';
 
 @AutoRouterConfig()
@@ -16,6 +17,7 @@ class AppRouter extends RootStackRouter {
       transitionsBuilder: TransitionsBuilders.fadeIn,
       path: '/',
       initial: true,
+      guards: [UserGuard()],
       children: [
         CustomRoute(
           page: HomeRoute.page,
@@ -25,6 +27,11 @@ class AppRouter extends RootStackRouter {
         CustomRoute(
           path: 'fundraising',
           page: FundraisingRoute.page,
+          transitionsBuilder: TransitionsBuilders.fadeIn,
+        ),
+        CustomRoute(
+          path: 'posts',
+          page: PostsRoute.page,
           transitionsBuilder: TransitionsBuilders.fadeIn,
         ),
         CustomRoute(
@@ -112,6 +119,16 @@ class AppRouter extends RootStackRouter {
       transitionsBuilder: TransitionsBuilders.fadeIn,
     ),
     CustomRoute(
+      page: IndefiniteUserRoute.page,
+      path: '/indefinite-user',
+      transitionsBuilder: TransitionsBuilders.fadeIn,
+    ),
+    CustomRoute(
+      page: ContactSupportRoute.page,
+      path: '/contact-support',
+      transitionsBuilder: TransitionsBuilders.fadeIn,
+    ),
+    CustomRoute(
       page: CreateAdoptionRoute.page,
       path: '/create-adoption/:petId',
       transitionsBuilder: TransitionsBuilders.slideBottom,
@@ -168,6 +185,30 @@ class AppRouter extends RootStackRouter {
     CustomRoute(
       page: BreedGalleryRoute.page,
       transitionsBuilder: TransitionsBuilders.fadeIn,
+    ),
+    CustomRoute(
+      page: UserSettingsRoute.page,
+      transitionsBuilder: TransitionsBuilders.fadeIn,
+    ),
+    CustomRoute(
+      page: ForgotPasswordRoute.page,
+      path: '/forgot-password',
+      transitionsBuilder: TransitionsBuilders.fadeIn,
+    ),
+    CustomRoute(
+      page: OTPVerificationRoute.page,
+      path: '/otp-verification',
+      transitionsBuilder: TransitionsBuilders.fadeIn,
+    ),
+    CustomRoute(
+      page: ResetPasswordRoute.page,
+      path: '/reset-password',
+      transitionsBuilder: TransitionsBuilders.fadeIn,
+    ),
+    CustomRoute(
+      page: CommentsRoute.page,
+      path: '/comments',
+      transitionsBuilder: TransitionsBuilders.slideBottom,
     ),
   ];
 }

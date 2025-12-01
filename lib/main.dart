@@ -1,6 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_gemini/flutter_gemini.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
@@ -27,6 +28,7 @@ void mainCommon({
   required String supabaseUrl,
   required String supabaseServiceRoleKey,
   required String appName,
+  required String logoUrl,
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -36,6 +38,7 @@ void mainCommon({
     supabaseUrl: supabaseUrl,
     supabaseServiceRoleKey: supabaseServiceRoleKey,
     appName: appName,
+    logoUrl: logoUrl,
   );
   await Supabase.initialize(
     url: FlavorConfig.instance.supabaseUrl,
@@ -46,7 +49,7 @@ void mainCommon({
     ),
     debug: true,
   );
-  Gemini.init(apiKey: 'AIzaSyCBPr2uSM7S9oC9ld2eWHytiJHOrTUc2Jg');
+  Gemini.init(apiKey: dotenv.get('GEMINI_API_KEY'));
   OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
   OneSignal.initialize('323cc2fb-7bab-418b-954e-a578788499bd');
   debugPrint(
@@ -125,16 +128,31 @@ class _MyAppState extends State<MyApp> {
           builder: EasyLoading.init(),
           routerConfig: appRouter.config(
             deepLinkBuilder: (deepLink) async {
-              final segments = deepLink.path.split('/');
-              final id = segments.length > 2 ? segments[2] : null;
+              final segments = deepLink.path
+                  .split('/')
+                  .where((s) => s.isNotEmpty)
+                  .toList();
+              debugPrint('${DateTime.now()}: Deep link path: ${deepLink.path}');
+              debugPrint('${DateTime.now()}: Deep link segments: $segments');
+              debugPrint(
+                '${DateTime.now()}: Deep link query: ${deepLink.uri.queryParameters}',
+              );
+              String? id = deepLink.path.split('/').last;
+              debugPrint('${DateTime.now()}: Initial id from segments: $id');
+              // For /adopt/id or /adopt/id/extra
+
               String? donor = deepLink.uri.queryParameters['donor'];
               double? amount = double.tryParse(
                 deepLink.uri.queryParameters['amount'].toString(),
               );
               String? invitedBy = deepLink.uri.queryParameters['invitedBy'];
-              if (deepLink.path.contains('forum-invite') &&
-                  id != null &&
-                  invitedBy != null) {
+              debugPrint(
+                '${DateTime.now()}: donor: $donor, amount: $amount, invitedBy: $invitedBy, USER_ID: $USER_ID',
+              );
+              if (deepLink.path.contains('forum-invite') && invitedBy != null) {
+                debugPrint(
+                  '${DateTime.now()}: forum-invite deep link detected',
+                );
                 await ForumProvider().invitedMemberFromLink(
                   invitedBy: invitedBy,
                   forumId: int.parse(id),
@@ -145,12 +163,13 @@ class _MyAppState extends State<MyApp> {
                   ForumChatRoute(forumId: int.parse(id)),
                   ForumSettingsRoute(forumId: int.parse(id)),
                 ]);
-                // do the function for inviting the member and alread accepted and then navigate to the forum chat
               }
               if (deepLink.path.contains('payment-success') &&
-                  id != null &&
                   donor != null &&
                   amount != null) {
+                debugPrint(
+                  '${DateTime.now()}: payment-success deep link detected',
+                );
                 PaymentProvider().confirmDonation(
                   donor: donor,
                   amount: amount,
@@ -158,16 +177,36 @@ class _MyAppState extends State<MyApp> {
                 );
                 return DeepLink([PaymentSuccessRoute(id: int.parse(id))]);
               }
-              if (deepLink.path.contains('fundraising') && id != null) {
+              if (deepLink.path.contains('fundraising')) {
+                debugPrint('${DateTime.now()}: fundraising deep link detected');
                 return DeepLink([
                   MainRoute(),
                   FundraisingDetailRoute(id: int.parse(id)),
                 ]);
               }
-              if (deepLink.path.contains('forum-chat') && id != null) {
+              if (deepLink.path.contains('forum-chat')) {
+                debugPrint('${DateTime.now()}: forum-chat deep link detected');
                 return DeepLink([
                   MainRoute(),
                   ForumChatRoute(forumId: int.parse(id)),
+                ]);
+              }
+              if (deepLink.path.contains('pet-details')) {
+                debugPrint('${DateTime.now()}: pet-details deep link detected');
+                return DeepLink([
+                  MainRoute(),
+                  PetDetailRoute(id: int.parse(id)),
+                ]);
+              }
+              if (deepLink.path.contains('adopt')) {
+                debugPrint(
+                  '${DateTime.now()}: adopt deep link detected, USER_ID: $USER_ID',
+                );
+                return DeepLink([
+                  MainRoute(),
+                  PetDetailRoute(id: int.parse(id)),
+                  if (USER_ID != null)
+                    CreateAdoptionRoute(petId: int.parse(id)),
                 ]);
               }
               if (deepLink.path.contains('signin')) {
@@ -184,13 +223,13 @@ class _MyAppState extends State<MyApp> {
                     EasyLoading.showError(result.error);
                   } else {
                     EasyLoading.showSuccess('Sign in successful');
-                    // Preload user-related data
                     await SessionManager.bootstrapAfterSignIn(eager: false);
-                    // return DeepLink([MainRoute()]);
                   }
                 }
               }
-
+              debugPrint(
+                '${DateTime.now()}: No matching deep link, returning default path',
+              );
               return DeepLink.defaultPath;
             },
           ),

@@ -94,6 +94,8 @@ class EventPostList extends StatelessWidget {
                 onSuggestionTap: (suggestion) {
                   showModalBottomSheet(
                     context: context,
+                    backgroundColor: Colors.white,
+
                     shape: RoundedRectangleBorder(),
                     builder: (_) {
                       return SuggestionModal(

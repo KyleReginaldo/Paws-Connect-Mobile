@@ -9,7 +9,7 @@ import '../../../core/widgets/text.dart';
 import '../models/forum_model.dart';
 import 'chat_message_widget.dart';
 
-class ChatMessageList extends StatelessWidget {
+class ChatMessageList extends StatefulWidget {
   final List<ForumChat> forumChats;
   final List<String> pendingChats;
   final bool isLoadingChats;
@@ -48,8 +48,19 @@ class ChatMessageList extends StatelessWidget {
   });
 
   @override
+  State<ChatMessageList> createState() => _ChatMessageListState();
+}
+
+class _ChatMessageListState extends State<ChatMessageList> 
+    with AutomaticKeepAliveClientMixin {
+  
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
-    if (isLoadingChats && forumChats.isEmpty) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
+    if (widget.isLoadingChats && widget.forumChats.isEmpty) {
       return ListView.builder(
         reverse: true,
         padding: const EdgeInsets.all(16),
@@ -58,7 +69,7 @@ class ChatMessageList extends StatelessWidget {
       );
     }
 
-    if (forumChats.isEmpty) {
+    if (widget.forumChats.isEmpty) {
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -86,25 +97,27 @@ class ChatMessageList extends StatelessWidget {
     }
 
     return RefreshTrigger(
-      onRefresh: () async => onRefresh(),
+      onRefresh: () async => widget.onRefresh(),
       child: Builder(
         builder: (context) {
           final combined = <dynamic>[];
-          combined.addAll(forumChats);
-          combined.addAll(pendingChats);
+          combined.addAll(widget.forumChats);
+          combined.addAll(widget.pendingChats);
 
           if (combined.isEmpty) {
             return const SizedBox.shrink();
           }
 
           return ListView.builder(
-            controller: scrollController,
+            controller: widget.scrollController,
             reverse: true,
             padding: const EdgeInsets.all(16),
-            itemCount: combined.length + (isLoadingMoreChats ? 1 : 0),
+            itemCount: combined.length + (widget.isLoadingMoreChats ? 1 : 0),
+            // Add cacheExtent for better performance
+            cacheExtent: 1000.0,
             itemBuilder: (context, index) {
               // Show loading indicator at the top (which is at the end when reversed)
-              if (isLoadingMoreChats && index == combined.length) {
+              if (widget.isLoadingMoreChats && index == combined.length) {
                 return const Padding(
                   padding: EdgeInsets.all(16.0),
                   child: Center(child: CircularProgressIndicator()),
@@ -140,30 +153,30 @@ class ChatMessageList extends StatelessWidget {
     int reversedIndex,
   ) {
     // Ensure key exists for this message
-    chatKeys.putIfAbsent(chat.id.toString(), () => GlobalKey());
+    widget.chatKeys.putIfAbsent(chat.id.toString(), () => GlobalKey());
 
-    final isCurrentUser = chat.users?.id == currentUserId;
+    final isCurrentUser = chat.users?.id == widget.currentUserId;
     final showAvatar =
-        reversedIndex == forumChats.length - 1 ||
-        (reversedIndex + 1 < forumChats.length
-            ? forumChats[reversedIndex + 1].users?.id != chat.users?.id
+        reversedIndex == widget.forumChats.length - 1 ||
+        (reversedIndex + 1 < widget.forumChats.length
+            ? widget.forumChats[reversedIndex + 1].users?.id != chat.users?.id
             : true);
 
     return ChatMessageWidget(
       chat: chat,
       isCurrentUser: isCurrentUser,
       showAvatar: showAvatar,
-      messageKey: chatKeys[chat.id.toString()],
-      controller: reactionsController,
-      config: reactionsConfig,
-      currentUserId: currentUserId,
-      allChats: forumChats, // Pass all chats for viewer filtering
-      onReactionAdded: (reaction) => onReactionAdded(reaction, chat.id),
-      onReactionRemoved: (reaction) => onReactionRemoved(reaction, chat.id),
-      onMenuItemTapped: (menuLabel) => onMenuItemTapped(menuLabel, chat),
-      onLongPress: () => onLongPress(chat.id),
-      onDoubleTap: () => onDoubleTap(chat.id),
-      onReplyToTapped: onReplyToTapped,
+      messageKey: widget.chatKeys[chat.id.toString()],
+      controller: widget.reactionsController,
+      config: widget.reactionsConfig,
+      currentUserId: widget.currentUserId,
+      allChats: widget.forumChats, // Pass all chats for viewer filtering
+      onReactionAdded: (reaction) => widget.onReactionAdded(reaction, chat.id),
+      onReactionRemoved: (reaction) => widget.onReactionRemoved(reaction, chat.id),
+      onMenuItemTapped: (menuLabel) => widget.onMenuItemTapped(menuLabel, chat),
+      onLongPress: () => widget.onLongPress(chat.id),
+      onDoubleTap: () => widget.onDoubleTap(chat.id),
+      onReplyToTapped: widget.onReplyToTapped,
     );
   }
 

@@ -1,8 +1,10 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:paws_connect/core/services/supabase_service.dart';
 
 import '../../../core/config/result.dart';
+import '../../../core/supabase/client.dart';
 import '../../../flavors/flavor_config.dart';
 import '../models/favorite_model.dart';
 
@@ -24,29 +26,27 @@ class FavoriteProvider {
     }
   }
 
-  Future<Result<void>> addFavorite(int pet, String user) async {
-    final response = await http.post(
-      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/favorites'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'user': user, 'pet': pet}),
-    ); // Replace with actual API endpoint
-
-    if (response.statusCode == 201) {
-      return Result.success(null);
-    } else {
-      return Result.error('Failed to add favorite');
+  Future<Result<String>> toggleFavorite(int petId) async {
+    final userId = USER_ID;
+    if (userId == null || userId.isEmpty) {
+      return Result.error('User not logged in');
     }
-  }
-
-  Future<Result<void>> removeFavorite(int favoriteId) async {
-    final response = await http.delete(
-      Uri.parse('${FlavorConfig.instance.apiBaseUrl}/favorites/$favoriteId'),
-    ); // Replace with actual API endpoint
-
-    if (response.statusCode == 200) {
-      return Result.success(null);
+    final result = await supabase
+        .from('favorites')
+        .select()
+        .eq('user', userId)
+        .eq('pet', petId);
+    if (result.isEmpty) {
+      // Add to favorites
+      await supabase.from('favorites').insert({'pet': petId, 'user': userId});
+      return Result.success('Added to favorites');
     } else {
-      return Result.error('Failed to remove favorite');
+      await supabase
+          .from('favorites')
+          .delete()
+          .eq('user', userId)
+          .eq('pet', petId);
+      return Result.success('Removed from favorites');
     }
   }
 }

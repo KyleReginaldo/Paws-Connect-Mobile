@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:paws_connect/core/enum/user.enum.dart';
 import 'package:paws_connect/core/router/app_route.gr.dart';
 import 'package:paws_connect/features/profile/models/user_profile_model.dart';
 
@@ -14,15 +15,7 @@ class UserGuard extends AutoRouteGuard {
     // auto_route. Check the current user/session and decide once.
     final currentUserId = supabase.auth.currentUser?.id;
     if (currentUserId == null) {
-      resolver.redirectUntil(
-        SignInRoute(
-          onResult: (success) {
-            if (success) {
-              resolver.next(true);
-            }
-          },
-        ),
-      );
+      resolver.next(true);
       return;
     }
     final response = await supabase
@@ -32,6 +25,13 @@ class UserGuard extends AutoRouteGuard {
         .single();
     final user = UserProfileMapper.fromMap(response);
     debugPrint('UserGuard: $user');
+
+    // Check for INDEFINITE status first - this blocks all app usage
+    if (user.status == UserStatus.INDEFINITE) {
+      resolver.redirectUntil(IndefiniteUserRoute());
+      return;
+    }
+
     if (user.createdBy != null &&
         (user.passwordChanged == false || user.passwordChanged == null)) {
       resolver.redirectUntil(

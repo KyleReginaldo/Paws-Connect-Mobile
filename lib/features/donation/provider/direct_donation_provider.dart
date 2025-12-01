@@ -74,7 +74,7 @@ class DirectDonationProvider {
         final screenshotUrl = supabase.storage
             .from('files')
             .getPublicUrl(fileName);
-        return screenshotUrl;
+        return screenshotUrl.replaceAll('10.0.2.2', '127.0.0.1');
       }
 
       return null;

@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:paws_connect/core/extension/ext.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/core/theme/paws_theme.dart';
 import 'package:paws_connect/core/widgets/text.dart';
@@ -49,6 +50,44 @@ class _CreateAdoptionScreenState extends State<CreateAdoptionScreen> {
   int numberOfHouseholdMembers = 2;
   String typeOfResidence = 'Apartment';
   final other = TextEditingController();
+
+  // New fields
+  String reasonForAdopting = '';
+  bool willingToVisitShelter = false;
+  bool willingToVisitAgain = false;
+  bool adoptingForSelf = true;
+  String howCanYouGiveFurReverHome = '';
+  String whereDidYouHearAboutUs = '';
+
+  final reasonController = TextEditingController();
+  final furReverHomeController = TextEditingController();
+  final hearAboutUsController = TextEditingController();
+
+  // Predefined options for "Where did you hear about us"
+  final List<String> hearAboutUsOptions = [
+    'Facebook',
+    'Instagram',
+    'Twitter/X',
+    'TikTok',
+    'Google Search',
+    'Friend/Family',
+    'Veterinarian',
+    'Pet Store',
+    'Community Event',
+    'Newspaper/Magazine',
+    'Radio/TV',
+    'Website',
+  ];
+
+  String? selectedHearAboutUs;
+  @override
+  void dispose() {
+    other.dispose();
+    reasonController.dispose();
+    furReverHomeController.dispose();
+    hearAboutUsController.dispose();
+    super.dispose();
+  }
 
   String _yn(bool v) => v ? 'Yes' : 'No';
 
@@ -100,25 +139,40 @@ class _CreateAdoptionScreenState extends State<CreateAdoptionScreen> {
                           color: PawsColors.primary.withValues(alpha: 0.2),
                         ),
                       ),
-                      child: Row(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        spacing: 5,
                         children: [
-                          Icon(
-                            LucideIcons.info,
-                            size: 18,
-                            color: PawsColors.primary,
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                LucideIcons.info,
+                                size: 18,
+                                color: PawsColors.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: PawsText(
+                                  'Please make sure your Profile has a clear photo of your house in Profile management. This helps speed up the review of your adoption request.',
+                                  color: PawsColors.textPrimary,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: PawsText(
-                              'Please make sure your Profile has a clear photo of your home in Profile management. This helps speed up the review of your adoption request.',
-                              color: PawsColors.textPrimary,
-                              fontSize: 13,
-                            ),
+                          PawsOutlinedButton(
+                            icon: LucideIcons.house,
+                            padding: EdgeInsets.zero,
+                            label: 'View house photo',
+                            onPressed: () {
+                              context.router.push(UserHouseRoute());
+                            },
                           ),
                         ],
                       ),
                     ),
+
                     const SizedBox(height: 12),
                     PawsText(
                       'Application Summary',
@@ -126,23 +180,86 @@ class _CreateAdoptionScreenState extends State<CreateAdoptionScreen> {
                       color: PawsColors.textPrimary,
                     ),
                     const SizedBox(height: 8),
+
+                    // Basic Information
                     _summaryRow('Applicant', applicantName ?? '—'),
                     _summaryRow('Pet', petName.isNotEmpty ? petName : '—'),
+                    _summaryRow(
+                      'Reason for Adopting',
+                      reasonController.text.isEmpty
+                          ? '—'
+                          : reasonController.text,
+                    ),
+                    _summaryRow('Adopting for Self', _yn(adoptingForSelf)),
+
+                    const Divider(height: 16),
+
+                    // Household Information
+                    PawsText(
+                      'Household Details',
+                      fontWeight: FontWeight.w600,
+                      color: PawsColors.textPrimary,
+                      fontSize: 13,
+                    ),
+                    const SizedBox(height: 4),
                     _summaryRow(
                       'Household Members',
                       numberOfHouseholdMembers.toString(),
                     ),
-                    _summaryRow('Residence Type', displayResidence),
-                    _summaryRow('Renting', _yn(isRenting)),
-                    _summaryRow(
-                      'Permission from Landlord',
-                      _yn(havePermissionFromLandlord),
-                    ),
-                    _summaryRow('Outdoor Space', _yn(haveOutdoorSpace)),
                     _summaryRow('Kids in Household', _yn(hasChildrenInHome)),
                     _summaryRow(
                       'Other Pets in Household',
                       _yn(hasOtherPetsInHome),
+                    ),
+
+                    const Divider(height: 16),
+
+                    // Housing Information
+                    PawsText(
+                      'Housing Details',
+                      fontWeight: FontWeight.w600,
+                      color: PawsColors.textPrimary,
+                      fontSize: 13,
+                    ),
+                    const SizedBox(height: 4),
+                    _summaryRow('Residence Type', displayResidence),
+                    _summaryRow('Renting', _yn(isRenting)),
+                    if (isRenting)
+                      _summaryRow(
+                        'Permission from Landlord',
+                        _yn(havePermissionFromLandlord),
+                      ),
+                    _summaryRow('Outdoor Space', _yn(haveOutdoorSpace)),
+
+                    const Divider(height: 16),
+
+                    // Shelter Engagement
+                    PawsText(
+                      'Shelter Engagement',
+                      fontWeight: FontWeight.w600,
+                      color: PawsColors.textPrimary,
+                      fontSize: 13,
+                    ),
+                    const SizedBox(height: 4),
+                    _summaryRow(
+                      'Willing to Visit Shelter',
+                      _yn(willingToVisitShelter),
+                    ),
+                    _summaryRow(
+                      'Willing to Visit Again',
+                      _yn(willingToVisitAgain),
+                    ),
+                    _summaryRow(
+                      'Where Heard About Us',
+                      hearAboutUsController.text.isEmpty
+                          ? '—'
+                          : hearAboutUsController.text,
+                    ),
+                    _summaryRow(
+                      'How Give Fur-ever Home',
+                      furReverHomeController.text.isEmpty
+                          ? '—'
+                          : furReverHomeController.text,
                     ),
                   ],
                 ),
@@ -294,6 +411,82 @@ class _CreateAdoptionScreenState extends State<CreateAdoptionScreen> {
     );
   }
 
+  Widget _buildChipSelection({
+    required String label,
+    required List<String> options,
+    required String? selectedValue,
+    required ValueChanged<String?> onChanged,
+    required TextEditingController textController,
+    String? customHint,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        PawsText(
+          label,
+          fontWeight: FontWeight.w500,
+          color: PawsColors.textPrimary,
+        ),
+        const SizedBox(height: 8),
+
+        // Chips
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: options.map((option) {
+            final isSelected = selectedValue == option;
+            return FilterChip(
+              label: PawsText(
+                option,
+                color: isSelected ? Colors.white : PawsColors.textPrimary,
+                fontSize: 13,
+              ),
+              selected: isSelected,
+              onSelected: (selected) {
+                if (selected) {
+                  onChanged(option);
+                  textController.text = option;
+                } else {
+                  onChanged(null);
+                  textController.clear();
+                }
+              },
+              backgroundColor: PawsColors.surface,
+              selectedColor: PawsColors.primary,
+              checkmarkColor: Colors.white,
+              side: BorderSide(
+                color: isSelected ? PawsColors.primary : PawsColors.border,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            );
+          }).toList(),
+        ),
+
+        const SizedBox(height: 12),
+
+        // Custom input field
+        PawsTextField(
+          hint: customHint ?? 'Other (please specify)',
+          controller: textController,
+          onChanged: (value) {
+            if (value.isNotEmpty) {
+              // If user types something, clear chip selection if it doesn't match
+              if (!options.contains(value)) {
+                onChanged(null);
+              }
+            }
+          },
+          validator: (val) {
+            if (selectedValue == null && (val == null || val.isEmpty)) {
+              return 'Please select an option or specify other';
+            }
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final pet = context.select((PetRepository repo) => repo.pet);
@@ -320,6 +513,7 @@ class _CreateAdoptionScreenState extends State<CreateAdoptionScreen> {
           child: ListView(
             padding: const EdgeInsets.all(20.0),
             children: [
+              // Header Section
               Row(
                 spacing: 8,
                 children: [
@@ -335,8 +529,10 @@ class _CreateAdoptionScreenState extends State<CreateAdoptionScreen> {
                 ],
               ),
               const SizedBox(height: 20),
+
+              // Pet Information Section
               PawsText(
-                'Adoption Details',
+                'Pet Information',
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
                 color: PawsColors.textPrimary,
@@ -352,7 +548,8 @@ class _CreateAdoptionScreenState extends State<CreateAdoptionScreen> {
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: CachedNetworkImage(
-                            imageUrl: pet.transformedPhotos.first,
+                            imageUrl:
+                                pet.transformedPhotos.first.transformedUrl,
                             width: 80,
                             height: 80,
                             fit: BoxFit.cover,
@@ -385,7 +582,7 @@ class _CreateAdoptionScreenState extends State<CreateAdoptionScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         PawsText(
-                          pet.name.isEmpty ? 'No name' : pet.name,
+                          pet.name ?? "Unnamed Pet",
                           fontWeight: FontWeight.w500,
                           fontSize: 16,
                         ),
@@ -404,52 +601,80 @@ class _CreateAdoptionScreenState extends State<CreateAdoptionScreen> {
                     ),
                   ],
                 ),
-                SizedBox(height: 10),
+                SizedBox(height: 16),
               ],
               if (user != null)
                 PawsText(
                   'Applicant: ${user.username}',
                   fontWeight: FontWeight.w500,
                 ),
+
+              const SizedBox(height: 24),
+
+              // Basic Adoption Information Section
+              PawsText(
+                'Basic Information',
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: PawsColors.textPrimary,
+              ),
               const SizedBox(height: 12),
-              _buildRadioGroup(
-                label: "Kid/s in the Household",
-                value: hasChildrenInHome,
-                onChanged: (val) => setState(() => hasChildrenInHome = val),
+
+              PawsText('Reason for Adopting', fontWeight: FontWeight.w500),
+              const SizedBox(height: 4),
+              PawsTextField(
+                hint: 'Please tell us why you want to adopt this pet',
+                controller: reasonController,
+                maxLines: 3,
+                validator: (val) {
+                  if (val == null || val.isEmpty) {
+                    return 'Please provide a reason';
+                  }
+                  return null;
+                },
               ),
-              SizedBox(height: 8),
-              _buildRadioGroup(
-                label: 'Other Pets in the Household',
-                value: hasOtherPetsInHome,
-                onChanged: (val) => setState(() => hasOtherPetsInHome = val),
-              ),
-              SizedBox(height: 8),
+              const SizedBox(height: 12),
 
               _buildRadioGroup(
-                label: 'Have Outdoor Space',
-                value: haveOutdoorSpace,
-                onChanged: (val) => setState(() => haveOutdoorSpace = val),
+                label: 'Are you adopting for yourself?',
+                value: adoptingForSelf,
+                onChanged: (val) => setState(() => adoptingForSelf = val),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 12),
 
-              _buildRadioGroup(
-                label: 'Permission from Landlord',
-                value: havePermissionFromLandlord,
-                onChanged: (val) =>
-                    setState(() => havePermissionFromLandlord = val),
+              PawsText(
+                'How can you give this pet a fur-ever home?',
+                fontWeight: FontWeight.w500,
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 4),
+              PawsTextField(
+                hint: 'Describe how you will care for this pet',
+                controller: furReverHomeController,
+                maxLines: 3,
+                validator: (val) {
+                  if (val == null || val.isEmpty) {
+                    return 'Please describe how you will care for the pet';
+                  }
+                  return null;
+                },
+              ),
 
-              _buildRadioGroup(
-                label: 'Renting',
-                value: isRenting,
-                onChanged: (val) => setState(() => isRenting = val),
+              const SizedBox(height: 24),
+
+              // Household Information Section
+              PawsText(
+                'Household Information',
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: PawsColors.textPrimary,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
+
               PawsText(
                 'Number of Household Members',
                 fontWeight: FontWeight.w500,
               ),
+              const SizedBox(height: 4),
               TextFormField(
                 initialValue: numberOfHouseholdMembers.toString(),
                 decoration: InputDecoration(
@@ -469,8 +694,34 @@ class _CreateAdoptionScreenState extends State<CreateAdoptionScreen> {
                 onSaved: (val) =>
                     numberOfHouseholdMembers = int.tryParse(val ?? '2') ?? 2,
               ),
+              const SizedBox(height: 12),
+
+              _buildRadioGroup(
+                label: "Kid/s in the Household",
+                value: hasChildrenInHome,
+                onChanged: (val) => setState(() => hasChildrenInHome = val),
+              ),
               const SizedBox(height: 8),
+
+              _buildRadioGroup(
+                label: 'Other Pets in the Household',
+                value: hasOtherPetsInHome,
+                onChanged: (val) => setState(() => hasOtherPetsInHome = val),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Housing Information Section
+              PawsText(
+                'Housing Information',
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: PawsColors.textPrimary,
+              ),
+              const SizedBox(height: 12),
+
               PawsText('Type of Residence', fontWeight: FontWeight.w500),
+              const SizedBox(height: 4),
               DropdownButtonFormField<String>(
                 initialValue: typeOfResidence,
                 decoration: InputDecoration(
@@ -492,17 +743,84 @@ class _CreateAdoptionScreenState extends State<CreateAdoptionScreen> {
               ),
               const SizedBox(height: 8),
               if (typeOfResidence == 'Other')
-                PawsTextField(
-                  hint: 'Specify other type of residence',
-                  controller: other,
-                  validator: (val) {
-                    if (typeOfResidence == 'Other' &&
-                        (val == null || val.isEmpty)) {
-                      return 'Please specify';
-                    }
-                    return null;
-                  },
+                Column(
+                  children: [
+                    PawsTextField(
+                      hint: 'Specify other type of residence',
+                      controller: other,
+                      validator: (val) {
+                        if (typeOfResidence == 'Other' &&
+                            (val == null || val.isEmpty)) {
+                          return 'Please specify';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                  ],
                 ),
+
+              _buildRadioGroup(
+                label: 'Are you renting?',
+                value: isRenting,
+                onChanged: (val) => setState(() => isRenting = val),
+              ),
+              const SizedBox(height: 8),
+
+              if (isRenting)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildRadioGroup(
+                      label: 'Do you have permission from landlord?',
+                      value: havePermissionFromLandlord,
+                      onChanged: (val) =>
+                          setState(() => havePermissionFromLandlord = val),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ),
+
+              _buildRadioGroup(
+                label: 'Do you have outdoor space?',
+                value: haveOutdoorSpace,
+                onChanged: (val) => setState(() => haveOutdoorSpace = val),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Shelter Engagement Section
+              PawsText(
+                'Shelter Engagement',
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: PawsColors.textPrimary,
+              ),
+              const SizedBox(height: 12),
+
+              _buildRadioGroup(
+                label: 'Are you willing to visit our shelter?',
+                value: willingToVisitShelter,
+                onChanged: (val) => setState(() => willingToVisitShelter = val),
+              ),
+              const SizedBox(height: 8),
+
+              _buildRadioGroup(
+                label: 'Are you willing to visit again if needed?',
+                value: willingToVisitAgain,
+                onChanged: (val) => setState(() => willingToVisitAgain = val),
+              ),
+              const SizedBox(height: 12),
+
+              _buildChipSelection(
+                label: 'Where did you hear about us?',
+                options: hearAboutUsOptions,
+                selectedValue: selectedHearAboutUs,
+                onChanged: (value) =>
+                    setState(() => selectedHearAboutUs = value),
+                textController: hearAboutUsController,
+                customHint: 'Other source (please specify)',
+              ),
             ],
           ),
         ),
@@ -542,6 +860,13 @@ class _CreateAdoptionScreenState extends State<CreateAdoptionScreen> {
                         ? (other.text.isNotEmpty ? other.text : 'Other')
                         : typeOfResidence,
                     user: USER_ID ?? '',
+                    // New fields
+                    reasonForAdopting: reasonController.text,
+                    willingToVisitShelter: willingToVisitShelter,
+                    willingToVisitAgain: willingToVisitAgain,
+                    adoptingForSelf: adoptingForSelf,
+                    howCanYouGiveFurReverHome: furReverHomeController.text,
+                    whereDidYouHearAboutUs: hearAboutUsController.text,
                   );
                   await _confirmAndSubmit(
                     dto: dto,

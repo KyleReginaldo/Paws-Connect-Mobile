@@ -9,19 +9,48 @@ import 'package:paws_connect/features/pets/models/pet_model.dart';
 import '../../../core/theme/paws_theme.dart';
 import '../../../core/widgets/text.dart';
 
-class PetContainer extends StatelessWidget {
+class PetContainer extends StatefulWidget {
   final Pet pet;
   final Function(int petId)? onFavoriteToggle;
-  const PetContainer({super.key, required this.pet, this.onFavoriteToggle});
+  final bool isFavorite;
+  const PetContainer({
+    super.key,
+    required this.pet,
+    this.onFavoriteToggle,
+    this.isFavorite = false,
+  });
+
+  @override
+  State<PetContainer> createState() => _PetContainerState();
+}
+
+class _PetContainerState extends State<PetContainer> {
+  late bool isFav;
+
+  @override
+  void initState() {
+    super.initState();
+    isFav = widget.isFavorite;
+  }
+
+  @override
+  void didUpdateWidget(PetContainer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Sync local state when isFavorite parameter changes from repository
+    if (oldWidget.isFavorite != widget.isFavorite) {
+      setState(() {
+        isFav = widget.isFavorite;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    bool isFav = pet.isFavorite ?? false;
     return Stack(
       children: [
         InkWell(
           onTap: () {
-            context.router.push(PetDetailRoute(pet: pet));
+            context.router.push(PetDetailRoute(id: widget.pet.id));
           },
           child: Container(
             padding: EdgeInsets.all(8),
@@ -41,7 +70,7 @@ class PetContainer extends StatelessWidget {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(6),
                       child: NetworkImageView(
-                        pet.transformedPhotos.first,
+                        widget.pet.transformedPhotos.first,
                         width: MediaQuery.sizeOf(context).width * 0.40,
                         height: 120,
                         fit: BoxFit.cover,
@@ -60,7 +89,9 @@ class PetContainer extends StatelessWidget {
                           color: Colors.black26,
                         ),
                         child: PawsText(
-                          DateFormat('MMM dd, yyyy').format(pet.createdAt),
+                          DateFormat(
+                            'MMM dd, yyyy',
+                          ).format(widget.pet.createdAt),
                           fontSize: 12,
                           color: PawsColors.textLight,
                         ),
@@ -72,32 +103,26 @@ class PetContainer extends StatelessWidget {
                 Row(
                   children: [
                     PawsText(
-                      pet.name.isEmpty ? 'No name' : pet.name,
+                      widget.pet.name != null && widget.pet.name!.isEmpty
+                          ? 'Unnamed Pet'
+                          : widget.pet.name!,
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                     ),
-                    if (pet.adopted != null)
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          color: PawsColors.success,
-                        ),
-                        child: PawsText(
-                          'ADOPTED',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
+                    if (widget.pet.adopted != null) ...[
+                      SizedBox(width: 6),
+                      PawsText(
+                        'ADOPTED',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.green,
                       ),
+                    ],
                   ],
                 ),
-                PawsText(pet.age, fontSize: 14),
+                PawsText(widget.pet.age, fontSize: 14),
                 PawsText(
-                  pet.breed,
+                  widget.pet.breed,
                   fontSize: 14,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -118,9 +143,10 @@ class PetContainer extends StatelessWidget {
                     : PawsColors.primary.withValues(alpha: 0.2),
               ),
             ),
-            onPressed: onFavoriteToggle != null
+            onPressed: widget.onFavoriteToggle != null
                 ? () {
-                    onFavoriteToggle!(pet.id);
+                    setState(() => isFav = !isFav);
+                    widget.onFavoriteToggle!(widget.pet.id);
                   }
                 : null,
             icon: Icon(

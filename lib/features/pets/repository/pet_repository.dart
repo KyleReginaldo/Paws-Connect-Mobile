@@ -22,6 +22,7 @@ class PetRepository extends ChangeNotifier {
   bool? _isVaccinated;
   bool? _isSpayedOrNeutered;
   bool? _isTrained;
+  bool? _isAdopted;
   String? _selectedHealthStatus;
   String? _selectedRequestStatus;
   String? _selectedGoodWith;
@@ -44,6 +45,7 @@ class PetRepository extends ChangeNotifier {
   bool? get isVaccinated => _isVaccinated;
   bool? get isSpayedOrNeutered => _isSpayedOrNeutered;
   bool? get isTrained => _isTrained;
+  bool? get isAdopted => _isAdopted;
   String? get selectedHealthStatus => _selectedHealthStatus;
   String? get selectedRequestStatus => _selectedRequestStatus;
   String? get selectedGoodWith => _selectedGoodWith;
@@ -62,6 +64,7 @@ class PetRepository extends ChangeNotifier {
     bool? isVaccinated,
     bool? isSpayedOrNeutered,
     bool? isTrained,
+    bool? isAdopted,
     String? healthStatus,
     String? requestStatus,
     String? goodWith,
@@ -80,6 +83,7 @@ class PetRepository extends ChangeNotifier {
       isVaccinated: isVaccinated,
       isSpayedOrNeutered: isSpayedOrNeutered,
       isTrained: isTrained,
+      isAdopted: isAdopted,
       healthStatus: healthStatus,
       requestStatus: requestStatus,
       goodWith: goodWith,
@@ -108,19 +112,63 @@ class PetRepository extends ChangeNotifier {
   Future<void> searchPets(String query, {String? userId}) async {
     _isSearching = true;
     notifyListeners();
-    final res = await _petProvider.searchPets(query, userId: userId);
-    if (res.isSuccess) {
-      _searchResults = res.value;
-    } else {
+    try {
+      final res = await _petProvider.searchPets(query, userId: userId);
+      if (res.isSuccess) {
+        // Infer intent for simple type queries like "cat(s)" or "dog(s)"
+        final intentType = _inferTypeFromQuery(query);
+        var list = res.value;
+        if (intentType != null) {
+          list = list
+              .where((p) => (p.type).toLowerCase() == intentType)
+              .toList();
+        }
+        _searchResults = list;
+        _errorMessage = null;
+      } else {
+        _searchResults = [];
+        _errorMessage = res.error;
+      }
+    } catch (e) {
       _searchResults = [];
-      _errorMessage = res.error;
+      _errorMessage = e.toString();
+    } finally {
+      _isSearching = false;
+      notifyListeners();
     }
-    _isSearching = false;
-    notifyListeners();
+  }
+
+  // Try to detect if the user's query is clearly asking for a type
+  // Returns 'cat' | 'dog' | null
+  String? _inferTypeFromQuery(String query) {
+    final q = query.trim().toLowerCase();
+    const catTerms = {'cat', 'cats', 'kitten', 'kittens', 'feline'};
+    const dogTerms = {'dog', 'dogs', 'puppy', 'puppies', 'canine'};
+    if (catTerms.contains(q)) return 'cat';
+    if (dogTerms.contains(q)) return 'dog';
+    return null;
   }
 
   void clearSearch() {
     _searchResults = null;
+    notifyListeners();
+  }
+
+  bool isFavorite(int petId) {
+    return _pets?.firstWhere((e) => e.id == petId).isFavorite ?? false;
+  }
+
+  bool isRecentFavorite(int petId) {
+    return _recentPets?.firstWhere((e) => e.id == petId).isFavorite ?? false;
+  }
+
+  void updatePetFavorite(int petId, bool isFavorite) {
+    _pets?.where((e) => e.id == petId).forEach((e) {
+      e.isFavorite = isFavorite;
+    });
+    _recentPets?.where((e) => e.id == petId).forEach((e) {
+      e.isFavorite = isFavorite;
+    });
     notifyListeners();
   }
 
@@ -171,22 +219,26 @@ class PetRepository extends ChangeNotifier {
 
   void fetchPetById(int id, {String? userId}) async {
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
     final result = await _petProvider.fetchPetById(id, userId: userId);
     if (result.isSuccess) {
       _pet = result.value;
+      _errorMessage = null;
       _isLoading = false;
       notifyListeners();
     } else {
       _pet = null;
+      _errorMessage = result.error;
       _isLoading = false;
       notifyListeners();
     }
   }
 
   // Method to fetch pets with current filter state
-  void fetchPetsWithFilters() {
+  void fetchPetsWithFilters({String? userId}) {
     fetchPets(
+      userId: userId,
       type: _selectedType,
       breed: _selectedBreed,
       gender: _selectedGender,
@@ -196,6 +248,7 @@ class PetRepository extends ChangeNotifier {
       isVaccinated: _isVaccinated,
       isSpayedOrNeutered: _isSpayedOrNeutered,
       isTrained: _isTrained,
+      isAdopted: _isAdopted,
       healthStatus: _selectedHealthStatus,
       requestStatus: _selectedRequestStatus,
       goodWith: _selectedGoodWith,
@@ -230,6 +283,11 @@ class PetRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateAdoptedFilter(bool? isAdopted) {
+    _isAdopted = isAdopted;
+    notifyListeners();
+  }
+
   void updateLocationFilter(String? location) {
     _selectedLocation = location;
     notifyListeners();
@@ -245,6 +303,7 @@ class PetRepository extends ChangeNotifier {
     _isVaccinated = null;
     _isSpayedOrNeutered = null;
     _isTrained = null;
+    _isAdopted = null;
     _selectedHealthStatus = null;
     _selectedRequestStatus = null;
     _selectedGoodWith = null;
@@ -262,6 +321,7 @@ class PetRepository extends ChangeNotifier {
         _isVaccinated != null ||
         _isSpayedOrNeutered != null ||
         _isTrained != null ||
+        _isAdopted != null ||
         _selectedHealthStatus != null ||
         _selectedRequestStatus != null ||
         _selectedGoodWith != null ||
@@ -279,27 +339,15 @@ class PetRepository extends ChangeNotifier {
     // clearAllFilters already notifies; no extra notify needed
   }
 
-  // Optimistically update favorite flag for a pet in local caches
-  void updatePetFavorite(int petId, bool isFav) {
-    bool changed = false;
-    if (_recentPets != null) {
-      for (var i = 0; i < _recentPets!.length; i++) {
-        if (_recentPets![i].id == petId) {
-          _recentPets![i].isFavorite = isFav;
-          changed = true;
-          break;
-        }
-      }
-    }
-    if (_pets != null) {
-      for (var i = 0; i < _pets!.length; i++) {
-        if (_pets![i].id == petId) {
-          _pets![i].isFavorite = isFav;
-          changed = true;
-        }
-      }
-    }
-    if (changed) notifyListeners();
+  // Toggle favorite status for a pet (flip true/false)
+  void togglePetFavorite(int petId) {
+    _recentPets?.where((e) => e.id == petId).forEach((e) {
+      e.isFavorite = !(e.isFavorite ?? false);
+    });
+    _pets?.where((e) => e.id == petId).forEach((e) {
+      e.isFavorite = !(e.isFavorite ?? false);
+    });
+    notifyListeners();
   }
 
   void getPoll(int petId) async {
