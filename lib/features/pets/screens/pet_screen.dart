@@ -459,27 +459,28 @@ class _PetCardState extends State<_PetCard> {
             ),
           ),
         ),
-        Positioned(
-          top: 10,
-          right: 10,
-          child: IconButton.filled(
-            style: ButtonStyle().copyWith(
-              backgroundColor: WidgetStatePropertyAll(
-                isFav
-                    ? PawsColors.primary
-                    : PawsColors.primary.withValues(alpha: 0.2),
+        if (USER_ID != null)
+          Positioned(
+            top: 10,
+            right: 10,
+            child: IconButton.filled(
+              style: ButtonStyle().copyWith(
+                backgroundColor: WidgetStatePropertyAll(
+                  isFav
+                      ? PawsColors.primary
+                      : PawsColors.primary.withValues(alpha: 0.2),
+                ),
+              ),
+              onPressed: () {
+                setState(() => isFav = !isFav);
+                widget.onFavoriteToggle(widget.pet.id, !isFav);
+              },
+              icon: Icon(
+                isFav ? Icons.favorite : Icons.favorite_border,
+                color: isFav ? Colors.white : PawsColors.primary,
               ),
             ),
-            onPressed: () {
-              setState(() => isFav = !isFav);
-              widget.onFavoriteToggle(widget.pet.id, !isFav);
-            },
-            icon: Icon(
-              isFav ? Icons.favorite : Icons.favorite_border,
-              color: isFav ? Colors.white : PawsColors.primary,
-            ),
           ),
-        ),
       ],
     );
   }

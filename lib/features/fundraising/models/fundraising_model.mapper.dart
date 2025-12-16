@@ -130,21 +130,6 @@ class FundraisingMapper extends ClassMapperBase<Fundraising> {
     key: r'e_wallets',
     opt: true,
   );
-  static String? _$transformedQrCode(Fundraising v) => v.transformedQrCode;
-  static const Field<Fundraising, String> _f$transformedQrCode = Field(
-    'transformedQrCode',
-    _$transformedQrCode,
-    key: r'transformed_qr_code',
-    mode: FieldMode.member,
-  );
-  static List<String>? _$transformedImages(Fundraising v) =>
-      v.transformedImages;
-  static const Field<Fundraising, List<String>> _f$transformedImages = Field(
-    'transformedImages',
-    _$transformedImages,
-    key: r'transformed_images',
-    mode: FieldMode.member,
-  );
 
   @override
   final MappableFields<Fundraising> fields = const {
@@ -166,8 +151,6 @@ class FundraisingMapper extends ClassMapperBase<Fundraising> {
     #gcashNumber: _f$gcashNumber,
     #bankAccounts: _f$bankAccounts,
     #eWallets: _f$eWallets,
-    #transformedQrCode: _f$transformedQrCode,
-    #transformedImages: _f$transformedImages,
   };
 
   static Fundraising _instantiate(DecodingData data) {
@@ -694,12 +677,20 @@ class DonationMapper extends ClassMapperBase<Donation> {
 
   static int _$id(Donation v) => v.id;
   static const Field<Donation, int> _f$id = Field('id', _$id);
-  static Donor _$donor(Donation v) => v.donor;
-  static const Field<Donation, Donor> _f$donor = Field('donor', _$donor);
+  static Donor? _$donor(Donation v) => v.donor;
+  static const Field<Donation, Donor> _f$donor = Field(
+    'donor',
+    _$donor,
+    opt: true,
+  );
   static int _$amount(Donation v) => v.amount;
   static const Field<Donation, int> _f$amount = Field('amount', _$amount);
-  static String _$message(Donation v) => v.message;
-  static const Field<Donation, String> _f$message = Field('message', _$message);
+  static String? _$message(Donation v) => v.message;
+  static const Field<Donation, String> _f$message = Field(
+    'message',
+    _$message,
+    opt: true,
+  );
   static DateTime _$donatedAt(Donation v) => v.donatedAt;
   static const Field<Donation, DateTime> _f$donatedAt = Field(
     'donatedAt',
@@ -791,7 +782,7 @@ extension DonationValueCopy<$R, $Out> on ObjectCopyWith<$R, Donation, $Out> {
 
 abstract class DonationCopyWith<$R, $In extends Donation, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  DonorCopyWith<$R, Donor, Donor> get donor;
+  DonorCopyWith<$R, Donor, Donor>? get donor;
   $R call({
     int? id,
     Donor? donor,
@@ -812,22 +803,22 @@ class _DonationCopyWithImpl<$R, $Out>
   late final ClassMapperBase<Donation> $mapper =
       DonationMapper.ensureInitialized();
   @override
-  DonorCopyWith<$R, Donor, Donor> get donor =>
-      $value.donor.copyWith.$chain((v) => call(donor: v));
+  DonorCopyWith<$R, Donor, Donor>? get donor =>
+      $value.donor?.copyWith.$chain((v) => call(donor: v));
   @override
   $R call({
     int? id,
-    Donor? donor,
+    Object? donor = $none,
     int? amount,
-    String? message,
+    Object? message = $none,
     DateTime? donatedAt,
     bool? isAnonymous,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
-      if (donor != null) #donor: donor,
+      if (donor != $none) #donor: donor,
       if (amount != null) #amount: amount,
-      if (message != null) #message: message,
+      if (message != $none) #message: message,
       if (donatedAt != null) #donatedAt: donatedAt,
       if (isAnonymous != null) #isAnonymous: isAnonymous,
     }),

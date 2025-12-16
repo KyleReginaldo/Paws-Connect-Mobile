@@ -1,10 +1,10 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/repository/common_repository.dart';
 import 'package:paws_connect/core/router/app_route.gr.dart';
 import 'package:paws_connect/core/supabase/client.dart';
+import 'package:paws_connect/core/widgets/state_views.dart';
 import 'package:paws_connect/core/widgets/text.dart';
 import 'package:paws_connect/dependency.dart';
 import 'package:paws_connect/features/notifications/provider/notification_provider.dart';
@@ -523,14 +523,7 @@ class _LoadingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Lottie.asset(
-        'assets/json/dog_loading.json',
-        width: 100,
-        height: 100,
-        repeat: true,
-      ),
-    );
+    return const LoadingStateView();
   }
 }
 
@@ -539,37 +532,12 @@ class _EmptyView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset(
-              'assets/images/empty_donation.png',
-              height: 140,
-              fit: BoxFit.contain,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              "You're all caught up",
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'No notifications yet. We\'ll bark or meow when there\'s something new.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
+    return EmptyStateView(
+      title: "You're all caught up",
+      message:
+          'No notifications yet. We\'ll bark or meow when there\'s something new.',
+      imagePath: 'assets/images/empty_donation.png',
+      imageHeight: 140,
     );
   }
 }

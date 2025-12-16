@@ -44,6 +44,7 @@ class FundraisingDetailScreen extends StatefulWidget
 
 class _FundraisingDetailScreenState extends State<FundraisingDetailScreen> {
   RealtimeChannel? donationsChannel;
+  bool _showAllDonations = false;
 
   @override
   void initState() {
@@ -367,41 +368,87 @@ class _FundraisingDetailScreenState extends State<FundraisingDetailScreen> {
                     fundraising.donations != null &&
                             fundraising.donations!.isNotEmpty
                         ? Column(
-                            children: fundraising.donations!.map((e) {
-                              return ListTile(
-                                onTap: () {
-                                  if (e.donor.id != USER_ID) {
-                                    context.router.push(
-                                      ProfileRoute(id: e.donor.id),
+                            children: [
+                              ...(_showAllDonations
+                                      ? fundraising.donations!
+                                      : fundraising.donations!.take(3))
+                                  .map((e) {
+                                    return ListTile(
+                                      onTap: e.donor != null
+                                          ? () {
+                                              if (e.donor!.id != USER_ID) {
+                                                context.router.push(
+                                                  ProfileRoute(id: e.donor!.id),
+                                                );
+                                              }
+                                            }
+                                          : null,
+                                      visualDensity: VisualDensity.compact,
+                                      contentPadding: EdgeInsets.zero,
+                                      title: PawsText(
+                                        timeago.format(e.donatedAt),
+                                        fontSize: 14,
+                                        color: PawsColors.textPrimary,
+                                      ),
+                                      subtitle: PawsText(
+                                        e.donor == null || e.isAnonymous
+                                            ? 'Anonymous'
+                                            : e.donor!.id == USER_ID
+                                            ? '${e.donor!.username} (You)'
+                                            : e.donor!.username,
+                                        fontSize: 14,
+                                        color: PawsColors.textSecondary,
+                                      ),
+                                      trailing:
+                                          e.donor != null &&
+                                              e.donor!.id == USER_ID
+                                          ? PawsText(
+                                              e.amount
+                                                  .toDouble()
+                                                  .displayMoney(),
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500,
+                                              color: PawsColors.success,
+                                            )
+                                          : null,
                                     );
-                                  }
-                                },
-                                visualDensity: VisualDensity.compact,
-                                contentPadding: EdgeInsets.zero,
-                                title: PawsText(
-                                  timeago.format(e.donatedAt),
-                                  fontSize: 14,
-                                  color: PawsColors.textPrimary,
+                                  }),
+                              if (fundraising.donations!.length > 3)
+                                GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _showAllDonations = !_showAllDonations;
+                                    });
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 8,
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        PawsText(
+                                          _showAllDonations
+                                              ? 'Show less'
+                                              : 'Show all ${fundraising.donations!.length} donations',
+                                          fontSize: 14,
+                                          color: PawsColors.primary,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        SizedBox(width: 4),
+                                        Icon(
+                                          _showAllDonations
+                                              ? LucideIcons.chevronUp
+                                              : LucideIcons.chevronDown,
+                                          color: PawsColors.primary,
+                                          size: 16,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                                subtitle: PawsText(
-                                  e.isAnonymous
-                                      ? 'Anonymous'
-                                      : e.donor.id == USER_ID
-                                      ? '${e.donor.username} (You)'
-                                      : e.donor.username,
-                                  fontSize: 14,
-                                  color: PawsColors.textSecondary,
-                                ),
-                                trailing: e.donor.id == USER_ID
-                                    ? PawsText(
-                                        e.amount.toDouble().displayMoney(),
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
-                                        color: PawsColors.success,
-                                      )
-                                    : null,
-                              );
-                            }).toList(),
+                            ],
                           )
                         : Center(
                             child: Column(

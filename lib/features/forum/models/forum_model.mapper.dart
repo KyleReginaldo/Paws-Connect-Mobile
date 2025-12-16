@@ -79,14 +79,6 @@ class ForumMapper extends ClassMapperBase<Forum> {
     key: r'forum_image_url',
     opt: true,
   );
-  static String? _$transformedForumImageUrl(Forum v) =>
-      v.transformedForumImageUrl;
-  static const Field<Forum, String> _f$transformedForumImageUrl = Field(
-    'transformedForumImageUrl',
-    _$transformedForumImageUrl,
-    key: r'transformed_forum_image_url',
-    mode: FieldMode.member,
-  );
 
   @override
   final MappableFields<Forum> fields = const {
@@ -100,7 +92,6 @@ class ForumMapper extends ClassMapperBase<Forum> {
     #private: _f$private,
     #lastChat: _f$lastChat,
     #forumImageUrl: _f$forumImageUrl,
-    #transformedForumImageUrl: _f$transformedForumImageUrl,
   };
 
   static Forum _instantiate(DecodingData data) {
@@ -457,13 +448,6 @@ class LastChatMapper extends ClassMapperBase<LastChat> {
     key: r'is_viewed',
     opt: true,
   );
-  static String? _$transformedImageUrl(LastChat v) => v.transformedImageUrl;
-  static const Field<LastChat, String> _f$transformedImageUrl = Field(
-    'transformedImageUrl',
-    _$transformedImageUrl,
-    key: r'transformed_image_url',
-    mode: FieldMode.member,
-  );
 
   @override
   final MappableFields<LastChat> fields = const {
@@ -473,7 +457,6 @@ class LastChatMapper extends ClassMapperBase<LastChat> {
     #message: _f$message,
     #imageUrl: _f$imageUrl,
     #isViewed: _f$isViewed,
-    #transformedImageUrl: _f$transformedImageUrl,
   };
 
   static LastChat _instantiate(DecodingData data) {
@@ -956,13 +939,6 @@ class ForumChatMapper extends ClassMapperBase<ForumChat> {
     key: r'message_warning',
     opt: true,
   );
-  static String? _$transformedImageUrl(ForumChat v) => v.transformedImageUrl;
-  static const Field<ForumChat, String> _f$transformedImageUrl = Field(
-    'transformedImageUrl',
-    _$transformedImageUrl,
-    key: r'transformed_image_url',
-    mode: FieldMode.member,
-  );
 
   @override
   final MappableFields<ForumChat> fields = const {
@@ -977,7 +953,6 @@ class ForumChatMapper extends ClassMapperBase<ForumChat> {
     #viewers: _f$viewers,
     #mentions: _f$mentions,
     #messageWarning: _f$messageWarning,
-    #transformedImageUrl: _f$transformedImageUrl,
   };
 
   static ForumChat _instantiate(DecodingData data) {

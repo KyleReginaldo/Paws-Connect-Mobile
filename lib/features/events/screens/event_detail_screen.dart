@@ -18,6 +18,8 @@ import 'package:paws_connect/core/services/loading_service.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/core/theme/paws_theme.dart';
 import 'package:paws_connect/core/widgets/button.dart';
+import 'package:paws_connect/core/widgets/circular_icon_button.dart';
+import 'package:paws_connect/core/widgets/gradient_overlay.dart';
 import 'package:paws_connect/core/widgets/text.dart';
 import 'package:paws_connect/features/events/models/event_model.dart';
 import 'package:paws_connect/features/events/provider/event_provider.dart';
@@ -301,19 +303,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       ),
                     ),
                     // Gradient overlay
-                    Container(
-                      height: 250,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withValues(alpha: 0.4),
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
-                      ),
-                    ),
+                    GradientOverlay.bottomToTop(height: 250),
                     // Back button
                     Positioned(
                       top: MediaQuery.of(context).padding.top + 8,
@@ -322,15 +312,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.5),
-                              shape: BoxShape.circle,
-                            ),
-                            child: IconButton(
-                              icon: Icon(Icons.arrow_back, color: Colors.white),
-                              onPressed: () => Navigator.of(context).pop(),
-                            ),
+                          CircularIconButton.overlay(
+                            icon: Icons.arrow_back,
+                            onPressed: () => Navigator.of(context).pop(),
+                            tooltip: 'Back',
                           ),
                           Container(
                             decoration: BoxDecoration(

@@ -393,7 +393,9 @@ class CommentsRoute extends _i45.PageRouteInfo<CommentsRouteArgs> {
     name,
     builder: (data) {
       final args = data.argsAs<CommentsRouteArgs>();
-      return _i9.CommentsScreen(key: args.key, post: args.post);
+      return _i45.WrappedRoute(
+        child: _i9.CommentsScreen(key: args.key, post: args.post),
+      );
     },
   );
 }

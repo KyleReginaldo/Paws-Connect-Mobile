@@ -10,6 +10,7 @@ import 'package:paws_connect/core/theme/paws_theme.dart';
 import 'package:paws_connect/core/widgets/text.dart';
 import 'package:paws_connect/features/adoption/repository/adoption_repository.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../dependency.dart';
 import '../../pets/models/pet_model.dart';
@@ -95,6 +96,29 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 8),
+                if (adoption.adoptionForm != null) ...{
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      // Open adoption form link
+                      launchUrl(Uri.parse(adoption.adoptionForm!));
+                    },
+                    icon: const Icon(LucideIcons.fileText),
+                    label: const Text('View Adoption Form'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: PawsColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                },
+
                 _buildAdoptionHeader(adoption),
                 const SizedBox(height: 20),
                 _buildApplicantCard(adoption),

@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:paws_connect/features/profile/models/user_profile_model.dart';
 
@@ -26,6 +27,8 @@ class Adoption with AdoptionMappable {
   final bool? adoptingForSelf;
   final String? howCanYouGiveFurReverHome;
   final String? whereDidYouHearAboutUs;
+  final String? adoptionForm;
+  final String? adoptionCertificate;
 
   const Adoption({
     required this.id,
@@ -46,5 +49,7 @@ class Adoption with AdoptionMappable {
     this.adoptingForSelf,
     this.howCanYouGiveFurReverHome,
     this.whereDidYouHearAboutUs,
+    this.adoptionForm,
+    this.adoptionCertificate,
   });
 }

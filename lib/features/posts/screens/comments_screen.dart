@@ -7,6 +7,7 @@ import 'package:paws_connect/core/components/components.dart';
 import 'package:paws_connect/core/extension/ext.dart';
 import 'package:paws_connect/core/services/supabase_service.dart';
 import 'package:paws_connect/core/supabase/client.dart';
+import 'package:paws_connect/core/widgets/image_carousel.dart';
 import 'package:paws_connect/core/widgets/text.dart';
 import 'package:paws_connect/dependency.dart';
 import 'package:paws_connect/features/posts/provider/posts_provider.dart';
@@ -274,7 +275,7 @@ class _PostPreview extends StatelessWidget {
         ? DateTime.tryParse(post.createdAt!)
         : null;
     final relative = created != null
-        ? 'Tails of Freedom • ${timeago.format(created)}'
+        ? 'Humanity for Animals • ${timeago.format(created)}'
         : '';
     final author = 'PawsConnect';
     final caption = post.description.trim();
@@ -327,7 +328,7 @@ class _PostPreview extends StatelessWidget {
               ],
             ),
           ),
-          if (images.isNotEmpty) _PostImagesCarousel(images: images),
+          if (images.isNotEmpty) ImageCarousel(images: images),
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
             child: _ExpandableText(
@@ -496,80 +497,7 @@ class _CommentItem extends StatelessWidget {
   }
 }
 
-class _PostImagesCarousel extends StatefulWidget {
-  final List<String> images;
-  const _PostImagesCarousel({required this.images});
-  @override
-  State<_PostImagesCarousel> createState() => _PostImagesCarouselState();
-}
-
-class _PostImagesCarouselState extends State<_PostImagesCarousel> {
-  int _index = 0;
-  @override
-  Widget build(BuildContext context) {
-    final images = widget.images;
-    final scheme = Theme.of(context).colorScheme;
-    final count = images.length;
-    final height = MediaQuery.of(context).size.width * 0.4;
-    return Column(
-      children: [
-        SizedBox(
-          height: height,
-          child: PageView.builder(
-            itemCount: count,
-            onPageChanged: (i) => setState(() => _index = i),
-            itemBuilder: (context, i) {
-              final url = images[i];
-              return Image.network(
-                url.transformedUrl,
-                fit: BoxFit.cover,
-                width: double.infinity,
-                loadingBuilder: (context, child, progress) {
-                  if (progress == null) return child;
-                  return Center(
-                    child: CircularProgressIndicator(
-                      value: progress.expectedTotalBytes != null
-                          ? progress.cumulativeBytesLoaded /
-                                (progress.expectedTotalBytes ?? 1)
-                          : null,
-                    ),
-                  );
-                },
-                errorBuilder: (_, __, ___) => Container(
-                  color: scheme.surfaceContainerHighest,
-                  alignment: Alignment.center,
-                  child: const Icon(Icons.broken_image, size: 40),
-                ),
-              );
-            },
-          ),
-        ),
-        if (count > 1)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(count, (i) {
-                return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  width: i == _index ? 18 : 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: i == _index
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(
-                            context,
-                          ).colorScheme.onSurfaceVariant.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                );
-              }),
-            ),
-          ),
-      ],
-    );
-  }
-}
+// Removed: Now using ImageCarousel from core/widgets
 
 class _ExpandableText extends StatefulWidget {
   final String title;

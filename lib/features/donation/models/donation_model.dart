@@ -8,7 +8,7 @@ class Donation with DonationMappable {
   final int id;
   final DateTime donatedAt;
   final String fundraising;
-  final String donor;
+  final String? donor;
   final double amount;
   final String message;
   final bool isAnonymous;
@@ -17,7 +17,7 @@ class Donation with DonationMappable {
     required this.id,
     required this.donatedAt,
     required this.fundraising,
-    required this.donor,
+    this.donor,
     required this.amount,
     required this.message,
     required this.isAnonymous,

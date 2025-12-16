@@ -68,7 +68,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              "Here’s the latest info from Paws Connect.",
+              "Here’s the latest info from PawsConnect.",
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),

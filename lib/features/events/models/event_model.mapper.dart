@@ -82,20 +82,6 @@ class EventMapper extends ClassMapperBase<Event> {
   );
   static Pet? _$pet(Event v) => v.pet;
   static const Field<Event, Pet> _f$pet = Field('pet', _$pet);
-  static int _$memberCount(Event v) => v.memberCount;
-  static const Field<Event, int> _f$memberCount = Field(
-    'memberCount',
-    _$memberCount,
-    key: r'member_count',
-    mode: FieldMode.member,
-  );
-  static List<String>? _$transformedImages(Event v) => v.transformedImages;
-  static const Field<Event, List<String>> _f$transformedImages = Field(
-    'transformedImages',
-    _$transformedImages,
-    key: r'transformed_images',
-    mode: FieldMode.member,
-  );
 
   @override
   final MappableFields<Event> fields = const {
@@ -112,8 +98,6 @@ class EventMapper extends ClassMapperBase<Event> {
     #members: _f$members,
     #fundraising: _f$fundraising,
     #pet: _f$pet,
-    #memberCount: _f$memberCount,
-    #transformedImages: _f$transformedImages,
   };
 
   static Event _instantiate(DecodingData data) {

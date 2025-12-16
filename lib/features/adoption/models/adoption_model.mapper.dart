@@ -132,6 +132,20 @@ class AdoptionMapper extends ClassMapperBase<Adoption> {
     key: r'where_did_you_hear_about_us',
     opt: true,
   );
+  static String? _$adoptionForm(Adoption v) => v.adoptionForm;
+  static const Field<Adoption, String> _f$adoptionForm = Field(
+    'adoptionForm',
+    _$adoptionForm,
+    key: r'adoption_form',
+    opt: true,
+  );
+  static String? _$adoptionCertificate(Adoption v) => v.adoptionCertificate;
+  static const Field<Adoption, String> _f$adoptionCertificate = Field(
+    'adoptionCertificate',
+    _$adoptionCertificate,
+    key: r'adoption_certificate',
+    opt: true,
+  );
 
   @override
   final MappableFields<Adoption> fields = const {
@@ -153,6 +167,8 @@ class AdoptionMapper extends ClassMapperBase<Adoption> {
     #adoptingForSelf: _f$adoptingForSelf,
     #howCanYouGiveFurReverHome: _f$howCanYouGiveFurReverHome,
     #whereDidYouHearAboutUs: _f$whereDidYouHearAboutUs,
+    #adoptionForm: _f$adoptionForm,
+    #adoptionCertificate: _f$adoptionCertificate,
   };
 
   static Adoption _instantiate(DecodingData data) {
@@ -175,6 +191,8 @@ class AdoptionMapper extends ClassMapperBase<Adoption> {
       adoptingForSelf: data.dec(_f$adoptingForSelf),
       howCanYouGiveFurReverHome: data.dec(_f$howCanYouGiveFurReverHome),
       whereDidYouHearAboutUs: data.dec(_f$whereDidYouHearAboutUs),
+      adoptionForm: data.dec(_f$adoptionForm),
+      adoptionCertificate: data.dec(_f$adoptionCertificate),
     );
   }
 
@@ -256,6 +274,8 @@ abstract class AdoptionCopyWith<$R, $In extends Adoption, $Out>
     bool? adoptingForSelf,
     String? howCanYouGiveFurReverHome,
     String? whereDidYouHearAboutUs,
+    String? adoptionForm,
+    String? adoptionCertificate,
   });
   AdoptionCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -294,6 +314,8 @@ class _AdoptionCopyWithImpl<$R, $Out>
     Object? adoptingForSelf = $none,
     Object? howCanYouGiveFurReverHome = $none,
     Object? whereDidYouHearAboutUs = $none,
+    Object? adoptionForm = $none,
+    Object? adoptionCertificate = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -320,6 +342,9 @@ class _AdoptionCopyWithImpl<$R, $Out>
         #howCanYouGiveFurReverHome: howCanYouGiveFurReverHome,
       if (whereDidYouHearAboutUs != $none)
         #whereDidYouHearAboutUs: whereDidYouHearAboutUs,
+      if (adoptionForm != $none) #adoptionForm: adoptionForm,
+      if (adoptionCertificate != $none)
+        #adoptionCertificate: adoptionCertificate,
     }),
   );
   @override
@@ -368,6 +393,11 @@ class _AdoptionCopyWithImpl<$R, $Out>
     whereDidYouHearAboutUs: data.get(
       #whereDidYouHearAboutUs,
       or: $value.whereDidYouHearAboutUs,
+    ),
+    adoptionForm: data.get(#adoptionForm, or: $value.adoptionForm),
+    adoptionCertificate: data.get(
+      #adoptionCertificate,
+      or: $value.adoptionCertificate,
     ),
   );
 

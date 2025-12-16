@@ -24,12 +24,12 @@ class EmailService {
 
       // Create message
       final emailMessage = Message()
-        ..from = Address(emailFrom, 'Paws Connect Support')
+        ..from = Address(emailFrom, 'PawsConnect Support')
         ..recipients.add(emailFrom) // Send to support email
         ..subject = 'Support Request: $subject'
         ..html =
             '''
-          <h2>Support Request from Paws Connect App</h2>
+          <h2>Support Request from PawsConnect App</h2>
           <p><strong>From:</strong> $userName</p>
           <p><strong>Email:</strong> $userEmail</p>
           <p><strong>Subject:</strong> $subject</p>
@@ -37,7 +37,7 @@ class EmailService {
           <h3>Message:</h3>
           <p>${message.replaceAll('\n', '<br>')}</p>
           <hr>
-          <p><em>This message was sent from the Paws Connect mobile application.</em></p>
+          <p><em>This message was sent from the PawsConnect mobile application.</em></p>
         ''';
 
       debugPrint('EmailService: Sending email...');
@@ -68,18 +68,18 @@ class EmailService {
 
       // Create confirmation message
       final confirmationMessage = Message()
-        ..from = Address(emailFrom, 'Paws Connect Support')
+        ..from = Address(emailFrom, 'PawsConnect Support')
         ..recipients.add(userEmail)
         ..subject = 'We received your support request: $subject'
         ..html =
             '''
-          <h2>Thank you for contacting Paws Connect Support</h2>
+          <h2>Thank you for contacting PawsConnect Support</h2>
           <p>Dear $userName,</p>
           <p>We have received your support request regarding: <strong>$subject</strong></p>
           <p>Our support team will review your message and get back to you as soon as possible.</p>
-          <p>Thank you for using Paws Connect!</p>
+          <p>Thank you for using PawsConnect!</p>
           <hr>
-          <p><em>Best regards,<br>Paws Connect Support Team</em></p>
+          <p><em>Best regards,<br>PawsConnect Support Team</em></p>
         ''';
 
       // Send confirmation email
@@ -106,14 +106,14 @@ class EmailService {
 
       // Create OTP message
       final otpMessage = Message()
-        ..from = Address(emailFrom, 'Paws Connect Security')
+        ..from = Address(emailFrom, 'PawsConnect Security')
         ..recipients.add(userEmail)
         ..subject = 'Password Reset - Verification Code'
         ..html =
             '''
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background-color: #FF7A00; padding: 20px; text-align: center;">
-              <h1 style="color: white; margin: 0;">🐾 Paws Connect</h1>
+              <h1 style="color: white; margin: 0;">🐾 PawsConnect</h1>
             </div>
             
             <div style="padding: 30px; background-color: #f9f9f9;">
@@ -124,7 +124,7 @@ class EmailService {
               </p>
               
               <p style="color: #555; font-size: 16px; line-height: 1.5;">
-                We received a request to reset your password for your Paws Connect account.
+                We received a request to reset your password for your PawsConnect account.
               </p>
               
               <div style="background-color: white; border: 2px solid #FF7A00; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center;">
@@ -134,7 +134,7 @@ class EmailService {
               </div>
               
               <p style="color: #555; font-size: 16px; line-height: 1.5;">
-                Enter this code in the Paws Connect app to proceed with resetting your password.
+                Enter this code in the PawsConnect app to proceed with resetting your password.
               </p>
               
               <div style="background-color: #fff3e0; border-left: 4px solid #FF7A00; padding: 15px; margin: 20px 0;">
@@ -145,13 +145,13 @@ class EmailService {
               
               <p style="color: #777; font-size: 14px; line-height: 1.5;">
                 Best regards,<br>
-                The Paws Connect Team
+                The PawsConnect Team
               </p>
             </div>
             
             <div style="background-color: #333; padding: 15px; text-align: center;">
               <p style="color: #999; font-size: 12px; margin: 0;">
-                This is an automated message from Paws Connect. Please do not reply to this email.
+                This is an automated message from PawsConnect. Please do not reply to this email.
               </p>
             </div>
           </div>

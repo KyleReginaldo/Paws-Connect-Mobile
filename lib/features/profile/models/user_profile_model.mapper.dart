@@ -127,23 +127,6 @@ class UserProfileMapper extends ClassMapperBase<UserProfile> {
     'onboarded',
     _$onboarded,
   );
-  static String? _$transformedIdAttachmentUrl(UserProfile v) =>
-      v.transformedIdAttachmentUrl;
-  static const Field<UserProfile, String> _f$transformedIdAttachmentUrl = Field(
-    'transformedIdAttachmentUrl',
-    _$transformedIdAttachmentUrl,
-    key: r'transformed_id_attachment_url',
-    mode: FieldMode.member,
-  );
-  static List<String>? _$transformedHouseImages(UserProfile v) =>
-      v.transformedHouseImages;
-  static const Field<UserProfile, List<String>> _f$transformedHouseImages =
-      Field(
-        'transformedHouseImages',
-        _$transformedHouseImages,
-        key: r'transformed_house_images',
-        mode: FieldMode.member,
-      );
 
   @override
   final MappableFields<UserProfile> fields = const {
@@ -165,8 +148,6 @@ class UserProfileMapper extends ClassMapperBase<UserProfile> {
     #lastActiveAt: _f$lastActiveAt,
     #violations: _f$violations,
     #onboarded: _f$onboarded,
-    #transformedIdAttachmentUrl: _f$transformedIdAttachmentUrl,
-    #transformedHouseImages: _f$transformedHouseImages,
   };
 
   static UserProfile _instantiate(DecodingData data) {
@@ -451,15 +432,6 @@ class UserIdentificationMapper extends ClassMapperBase<UserIdentification> {
     'status',
     _$status,
   );
-  static String _$transformedIdAttachmentUrl(UserIdentification v) =>
-      v.transformedIdAttachmentUrl;
-  static const Field<UserIdentification, String> _f$transformedIdAttachmentUrl =
-      Field(
-        'transformedIdAttachmentUrl',
-        _$transformedIdAttachmentUrl,
-        key: r'transformed_id_attachment_url',
-        mode: FieldMode.member,
-      );
 
   @override
   final MappableFields<UserIdentification> fields = const {
@@ -473,7 +445,6 @@ class UserIdentificationMapper extends ClassMapperBase<UserIdentification> {
     #dateOfBirth: _f$dateOfBirth,
     #idType: _f$idType,
     #status: _f$status,
-    #transformedIdAttachmentUrl: _f$transformedIdAttachmentUrl,
   };
 
   static UserIdentification _instantiate(DecodingData data) {

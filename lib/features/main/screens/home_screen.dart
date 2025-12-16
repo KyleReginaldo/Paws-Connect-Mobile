@@ -1116,7 +1116,22 @@ class _HomeScreenState extends State<HomeScreen> with TutorialTargetMixin {
                     adoptions: adoptions,
                   ),
                 },
-                if (allPets != null) ...{
+                if (allPets
+                            ?.where(
+                              (e) => e.createdAt.isAfter(
+                                DateTime.now().subtract(Duration(days: 7)),
+                              ),
+                            )
+                            .toList() !=
+                        null &&
+                    allPets!
+                        .where(
+                          (e) => e.createdAt.isAfter(
+                            DateTime.now().subtract(Duration(days: 7)),
+                          ),
+                        )
+                        .toList()
+                        .isNotEmpty) ...{
                   PawsText(
                     'Recently added',
                     fontSize: 16,

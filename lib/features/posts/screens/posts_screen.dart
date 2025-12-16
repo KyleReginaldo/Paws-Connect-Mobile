@@ -7,6 +7,9 @@ import 'package:paws_connect/core/components/components.dart';
 import 'package:paws_connect/core/extension/ext.dart';
 import 'package:paws_connect/core/router/app_route.gr.dart';
 import 'package:paws_connect/core/services/supabase_service.dart';
+import 'package:paws_connect/core/widgets/count_pill.dart';
+import 'package:paws_connect/core/widgets/image_carousel.dart';
+import 'package:paws_connect/core/widgets/state_views.dart';
 import 'package:paws_connect/dependency.dart';
 import 'package:paws_connect/flavors/flavor_config.dart';
 import 'package:provider/provider.dart';
@@ -269,7 +272,7 @@ class _PostCardState extends State<_PostCard> {
         ? DateTime.tryParse(widget.post.createdAt!)
         : null;
     final relative = created != null
-        ? 'Tails of Freedom • ${timeago.format(created)}'
+        ? 'Humanity for Animals • ${timeago.format(created)}'
         : '';
 
     final author = 'PawsConnect';
@@ -326,7 +329,7 @@ class _PostCardState extends State<_PostCard> {
             ),
           ),
 
-          if (images.isNotEmpty) _PostImagesCarousel(images: images),
+          if (images.isNotEmpty) ImageCarousel(images: images),
 
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
@@ -346,7 +349,7 @@ class _PostCardState extends State<_PostCard> {
                 Row(
                   children: [
                     if ((widget.post.reactions?.length ?? 0) > 0)
-                      _CountPill(
+                      CountPill(
                         icon: LucideIcons.pawPrint,
                         count: widget.post.reactions!.length,
                         color: scheme.primary,
@@ -479,80 +482,7 @@ class _IconAction extends StatelessWidget {
   }
 }
 
-class _PostImagesCarousel extends StatefulWidget {
-  final List<String> images;
-  const _PostImagesCarousel({required this.images});
-  @override
-  State<_PostImagesCarousel> createState() => _PostImagesCarouselState();
-}
-
-class _PostImagesCarouselState extends State<_PostImagesCarousel> {
-  int _index = 0;
-  @override
-  Widget build(BuildContext context) {
-    final images = widget.images;
-    final scheme = Theme.of(context).colorScheme;
-    final count = images.length;
-    final height = MediaQuery.of(context).size.width * 0.4;
-    return Column(
-      children: [
-        SizedBox(
-          height: height,
-          child: PageView.builder(
-            itemCount: count,
-            onPageChanged: (i) => setState(() => _index = i),
-            itemBuilder: (context, i) {
-              final url = images[i];
-              return Image.network(
-                url.transformedUrl,
-                fit: BoxFit.cover,
-                width: double.infinity,
-                loadingBuilder: (context, child, progress) {
-                  if (progress == null) return child;
-                  return Center(
-                    child: CircularProgressIndicator(
-                      value: progress.expectedTotalBytes != null
-                          ? progress.cumulativeBytesLoaded /
-                                (progress.expectedTotalBytes ?? 1)
-                          : null,
-                    ),
-                  );
-                },
-                errorBuilder: (_, __, ___) => Container(
-                  color: scheme.surfaceContainerHighest,
-                  alignment: Alignment.center,
-                  child: const Icon(Icons.broken_image, size: 40),
-                ),
-              );
-            },
-          ),
-        ),
-        if (count > 1)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(count, (i) {
-                return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  width: i == _index ? 18 : 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: i == _index
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(
-                            context,
-                          ).colorScheme.onSurfaceVariant.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                );
-              }),
-            ),
-          ),
-      ],
-    );
-  }
-}
+// Removed: Now using ImageCarousel from core/widgets
 
 class _LoadingView extends StatelessWidget {
   const _LoadingView();
@@ -699,74 +629,15 @@ class _ErrorView extends StatelessWidget {
   const _ErrorView({required this.message, required this.onRetry});
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          spacing: 12,
-          children: [
-            Icon(Icons.error_outline, size: 56, color: theme.colorScheme.error),
-            PawsText(
-              'Failed to load posts',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            PawsText(
-              message,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            ElevatedButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(LucideIcons.refreshCcw),
-              label: const PawsText('Try again'),
-            ),
-          ],
-        ),
-      ),
+    return ErrorStateView(
+      title: 'Failed to load posts',
+      message: message,
+      onRetry: onRetry,
     );
   }
 }
 
-class _CountPill extends StatelessWidget {
-  final IconData icon;
-  final int count;
-  final Color color;
-  const _CountPill({
-    required this.icon,
-    required this.count,
-    required this.color,
-  });
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 6),
-          Text(
-            '$count',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// Removed: Now using CountPill from core/widgets
 
 class _ExpandableText extends StatefulWidget {
   final String title;

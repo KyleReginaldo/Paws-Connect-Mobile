@@ -71,7 +71,7 @@ class TermsContent extends StatelessWidget {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    'A mobile-first platform designed to support adoption, welfare support, and fundraising for Tails of Freedom Animal Haven in Bacoor City, Cavite.',
+                    'A mobile-first platform designed to support adoption, welfare support, and fundraising for Humanity for Animals in Bacoor City, Cavite.',
                     style: TextStyle(
                       fontSize: 14,
                       color: PawsColors.textSecondary,

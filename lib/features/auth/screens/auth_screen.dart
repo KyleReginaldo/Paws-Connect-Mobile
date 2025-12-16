@@ -611,6 +611,7 @@ class _SignInScreenState extends State<SignInScreen>
                                                       value.isNotEmpty
                                                   ? null
                                                   : 'Enter a valid phone number',
+                                              maxLength: 10,
                                             ),
                                           ],
                                         )

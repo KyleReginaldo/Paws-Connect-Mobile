@@ -85,17 +85,17 @@ class DonationsCount with DonationsCountMappable {
 @MappableClass(caseStyle: CaseStyle.snakeCase)
 class Donation with DonationMappable {
   final int id;
-  final Donor donor;
+  final Donor? donor;
   final int amount;
-  final String message;
+  final String? message;
   final DateTime donatedAt;
   final bool isAnonymous;
 
   Donation({
     required this.id,
-    required this.donor,
+    this.donor,
     required this.amount,
-    required this.message,
+    this.message,
     required this.donatedAt,
     required this.isAnonymous,
   });

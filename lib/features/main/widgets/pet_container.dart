@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:paws_connect/core/components/components.dart';
 import 'package:paws_connect/core/router/app_route.gr.dart';
+import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/features/pets/models/pet_model.dart';
 
 import '../../../core/theme/paws_theme.dart';
@@ -132,29 +133,30 @@ class _PetContainerState extends State<PetContainer> {
             ),
           ),
         ),
-        Positioned(
-          top: 10,
-          right: 10,
-          child: IconButton.filled(
-            style: ButtonStyle().copyWith(
-              backgroundColor: WidgetStatePropertyAll(
-                isFav
-                    ? PawsColors.primary
-                    : PawsColors.primary.withValues(alpha: 0.2),
+        if (USER_ID != null)
+          Positioned(
+            top: 10,
+            right: 10,
+            child: IconButton.filled(
+              style: ButtonStyle().copyWith(
+                backgroundColor: WidgetStatePropertyAll(
+                  isFav
+                      ? PawsColors.primary
+                      : PawsColors.primary.withValues(alpha: 0.2),
+                ),
+              ),
+              onPressed: widget.onFavoriteToggle != null
+                  ? () {
+                      setState(() => isFav = !isFav);
+                      widget.onFavoriteToggle!(widget.pet.id);
+                    }
+                  : null,
+              icon: Icon(
+                isFav ? Icons.favorite : Icons.favorite_border,
+                color: isFav ? Colors.white : PawsColors.primary,
               ),
             ),
-            onPressed: widget.onFavoriteToggle != null
-                ? () {
-                    setState(() => isFav = !isFav);
-                    widget.onFavoriteToggle!(widget.pet.id);
-                  }
-                : null,
-            icon: Icon(
-              isFav ? Icons.favorite : Icons.favorite_border,
-              color: isFav ? Colors.white : PawsColors.primary,
-            ),
           ),
-        ),
       ],
     );
   }

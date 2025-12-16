@@ -61,13 +61,6 @@ class AddressMapper extends ClassMapperBase<Address> {
     'longitude',
     _$longitude,
   );
-  static String _$fullAddress(Address v) => v.fullAddress;
-  static const Field<Address, String> _f$fullAddress = Field(
-    'fullAddress',
-    _$fullAddress,
-    key: r'full_address',
-    mode: FieldMode.member,
-  );
 
   @override
   final MappableFields<Address> fields = const {
@@ -82,7 +75,6 @@ class AddressMapper extends ClassMapperBase<Address> {
     #zipCode: _f$zipCode,
     #latitude: _f$latitude,
     #longitude: _f$longitude,
-    #fullAddress: _f$fullAddress,
   };
 
   static Address _instantiate(DecodingData data) {

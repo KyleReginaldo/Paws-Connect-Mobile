@@ -10,7 +10,7 @@ void main() async {
   String supabaseUrl = "https://fjogjfdhtszaycqirwpm.supabase.co";
   String supabaseServiceRoleKey =
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZqb2dqZmRodHN6YXljcWlyd3BtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0OTcwOTc1MywiZXhwIjoyMDY1Mjg1NzUzfQ.gpjlUhaBUxoZSi5_8DOg8Uqs6STkC1QXmlZ9PaxPYeE";
-  String appName = "Paws Connect";
+  String appName = "PawsConnect";
   String logoUrl =
       "https://fjogjfdhtszaycqirwpm.supabase.co/storage/v1/object/public/files/logo/ic_launcher.png";
 

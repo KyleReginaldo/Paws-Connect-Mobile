@@ -34,8 +34,12 @@ class DonationMapper extends ClassMapperBase<Donation> {
     'fundraising',
     _$fundraising,
   );
-  static String _$donor(Donation v) => v.donor;
-  static const Field<Donation, String> _f$donor = Field('donor', _$donor);
+  static String? _$donor(Donation v) => v.donor;
+  static const Field<Donation, String> _f$donor = Field(
+    'donor',
+    _$donor,
+    opt: true,
+  );
   static double _$amount(Donation v) => v.amount;
   static const Field<Donation, double> _f$amount = Field('amount', _$amount);
   static String _$message(Donation v) => v.message;
@@ -152,7 +156,7 @@ class _DonationCopyWithImpl<$R, $Out>
     int? id,
     DateTime? donatedAt,
     String? fundraising,
-    String? donor,
+    Object? donor = $none,
     double? amount,
     String? message,
     bool? isAnonymous,
@@ -161,7 +165,7 @@ class _DonationCopyWithImpl<$R, $Out>
       if (id != null) #id: id,
       if (donatedAt != null) #donatedAt: donatedAt,
       if (fundraising != null) #fundraising: fundraising,
-      if (donor != null) #donor: donor,
+      if (donor != $none) #donor: donor,
       if (amount != null) #amount: amount,
       if (message != null) #message: message,
       if (isAnonymous != null) #isAnonymous: isAnonymous,

@@ -50,73 +50,178 @@ class _AdoptionHistoryScreenState extends State<AdoptionHistoryScreen> {
         ),
       ),
       body: adoptions != null && adoptions.isNotEmpty
-          ? ListView.builder(
-              padding: EdgeInsets.all(16),
-              itemCount: adoptions.length,
-              itemBuilder: (context, index) {
-                final adoption = adoptions[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: ListTile(
-                    onTap: () {
-                      context.router.push(AdoptionDetailRoute(id: adoption.id));
-                    },
-                    tileColor: Colors.white,
-                    leading: Stack(
-                      children: [
-                        UserAvatar(
-                          imageUrl: adoption.pets.transformedPhotos.first,
-                          initials: adoption.pets.name,
-                          size: 32,
-                        ),
-                        if (adoption.pets.adopted != null)
-                          Positioned(
-                            top: -2,
-                            right: -2,
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                color: PawsColors.success,
-                              ),
-                              child: PawsText(
-                                'ADOPTED',
-                                fontSize: 8,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    title: Row(
-                      spacing: 10,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        PawsText(adoption.pets.name ?? "Unnamed Pet"),
-                        PawsText(
-                          timeago.format(adoption.createdAt),
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
-                      ],
-                    ),
-                    subtitle: PawsText(
-                      adoption.status.capitalize(),
-                      color: adoption.status.color,
-                    ),
-                  ),
+          ? RefreshIndicator(
+              onRefresh: () async {
+                await context.read<AdoptionRepository>().fetchUserAdoptions(
+                  USER_ID ?? "",
                 );
               },
+              child: ListView.builder(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                itemCount: adoptions.length,
+                itemBuilder: (context, index) {
+                  final adoption = adoptions[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: InkWell(
+                      onTap: () {
+                        context.router.push(
+                          AdoptionDetailRoute(id: adoption.id),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.grey.shade200,
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.03),
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            children: [
+                              // Pet Image
+                              Stack(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: UserAvatar(
+                                      imageUrl:
+                                          adoption.pets.transformedPhotos.first,
+                                      initials: adoption.pets.name,
+                                      size: 56,
+                                    ),
+                                  ),
+                                  if (adoption.pets.adopted != null)
+                                    Positioned(
+                                      top: 2,
+                                      right: 2,
+                                      child: Container(
+                                        padding: EdgeInsets.all(4),
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: PawsColors.success,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(
+                                                0.15,
+                                              ),
+                                              blurRadius: 3,
+                                            ),
+                                          ],
+                                        ),
+                                        child: Icon(
+                                          Icons.check,
+                                          size: 12,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              SizedBox(width: 12),
+                              // Pet Info
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: PawsText(
+                                            adoption.pets.name ?? "Unnamed Pet",
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 3,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: adoption.status.color
+                                                .withOpacity(0.12),
+                                            borderRadius: BorderRadius.circular(
+                                              6,
+                                            ),
+                                          ),
+                                          child: PawsText(
+                                            adoption.status.capitalize(),
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: adoption.status.color,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.access_time,
+                                          size: 12,
+                                          color: Colors.grey.shade500,
+                                        ),
+                                        SizedBox(width: 4),
+                                        PawsText(
+                                          timeago.format(adoption.createdAt),
+                                          fontSize: 12,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                        Spacer(),
+                                        Icon(
+                                          Icons.arrow_forward_ios,
+                                          size: 12,
+                                          color: Colors.grey.shade400,
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
             )
           : Center(
-              child: PawsText(
-                'No adoption found.',
-                fontSize: 14,
-                color: Colors.grey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.pets_outlined,
+                    size: 64,
+                    color: Colors.grey.shade300,
+                  ),
+                  SizedBox(height: 16),
+                  PawsText(
+                    'No adoption history',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey.shade600,
+                  ),
+                  SizedBox(height: 8),
+                  PawsText(
+                    'Your adoption requests will appear here',
+                    fontSize: 14,
+                    color: Colors.grey.shade400,
+                  ),
+                ],
               ),
             ),
     );
