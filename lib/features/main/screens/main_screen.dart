@@ -4,14 +4,17 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:paws_connect/core/repository/common_repository.dart';
 import 'package:paws_connect/core/services/chat_visibility_service.dart';
 import 'package:paws_connect/core/services/notification_service.dart';
+import 'package:paws_connect/core/services/pawsconnect_service.dart';
 import 'package:paws_connect/core/services/supabase_service.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/dependency.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/mixins/tutorial_target_mixin.dart';
 import '../../../core/notifiers/user_id_notifier.dart';
@@ -50,7 +53,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     print('🎯 MAIN SCREEN: initState called');
-
+    checkAppVersionLive();
     // Initialize app as being in foreground
     NotificationService.setAppForegroundState(true);
 
@@ -95,6 +98,81 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         _notificationsChannel?.unsubscribe();
       } catch (_) {}
       _initNotificationsRealtime();
+    }
+  }
+
+  bool _isVersionGreater(String version1, String version2) {
+    final v1Parts = version1
+        .split('.')
+        .map((e) => int.tryParse(e) ?? 0)
+        .toList();
+    final v2Parts = version2
+        .split('.')
+        .map((e) => int.tryParse(e) ?? 0)
+        .toList();
+
+    final maxLength = v1Parts.length > v2Parts.length
+        ? v1Parts.length
+        : v2Parts.length;
+
+    for (int i = 0; i < maxLength; i++) {
+      final v1 = i < v1Parts.length ? v1Parts[i] : 0;
+      final v2 = i < v2Parts.length ? v2Parts[i] : 0;
+
+      if (v1 > v2) return true;
+      if (v1 < v2) return false;
+    }
+
+    return false;
+  }
+
+  void checkAppVersionLive() async {
+    final liveVersion = await fetchGameTitle();
+    final appInfo = await PackageInfo.fromPlatform();
+    debugPrint('Live App Version: $liveVersion');
+    debugPrint('Current App Version: ${appInfo.version}');
+    debugPrint('Live App Version Is Not Null ${liveVersion != null}');
+    if (liveVersion != null) {
+      debugPrint('Comparing versions: $liveVersion vs ${appInfo.version}');
+      if (_isVersionGreater(liveVersion, appInfo.version)) {
+        debugPrint('A new version of the app is available!');
+        if (mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) {
+              return AlertDialog(
+                title: const Text('Update Available'),
+                content: Text(
+                  'A new version ($liveVersion) of PawsConnect is available. '
+                  'You are currently using version ${appInfo.version}. '
+                  'Please update to the latest version for the best experience.',
+                ),
+                backgroundColor: Colors.white,
+                surfaceTintColor: Colors.white,
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('Later'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      // Open the app store link
+                      launchUrl(
+                        Uri.parse('https://kylereginaldo.itch.io/pawsconnect'),
+                      );
+                    },
+                    child: const Text('Update Now'),
+                  ),
+                ],
+              );
+            },
+          );
+        }
+      }
     }
   }
 

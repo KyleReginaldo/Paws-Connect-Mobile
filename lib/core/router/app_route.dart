@@ -210,5 +210,10 @@ class AppRouter extends RootStackRouter {
       path: '/comments',
       transitionsBuilder: TransitionsBuilders.slideBottom,
     ),
+    CustomRoute(
+      page: ReactionsRoute.page,
+      path: '/reactions',
+      transitionsBuilder: TransitionsBuilders.slideBottom,
+    ),
   ];
 }

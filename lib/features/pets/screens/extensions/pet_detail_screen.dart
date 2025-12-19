@@ -829,10 +829,10 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                       children: [
                         PawsText(
                           pet.name != null && pet.name!.isEmpty
-                              ? 'Unnamed Pet'
-                              : pet.name!,
+                              ? pet.name!
+                              : 'Unnamed Pet',
                           fontSize: 18,
-                          color: pet.name!.isEmpty
+                          color: pet.name != null && pet.name!.isEmpty
                               ? PawsColors.textSecondary
                               : PawsColors.textPrimary,
                         ),

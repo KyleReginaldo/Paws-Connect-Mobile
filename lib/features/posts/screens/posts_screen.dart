@@ -1,8 +1,11 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'dart:io';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:paws_connect/core/components/components.dart';
 import 'package:paws_connect/core/extension/ext.dart';
 import 'package:paws_connect/core/router/app_route.gr.dart';
@@ -228,6 +231,7 @@ class _PostCardState extends State<_PostCard> {
   }
 
   Future<void> _handleShare() async {
+    File? tempFile;
     try {
       final post = widget.post;
       final title = post.title.isNotEmpty ? post.title : 'PawsConnect';
@@ -235,31 +239,54 @@ class _PostCardState extends State<_PostCard> {
       final links = post.links?.isNotEmpty == true
           ? '\n${post.links!.join('\n')}'
           : '';
+      debugPrint('links: ${post.images}');
 
       final shareText = '$title\n\n$description$links';
 
-      // Use social_sharing_plus for Facebook sharing with images
       if (post.images?.isNotEmpty == true) {
         final imageUrl = post.images!.first.transformedUrl;
-        await SocialSharingPlus.shareToSocialMedia(
-          SocialPlatform.facebook,
-          shareText,
-          media: imageUrl,
-          isOpenBrowser: true,
-        );
+
+        final response = await http.get(Uri.parse(imageUrl));
+        if (response.statusCode == 200) {
+          final tempDir = await getTemporaryDirectory();
+          final fileName = imageUrl.split('/').last;
+          tempFile = File('${tempDir.path}/$fileName');
+          await tempFile.writeAsBytes(response.bodyBytes);
+
+          await SocialSharingPlus.shareToSocialMedia(
+            SocialPlatform.facebook,
+            shareText,
+            media: tempFile.path,
+            isOpenBrowser: false,
+          );
+        } else {
+          await SocialSharingPlus.shareToSocialMedia(
+            SocialPlatform.facebook,
+            shareText,
+            isOpenBrowser: false,
+          );
+        }
       } else {
-        // Fallback to text sharing if no images
         await SocialSharingPlus.shareToSocialMedia(
           SocialPlatform.facebook,
           shareText,
-          isOpenBrowser: true,
+          isOpenBrowser: false,
         );
       }
     } catch (e) {
+      debugPrint('Error sharing post: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Can\'t share post, please try again.')),
         );
+      }
+    } finally {
+      if (tempFile != null && await tempFile.exists()) {
+        try {
+          await tempFile.delete();
+        } catch (e) {
+          debugPrint('Error deleting temp file: $e');
+        }
       }
     }
   }
@@ -346,27 +373,36 @@ class _PostCardState extends State<_PostCard> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    if ((widget.post.reactions?.length ?? 0) > 0)
-                      CountPill(
-                        icon: LucideIcons.pawPrint,
-                        count: widget.post.reactions!.length,
-                        color: scheme.primary,
+                GestureDetector(
+                  onTap: () {
+                    context.router.push(ReactionsRoute(post: widget.post));
+                  },
+                  child: Row(
+                    children: [
+                      if ((widget.post.reactions?.length ?? 0) > 0)
+                        CountPill(
+                          icon: LucideIcons.pawPrint,
+                          count: widget.post.reactions!.length,
+                          color: scheme.primary,
+                        ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${widget.post.reactions?.length ?? 0} ${(widget.post.reactions?.length ?? 0) <= 1 ? 'like' : 'likes'}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
                       ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${widget.post.reactions?.length ?? 0} ${(widget.post.reactions?.length ?? 0) <= 1 ? 'like' : 'likes'}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-                Text(
-                  '${widget.post.comments?.length ?? 0} ${(widget.post.comments?.length ?? 0) <= 1 ? 'comment' : 'comments'}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
+                GestureDetector(
+                  onTap: () =>
+                      context.router.push(CommentsRoute(post: widget.post)),
+                  child: Text(
+                    '${widget.post.comments?.length ?? 0} ${(widget.post.comments?.length ?? 0) <= 1 ? 'comment' : 'comments'}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ],
@@ -482,8 +518,6 @@ class _IconAction extends StatelessWidget {
   }
 }
 
-// Removed: Now using ImageCarousel from core/widgets
-
 class _LoadingView extends StatelessWidget {
   const _LoadingView();
   @override
@@ -512,7 +546,6 @@ class _PostCardSkeleton extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header skeleton
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 12, 8, 8),
             child: Row(
@@ -533,13 +566,11 @@ class _PostCardSkeleton extends StatelessWidget {
             ),
           ),
 
-          // Image skeleton
           Container(
             height: MediaQuery.of(context).size.width * 0.4,
             color: Colors.grey[300],
           ),
 
-          // Content skeleton
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
             child: Column(
@@ -554,7 +585,6 @@ class _PostCardSkeleton extends StatelessWidget {
             ),
           ),
 
-          // Stats skeleton
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: Row(
@@ -568,7 +598,6 @@ class _PostCardSkeleton extends StatelessWidget {
 
           const Divider(height: 1),
 
-          // Actions skeleton
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             child: Row(
@@ -583,7 +612,6 @@ class _PostCardSkeleton extends StatelessWidget {
 
           const Divider(height: 1),
 
-          // Comment input skeleton
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
             child: SkeletonLine(width: double.infinity, height: 36, radius: 24),
@@ -637,8 +665,6 @@ class _ErrorView extends StatelessWidget {
   }
 }
 
-// Removed: Now using CountPill from core/widgets
-
 class _ExpandableText extends StatefulWidget {
   final String title;
   final String description;
@@ -673,14 +699,13 @@ class _ExpandableTextState extends State<_ExpandableText> {
             height: 1.4,
           ),
           children: [
-            // Title (Author name)
             TextSpan(
               text: widget.title,
               style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
             ),
-            // Space after title
+
             const TextSpan(text: ' '),
-            // Description
+
             TextSpan(
               text: widget.description,
               style: TextStyle(
@@ -689,7 +714,7 @@ class _ExpandableTextState extends State<_ExpandableText> {
                 fontWeight: FontWeight.w400,
               ),
             ),
-            // Links (if present)
+
             if (widget.links.isNotEmpty) ...{
               const TextSpan(text: '\n'),
               for (var link in widget.links) ...[

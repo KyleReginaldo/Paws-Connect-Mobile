@@ -246,12 +246,14 @@ class _SignInScreenState extends State<SignInScreen>
     try {
       final prefs = await SharedPreferences.getInstance();
       final rememberedEmail = prefs.getString('remembered_email') ?? '';
+      final rememberedPassword = prefs.getString('remembered_password') ?? '';
       final shouldRemember = prefs.getBool('remember_me') ?? false;
       debugPrint('email: $rememberedEmail, rememberMe: $shouldRemember');
       if (shouldRemember && rememberedEmail.isNotEmpty) {
         if (mounted) {
           setState(() {
             email.text = rememberedEmail.trim();
+            password.text = rememberedPassword.trim();
             rememberMe = shouldRemember;
           });
         }
@@ -266,9 +268,11 @@ class _SignInScreenState extends State<SignInScreen>
       final prefs = await SharedPreferences.getInstance();
       if (rememberMe) {
         await prefs.setString('remembered_email', email.text.trim());
+        await prefs.setString('remembered_password', password.text.trim());
         await prefs.setBool('remember_me', true);
       } else {
         await prefs.remove('remembered_email');
+        await prefs.remove('remembered_password');
         await prefs.setBool('remember_me', false);
       }
     } catch (e) {
@@ -588,7 +592,7 @@ class _SignInScreenState extends State<SignInScreen>
                                             PawsText('Username'),
                                             PawsTextField(
                                               controller: username,
-                                              hint: 'juan123',
+                                              hint: 'Enter your username',
                                               validator: (value) =>
                                                   value != null &&
                                                       value.isNotEmpty
@@ -605,7 +609,7 @@ class _SignInScreenState extends State<SignInScreen>
                                                 foregroundColor:
                                                     PawsColors.textSecondary,
                                               ),
-                                              hint: '9*********',
+                                              hint: '9923189664',
                                               validator: (value) =>
                                                   value != null &&
                                                       value.isNotEmpty
@@ -622,7 +626,7 @@ class _SignInScreenState extends State<SignInScreen>
                                 PawsText('Email'),
                                 PawsTextField(
                                   controller: email,
-                                  hint: 'juan@example.com',
+                                  hint: 'Enter your email',
                                   validator: (value) =>
                                       value != null && value.contains('@')
                                       ? null
@@ -632,7 +636,9 @@ class _SignInScreenState extends State<SignInScreen>
                                 PawsText('Password'),
                                 PawsTextField(
                                   controller: password,
-                                  hint: '********',
+                                  hint: selectedTab == 1
+                                      ? 'Create your password'
+                                      : 'Enter your password',
                                   obscureText: true,
                                   validator: _validatePasswordField,
                                 ),
