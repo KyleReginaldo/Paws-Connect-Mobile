@@ -277,7 +277,22 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
               const SizedBox(height: 16),
 
               // Category dropdown
-              PawsText('Category *', fontSize: 14, fontWeight: FontWeight.w500),
+              RichText(
+                text: TextSpan(
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                  ),
+                  children: [
+                    const TextSpan(text: 'Category '),
+                    const TextSpan(
+                      text: '*',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 initialValue: _selectedCategory,
@@ -312,7 +327,22 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
               const SizedBox(height: 16),
 
               // Subject field
-              PawsText('Subject *', fontSize: 14, fontWeight: FontWeight.w500),
+              RichText(
+                text: TextSpan(
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                  ),
+                  children: [
+                    const TextSpan(text: 'Subject '),
+                    const TextSpan(
+                      text: '*',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _subjectController,
@@ -343,7 +373,22 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
               const SizedBox(height: 16),
 
               // Message field
-              PawsText('Message *', fontSize: 14, fontWeight: FontWeight.w500),
+              RichText(
+                text: TextSpan(
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                  ),
+                  children: [
+                    const TextSpan(text: 'Message '),
+                    const TextSpan(
+                      text: '*',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _messageController,

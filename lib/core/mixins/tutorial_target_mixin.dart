@@ -5,6 +5,7 @@ class TutorialKeys {
   // Bottom Navigation Keys
   static final GlobalKey homeTabKey = GlobalKey();
   static final GlobalKey fundraisingTabKey = GlobalKey();
+  static final GlobalKey feedTabKey = GlobalKey();
   static final GlobalKey petsTabKey = GlobalKey();
   static final GlobalKey forumTabKey = GlobalKey();
 
@@ -24,6 +25,7 @@ mixin TutorialTargetMixin {
   // Expose shared keys via getters (keeps existing field names in calling code)
   GlobalKey get homeTabKey => TutorialKeys.homeTabKey;
   GlobalKey get fundraisingTabKey => TutorialKeys.fundraisingTabKey;
+  GlobalKey get feedTabKey => TutorialKeys.feedTabKey;
   GlobalKey get petsTabKey => TutorialKeys.petsTabKey;
   GlobalKey get forumTabKey => TutorialKeys.forumTabKey;
 
@@ -41,6 +43,7 @@ mixin TutorialTargetMixin {
     return {
       'home_tab': homeTabKey,
       'fundraising_tab': fundraisingTabKey,
+      'feed_tab': feedTabKey,
       'pets_tab': petsTabKey,
       'forum_tab': forumTabKey,
       'location_button': locationButtonKey,

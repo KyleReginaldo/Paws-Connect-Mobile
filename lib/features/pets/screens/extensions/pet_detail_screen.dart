@@ -828,7 +828,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         PawsText(
-                          pet.name != null && pet.name!.isEmpty
+                          pet.name != null && pet.name!.isNotEmpty
                               ? pet.name!
                               : 'Unnamed Pet',
                           fontSize: 18,

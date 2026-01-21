@@ -471,7 +471,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
             ),
             BottomNavigationBarItem(
               label: 'Feed',
-              icon: Icon(LucideIcons.pawPrint),
+              icon: Icon(LucideIcons.pawPrint, key: TutorialKeys.feedTabKey),
             ),
             BottomNavigationBarItem(
               label: 'Pets',

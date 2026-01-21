@@ -80,6 +80,28 @@ class TutorialService {
       );
     }
 
+    if (isMounted(targetKeys['feed_tab'])) {
+      _targets.add(
+        TargetFocus(
+          identify: 'feed_tab',
+          keyTarget: targetKeys['feed_tab']!,
+          alignSkip: Alignment.topRight,
+          enableOverlayTab: true,
+          contents: [
+            TargetContent(
+              align: ContentAlign.top,
+              builder: (context, controller) => _buildContent(
+                title: 'Community Feed',
+                description:
+                    'Share and discover posts from the PawsConnect community! Post photos and stories of your pets, adoption journeys, tips and advice, or ask for help. Connect with other pet lovers and stay updated on community activities.',
+                controller: controller,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     if (isMounted(targetKeys['pets_tab'])) {
       _targets.add(
         TargetFocus(
