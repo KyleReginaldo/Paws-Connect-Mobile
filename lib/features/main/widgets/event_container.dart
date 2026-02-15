@@ -5,7 +5,6 @@ import 'package:glow_container/glow_container.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/components/media/network_image_view.dart';
 import 'package:paws_connect/core/theme/paws_theme.dart';
-import 'package:paws_connect/core/widgets/divider.dart';
 import 'package:paws_connect/core/widgets/text.dart';
 import 'package:paws_connect/features/events/models/event_model.dart';
 
@@ -144,46 +143,6 @@ class EventContainer extends StatelessWidget {
                 ),
               ],
             ),
-            if (event.suggestions != null && event.suggestions!.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              PawsDivider(text: 'PawsAI'),
-              SizedBox(height: 12),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  spacing: 6,
-                  children: event.suggestions!.map((e) {
-                    return GestureDetector(
-                      onTap: () {
-                        if (onSuggestionTap != null) {
-                          onSuggestionTap!(e);
-                        }
-                      },
-                      child: GlowContainer(
-                        glowRadius: 1,
-                        containerOptions: ContainerOptions(
-                          borderRadius: 25,
-                          padding: EdgeInsets.zero,
-                        ),
-                        gradientColors: [
-                          Colors.blue,
-                          Colors.purple,
-                          Colors.pink,
-                        ],
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: PawsText(
-                            e,
-                            fontSize: 10,
-                            color: PawsColors.textPrimary,
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ],
           ],
         ),
       ),

@@ -73,85 +73,89 @@ class _AddForumMemberScreenState extends State<AddForumMemberScreen> {
   Widget build(BuildContext context) {
     final users = context.watch<ForumRepository>().availableUsers;
     final isLoading = context.watch<ForumRepository>().usersLoading;
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Add Forum Members',
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-        ),
-        actions: [
-          if (selectedUsers.isNotEmpty)
-            PawsTextButton(
-              label: 'Add (${selectedUsers.length})',
-              onPressed: () {
-                handleAddMembers();
-              },
-            ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          spacing: 10,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            PawsSearchBar(
-              hintText: 'Search users',
-              onChanged: (value) {
-                debugPrint('Search: $value');
-                final repo = context.read<ForumRepository>();
-                repo.fetchAvailableUsers(widget.forumId, username: value);
-              },
-            ),
-            PawsText('Suggested'),
-            if (context.watch<ForumRepository>().userErrorMessage != null)
-              Center(
-                child: PawsText(
-                  context.watch<ForumRepository>().userErrorMessage ?? '',
-                  fontSize: 12,
-                  color: PawsColors.textSecondary,
-                ),
+    return GestureDetector(
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      behavior: HitTestBehavior.opaque,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            'Add Forum Members',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+          ),
+          actions: [
+            if (selectedUsers.isNotEmpty)
+              PawsTextButton(
+                label: 'Add (${selectedUsers.length})',
+                onPressed: () {
+                  handleAddMembers();
+                },
               ),
-            isLoading
-                ? Center(child: CircularProgressIndicator())
-                : Column(
-                    spacing: 8,
-                    children: users
-                        .map(
-                          (member) => ListTile(
-                            dense: true,
-                            contentPadding: EdgeInsets.zero,
-                            visualDensity: VisualDensity(
-                              horizontal: 0,
-                              vertical: -4,
-                            ),
-                            leading: UserAvatar(
-                              imageUrl: member.profileImageLink,
-                              initials: member.username,
-                              size: 32,
-                            ),
-                            title: PawsText(member.username),
-                            trailing: Checkbox(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(100),
-                              ),
-                              onChanged: (value) {
-                                setState(() {
-                                  if (value == true) {
-                                    selectedUsers.add(member);
-                                  } else {
-                                    selectedUsers.remove(member);
-                                  }
-                                });
-                                debugPrint('Selected Users: $selectedUsers');
-                              },
-                              value: selectedUsers.contains(member),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                  ),
           ],
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            spacing: 10,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              PawsSearchBar(
+                hintText: 'Search users',
+                onChanged: (value) {
+                  debugPrint('Search: $value');
+                  final repo = context.read<ForumRepository>();
+                  repo.fetchAvailableUsers(widget.forumId, username: value);
+                },
+              ),
+              PawsText('Suggested'),
+              if (context.watch<ForumRepository>().userErrorMessage != null)
+                Center(
+                  child: PawsText(
+                    context.watch<ForumRepository>().userErrorMessage ?? '',
+                    fontSize: 12,
+                    color: PawsColors.textSecondary,
+                  ),
+                ),
+              isLoading
+                  ? Center(child: CircularProgressIndicator())
+                  : Column(
+                      spacing: 8,
+                      children: users
+                          .map(
+                            (member) => ListTile(
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              visualDensity: VisualDensity(
+                                horizontal: 0,
+                                vertical: -4,
+                              ),
+                              leading: UserAvatar(
+                                imageUrl: member.profileImageLink,
+                                initials: member.username,
+                                size: 32,
+                              ),
+                              title: PawsText(member.username),
+                              trailing: Checkbox(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(100),
+                                ),
+                                onChanged: (value) {
+                                  setState(() {
+                                    if (value == true) {
+                                      selectedUsers.add(member);
+                                    } else {
+                                      selectedUsers.remove(member);
+                                    }
+                                  });
+                                  debugPrint('Selected Users: $selectedUsers');
+                                },
+                                value: selectedUsers.contains(member),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+            ],
+          ),
         ),
       ),
     );

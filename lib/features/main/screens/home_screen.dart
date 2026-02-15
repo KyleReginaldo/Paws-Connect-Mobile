@@ -38,7 +38,6 @@ import '../../../core/services/tutorial_service.dart';
 import '../../../core/session/session_manager.dart';
 import '../../../core/theme/paws_theme.dart';
 import '../../../core/transfer_object/address.dto.dart';
-import '../../../core/widgets/search_field.dart';
 import '../../../core/widgets/text.dart';
 import '../../../dependency.dart';
 import '../../favorite/repository/favorite_repository.dart';
@@ -813,477 +812,532 @@ class _HomeScreenState extends State<HomeScreen> with TutorialTargetMixin {
       });
     }
     debugPrint('may laman ba yung events: ${events?.length}');
-    return Scaffold(
-      key: scaffoldKey,
-      appBar: HomeAppBar(
-        onProfileTap: () {
-          if (USER_ID == null || (USER_ID?.isEmpty ?? true)) {
-            context.router.push(
-              SignInRoute(
-                onResult: (success) async {
-                  if (!success) return;
-                  await SessionManager.bootstrapAfterSignIn(eager: false);
-                  if (context.mounted &&
-                      USER_ID != null &&
-                      USER_ID!.isNotEmpty) {
-                    context.router.push(ProfileRoute(id: USER_ID!));
-                  }
-                },
-              ),
+    return GestureDetector(
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      behavior: HitTestBehavior.opaque,
+      child: Scaffold(
+        key: scaffoldKey,
+        appBar: HomeAppBar(
+          onProfileTap: () {
+            if (USER_ID == null || (USER_ID?.isEmpty ?? true)) {
+              context.router.push(
+                SignInRoute(
+                  onResult: (success) async {
+                    if (!success) return;
+                    await SessionManager.bootstrapAfterSignIn(eager: false);
+                    if (context.mounted &&
+                        USER_ID != null &&
+                        USER_ID!.isNotEmpty) {
+                      context.router.push(ProfileRoute(id: USER_ID!));
+                    }
+                  },
+                ),
+              );
+            } else {
+              context.router.push(ProfileRoute(id: USER_ID!));
+            }
+          },
+          address: defaultAddress,
+          profile: user,
+          locationButtonKey: locationButtonKey,
+          notificationsButtonKey: notificationsButtonKey,
+          profileButtonKey: profileButtonKey,
+          onOpenCurrentLocation: _showLocationOptions,
+          currentLocationAddress: _currentLocationAddress,
+          isLoadingLocation: _isLoadingLocation,
+        ),
+        body: RefreshTrigger(
+          onRefresh: () async {
+            context.read<AdoptionRepository>().fetchUserAdoptions(
+              USER_ID ?? '',
             );
-          } else {
-            context.router.push(ProfileRoute(id: USER_ID!));
-          }
-        },
-        address: defaultAddress,
-        profile: user,
-        locationButtonKey: locationButtonKey,
-        notificationsButtonKey: notificationsButtonKey,
-        profileButtonKey: profileButtonKey,
-        onOpenCurrentLocation: _showLocationOptions,
-        currentLocationAddress: _currentLocationAddress,
-        isLoadingLocation: _isLoadingLocation,
-      ),
-      body: RefreshTrigger(
-        onRefresh: () async {
-          context.read<PetRepository>().fetchRecentPets(userId: USER_ID);
-          context.read<FundraisingRepository>().fetchFundraisings();
-          context.read<FundraisingRepository>().fetchActiveFundraisings();
 
-          context.read<AddressRepository>().fetchDefaultAddress(USER_ID ?? '');
-          context.read<AddressRepository>().fetchAllAddresses(USER_ID ?? '');
-          context.read<ProfileRepository>().fetchUserProfile(USER_ID ?? '');
-          context.read<AdoptionRepository>().fetchUserAdoptions(USER_ID ?? "");
-          context.read<EventRepository>().fetchEvents();
-          context.read<HomeRepository>().fetchCapstoneLinks();
-        },
-        child: SizedBox(
-          height: MediaQuery.sizeOf(context).height,
-          width: MediaQuery.sizeOf(context).width,
-          child: SingleChildScrollView(
-            physics: AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.all(16),
-            child: Column(
-              spacing: 10,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (capstoneLinks.isNotEmpty) ...{
-                  Column(
-                    spacing: 8,
-                    children: capstoneLinks.map((e) {
-                      debugPrint(e.imageLink!.transformedUrl);
-                      return Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          image: DecorationImage(
-                            image: e.imageLink != null
-                                ? NetworkImage(e.imageLink!.transformedUrl)
-                                : AssetImage('assets/images/form.jpg')
-                                      as ImageProvider,
-                            fit: BoxFit.cover,
-                            opacity: 0.6,
-                          ),
-                          color: Colors.black,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: PawsColors.border),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          spacing: 8,
-                          children: [
-                            PawsText(e.title, color: Colors.white),
-                            PawsText(
-                              e.description ??
-                                  'Using this link you can help us improve PawsConnect by providing feedback through a quick evaluation form.',
-                              fontSize: 13,
-                              color: Colors.white,
-                            ),
+            context.read<DonationRepository>().fetchDonorLeaderboard();
+            context.read<PetRepository>().fetchRecentPets(userId: USER_ID);
+            context.read<FundraisingRepository>().fetchFundraisings();
+            context.read<FundraisingRepository>().fetchActiveFundraisings();
 
-                            InkWell(
-                              onTap: () {
-                                launchUrl(Uri.parse(e.link));
-                              },
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: PawsColors.primary,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: PawsText(
-                                  e.buttonLabel ?? 'Visit Link',
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                },
-                if (user?.userIdentification != null &&
-                    user!.userIdentification?.status == 'PENDING') ...{
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.blueAccent.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: Colors.blueAccent.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          color: Colors.blueAccent,
-                          size: 20,
-                        ),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: PawsText(
-                            'Your verification is currently pending. We will notify you once it is approved.',
-                            color: Colors.blueAccent.shade700,
-                            fontSize: 14,
+            context.read<AddressRepository>().fetchDefaultAddress(
+              USER_ID ?? '',
+            );
+            context.read<AddressRepository>().fetchAllAddresses(USER_ID ?? '');
+            context.read<ProfileRepository>().fetchUserProfile(USER_ID ?? '');
+            context.read<AdoptionRepository>().fetchUserAdoptions(
+              USER_ID ?? "",
+            );
+            context.read<EventRepository>().fetchEvents();
+            context.read<HomeRepository>().fetchCapstoneLinks();
+          },
+          child: SizedBox(
+            height: MediaQuery.sizeOf(context).height,
+            width: MediaQuery.sizeOf(context).width,
+            child: SingleChildScrollView(
+              physics: AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.all(16),
+              child: Column(
+                spacing: 10,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (capstoneLinks.isNotEmpty) ...{
+                    Column(
+                      spacing: 8,
+                      children: capstoneLinks.map((e) {
+                        debugPrint(e.imageLink!.transformedUrl);
+                        return Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                },
-                if (user != null &&
-                    (user.houseImages == null ||
-                        user.houseImages!.isEmpty)) ...{
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: PawsColors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: PawsColors.primary.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
+                          decoration: BoxDecoration(
+                            image: DecorationImage(
+                              image: e.imageLink != null
+                                  ? NetworkImage(e.imageLink!.transformedUrl)
+                                  : AssetImage('assets/images/form.jpg')
+                                        as ImageProvider,
+                              fit: BoxFit.cover,
+                              opacity: 0.6,
+                            ),
+                            color: Colors.black,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: PawsColors.border),
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
+                            spacing: 8,
                             children: [
+                              PawsText(e.title, color: Colors.white),
                               PawsText(
-                                'Adding house images can increase your chances of successful adoptions. Please consider uploading some photos of your home.',
-                                color: PawsColors.primary,
+                                e.description ??
+                                    'Using this link you can help us improve PawsConnect by providing feedback through a quick evaluation form.',
                                 fontSize: 13,
+                                color: Colors.white,
                               ),
-                              PawsElevatedButton(
-                                label: 'Add Now',
-                                isFullWidth: false,
-                                size: 14,
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 0,
-                                ),
-                                borderRadius: 4,
-                                textStyle: TextStyle()
-                                  ..copyWith(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                icon: LucideIcons.housePlus,
-                                onPressed: () {
-                                  context.router.push(UserHouseRoute());
+
+                              InkWell(
+                                onTap: () {
+                                  launchUrl(Uri.parse(e.link));
                                 },
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: PawsColors.primary,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: PawsText(
+                                    e.buttonLabel ?? 'Visit Link',
+                                    color: Colors.white,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
-                        ),
-                        SvgPicture.asset(
-                          'assets/svg/houses.svg',
-                          height: 100,
-                          width: 100,
-                        ),
-                      ],
+                        );
+                      }).toList(),
                     ),
-                  ),
-                },
-                if (user?.status == UserStatus.PENDING &&
-                    user?.userIdentification == null)
-                  VerifyNow(
-                    onTap: () async {
-                      bool? result = await context.router.push(
-                        SetUpVerificationRoute(),
-                      );
-                      if (result == true && mounted) {
-                        context.read<ProfileRepository>().fetchUserProfile(
-                          USER_ID!,
-                        );
-                      }
-                    },
-                  ),
-                if (topDonors != null && topDonors.isNotEmpty) ...{
-                  // Section header
-                  Row(
-                    children: [
-                      Icon(
-                        LucideIcons.crown,
-                        size: 18,
-                        color: Colors.amber.shade700,
+                  },
+                  if (user?.userIdentification != null &&
+                      user!.userIdentification?.status == 'PENDING') ...{
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.blueAccent.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.blueAccent.withValues(alpha: 0.3),
+                        ),
                       ),
-                      SizedBox(width: 6),
-                      PawsText(
-                        'Top Donors',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            color: Colors.blueAccent,
+                            size: 20,
+                          ),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: PawsText(
+                              'Your verification is currently pending. We will notify you once it is approved.',
+                              color: Colors.blueAccent.shade700,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
                       ),
-                      SizedBox(width: 6),
-                      // Container(
-                      //   padding: EdgeInsets.symmetric(
-                      //     horizontal: 6,
-                      //     vertical: 2,
-                      //   ),
-                      //   decoration: BoxDecoration(
-                      //     color: Colors.amber.withValues(alpha: 0.15),
-                      //     borderRadius: BorderRadius.circular(10),
-                      //   ),
-                      //   child: Row(
-                      //     children: [
-                      //       Icon(
-                      //         Icons.favorite,
-                      //         size: 12,
-                      //         color: Colors.amber.shade700,
-                      //       ),
-                      //       SizedBox(width: 4),
-                      //       PawsText(
-                      //         'Thank you',
-                      //         fontSize: 10,
-                      //         color: Colors.amber.shade800,
-                      //       ),
-                      //     ],
-                      //   ),
-                      // ),
-                    ],
-                  ),
-                  SizedBox(
-                    height: 42,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      padding: EdgeInsets.zero,
-                      itemCount: topDonors.length,
-                      separatorBuilder: (_, __) => SizedBox(width: 8),
-                      itemBuilder: (context, index) {
-                        final donor = topDonors[index];
-                        return _TopDonorChip(
-                          username: donor.user.username,
-                          rank: donor.rank,
-                          id: donor.user.id,
-                          profileImageLink: donor.user.profileImageLink,
+                    ),
+                  },
+                  if (user != null &&
+                      (user.houseImages == null ||
+                          user.houseImages!.isEmpty)) ...{
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: PawsColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: PawsColors.primary.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                PawsText(
+                                  'Adding house images can increase your chances of successful adoptions. Please consider uploading some photos of your home.',
+                                  color: PawsColors.primary,
+                                  fontSize: 13,
+                                ),
+                                PawsElevatedButton(
+                                  label: 'Add Now',
+                                  isFullWidth: false,
+                                  size: 14,
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 0,
+                                  ),
+                                  borderRadius: 4,
+                                  textStyle: TextStyle()
+                                    ..copyWith(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  icon: LucideIcons.housePlus,
+                                  onPressed: () {
+                                    context.router.push(UserHouseRoute());
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                          SvgPicture.asset(
+                            'assets/svg/houses.svg',
+                            height: 100,
+                            width: 100,
+                          ),
+                        ],
+                      ),
+                    ),
+                  },
+                  if (user?.status == UserStatus.PENDING &&
+                      user?.userIdentification == null)
+                    VerifyNow(
+                      onTap: () async {
+                        bool? result = await context.router.push(
+                          SetUpVerificationRoute(),
                         );
+                        if (result == true && mounted) {
+                          context.read<ProfileRepository>().fetchUserProfile(
+                            USER_ID!,
+                          );
+                        }
                       },
                     ),
-                  ),
-                },
-                PawsSearchBar(
-                  key: searchFieldKey,
-                  hintText: 'Search for pets...',
-                  onTap: () {
-                    showSearch(
-                      context: context,
-                      delegate: PetSearchDelegate(repo: sl<PetRepository>()),
-                    );
+                  if (topDonors != null && topDonors.isNotEmpty) ...{
+                    // Section header
+                    Row(
+                      children: [
+                        Icon(
+                          LucideIcons.crown,
+                          size: 18,
+                          color: Colors.amber.shade700,
+                        ),
+                        SizedBox(width: 6),
+                        PawsText(
+                          'Top Donors',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        SizedBox(width: 6),
+                        // Container(
+                        //   padding: EdgeInsets.symmetric(
+                        //     horizontal: 6,
+                        //     vertical: 2,
+                        //   ),
+                        //   decoration: BoxDecoration(
+                        //     color: Colors.amber.withValues(alpha: 0.15),
+                        //     borderRadius: BorderRadius.circular(10),
+                        //   ),
+                        //   child: Row(
+                        //     children: [
+                        //       Icon(
+                        //         Icons.favorite,
+                        //         size: 12,
+                        //         color: Colors.amber.shade700,
+                        //       ),
+                        //       SizedBox(width: 4),
+                        //       PawsText(
+                        //         'Thank you',
+                        //         fontSize: 10,
+                        //         color: Colors.amber.shade800,
+                        //       ),
+                        //     ],
+                        //   ),
+                        // ),
+                      ],
+                    ),
+                    SizedBox(
+                      height: 42,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        padding: EdgeInsets.zero,
+                        itemCount: topDonors.length,
+                        separatorBuilder: (_, __) => SizedBox(width: 8),
+                        itemBuilder: (context, index) {
+                          final donor = topDonors[index];
+                          return _TopDonorChip(
+                            username: donor.user.username,
+                            rank: donor.rank,
+                            id: donor.user.id,
+                            profileImageLink: donor.user.profileImageLink,
+                          );
+                        },
+                      ),
+                    ),
                   },
-                ),
-                if (events != null && events.isNotEmpty) ...{
-                  EventPostList(
-                    overlayController: overlayController,
-                    events: events,
-                  ),
-                },
-
-                if (user?.status != UserStatus.INDEFINITE &&
-                    user?.status != UserStatus.PENDING &&
-                    adoptions != null &&
-                    adoptions.isNotEmpty) ...{
-                  AdoptionOverview(
-                    key: adoptionOverviewKey,
-                    adoptions: adoptions,
-                  ),
-                },
-                if (allPets
-                            ?.where(
-                              (e) => e.createdAt.isAfter(
-                                DateTime.now().subtract(Duration(days: 7)),
-                              ),
-                            )
-                            .toList() !=
-                        null &&
-                    allPets!
-                        .where(
-                          (e) => e.createdAt.isAfter(
-                            DateTime.now().subtract(Duration(days: 7)),
-                          ),
-                        )
-                        .toList()
-                        .isNotEmpty) ...{
-                  PawsText(
-                    'Recently added',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                },
-
-                if (petError != null)
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: Colors.red.withValues(alpha: 0.3),
+                  InkWell(
+                    onTap: () {
+                      showSearch(
+                        context: context,
+                        delegate: PetSearchDelegate(repo: sl<PetRepository>()),
+                      );
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: PawsColors.primary.withValues(alpha: 0.3),
+                        ),
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.error_outline, color: Colors.red, size: 20),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: PawsText(
-                            petError,
-                            color: Colors.red,
+                      child: Row(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            child: Icon(
+                              LucideIcons.search,
+                              size: 16,
+                              color: PawsColors.primary,
+                            ),
+                          ),
+                          PawsText(
+                            'Search for pets...',
+                            color: PawsColors.primary,
                             fontSize: 14,
                           ),
-                        ),
-                      ],
-                    ),
-                  )
-                else
-                  petLoading
-                      ? SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            spacing: 10,
-                            children: List.generate(3, (_) {
-                              return Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8),
-                                  color: Colors.grey.shade300,
-                                ),
-                                height: 120,
-                                width: MediaQuery.sizeOf(context).width * 0.30,
-                                margin: EdgeInsets.only(bottom: 10),
-                              );
-                            }),
-                          ),
-                        )
-                      : allPets != null
-                      ? Consumer<PetRepository>(
-                          builder: (context, repo, _) {
-                            final pets = repo.pets
-                                ?.where(
-                                  (e) => e.createdAt.isAfter(
-                                    DateTime.now().subtract(Duration(days: 7)),
-                                  ),
-                                )
-                                .toList();
-                            if (pets == null) return SizedBox.shrink();
-                            return SingleChildScrollView(
-                              key: recentPetsKey,
-                              scrollDirection: Axis.horizontal,
-                              child: Row(
-                                spacing: 10,
-                                children: List.generate(
-                                  pets.length,
-                                  (index) => PetContainer(
-                                    pet: pets[index],
-                                    isFavorite: context
-                                        .watch<PetRepository>()
-                                        .isFavorite(pets[index].id),
-                                    onFavoriteToggle: (petId) {
-                                      repo.togglePetFavorite(petId);
-                                    },
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        )
-                      : SizedBox.shrink(),
-                if (activeFundraisings != null && activeFundraisings.isNotEmpty)
-                  PawsText(
-                    'Active Fundraising',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                if (fundraisingError != null)
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: Colors.red.withValues(alpha: 0.3),
+                        ],
                       ),
                     ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.error_outline, color: Colors.red, size: 20),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: PawsText(
-                            fundraisingError,
-                            color: Colors.red,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
+                  ),
+
+                  if (events != null && events.isNotEmpty) ...{
+                    EventPostList(
+                      overlayController: overlayController,
+                      events: events,
                     ),
-                  )
-                else
-                  fundraisingLoading
-                      ? Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: Colors.grey.shade300,
+                  },
+
+                  if (user?.status != UserStatus.INDEFINITE &&
+                      user?.status != UserStatus.PENDING &&
+                      adoptions != null &&
+                      adoptions.isNotEmpty) ...{
+                    AdoptionOverview(
+                      key: adoptionOverviewKey,
+                      adoptions: adoptions,
+                    ),
+                  },
+                  if (allPets
+                              ?.where(
+                                (e) => e.createdAt.isAfter(
+                                  DateTime.now().subtract(Duration(days: 7)),
+                                ),
+                              )
+                              .toList() !=
+                          null &&
+                      allPets!
+                          .where(
+                            (e) => e.createdAt.isAfter(
+                              DateTime.now().subtract(Duration(days: 7)),
+                            ),
+                          )
+                          .toList()
+                          .isNotEmpty) ...{
+                    PawsText(
+                      'Recently added',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  },
+
+                  if (petError != null)
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.red.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            color: Colors.red,
+                            size: 20,
                           ),
-                          height: 120,
-                          width: MediaQuery.sizeOf(context).width * 0.90,
-                          margin: EdgeInsets.only(bottom: 10),
-                        )
-                      : SingleChildScrollView(
-                          key: fundraisingListKey,
-                          physics: PageScrollPhysics(),
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            spacing: 10,
-                            children:
-                                activeFundraisings == null &&
-                                    fundraisingError == null
-                                ? [
-                                    Center(
-                                      child: PawsText('No fundraisings found'),
-                                    ),
-                                  ]
-                                : activeFundraisings != null
-                                ? List.generate(
-                                    activeFundraisings.length,
-                                    (index) => FundraisingContainer(
-                                      fundraising: activeFundraisings[index],
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: PawsText(
+                              petError,
+                              color: Colors.red,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    petLoading
+                        ? SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              spacing: 10,
+                              children: List.generate(3, (_) {
+                                return Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    color: Colors.grey.shade300,
+                                  ),
+                                  height: 120,
+                                  width:
+                                      MediaQuery.sizeOf(context).width * 0.30,
+                                  margin: EdgeInsets.only(bottom: 10),
+                                );
+                              }),
+                            ),
+                          )
+                        : allPets != null
+                        ? Consumer<PetRepository>(
+                            builder: (context, repo, _) {
+                              final pets = repo.pets
+                                  ?.where(
+                                    (e) => e.createdAt.isAfter(
+                                      DateTime.now().subtract(
+                                        Duration(days: 7),
+                                      ),
                                     ),
                                   )
-                                : [],
-                          ),
+                                  .toList();
+                              if (pets == null) return SizedBox.shrink();
+                              return SingleChildScrollView(
+                                key: recentPetsKey,
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  spacing: 10,
+                                  children: List.generate(
+                                    pets.length,
+                                    (index) => PetContainer(
+                                      pet: pets[index],
+                                      isFavorite: context
+                                          .watch<PetRepository>()
+                                          .isFavorite(pets[index].id),
+                                      onFavoriteToggle: (petId) {
+                                        repo.togglePetFavorite(petId);
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          )
+                        : SizedBox.shrink(),
+                  if (activeFundraisings != null &&
+                      activeFundraisings.isNotEmpty)
+                    PawsText(
+                      'Active Fundraising',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  if (fundraisingError != null)
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.red.withValues(alpha: 0.3),
                         ),
-              ],
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            color: Colors.red,
+                            size: 20,
+                          ),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: PawsText(
+                              fundraisingError,
+                              color: Colors.red,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    fundraisingLoading
+                        ? Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              color: Colors.grey.shade300,
+                            ),
+                            height: 120,
+                            width: MediaQuery.sizeOf(context).width * 0.90,
+                            margin: EdgeInsets.only(bottom: 10),
+                          )
+                        : SingleChildScrollView(
+                            key: fundraisingListKey,
+                            physics: PageScrollPhysics(),
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              spacing: 10,
+                              children:
+                                  activeFundraisings == null &&
+                                      fundraisingError == null
+                                  ? [
+                                      Center(
+                                        child: PawsText(
+                                          'No fundraisings found',
+                                        ),
+                                      ),
+                                    ]
+                                  : activeFundraisings != null
+                                  ? List.generate(
+                                      activeFundraisings.length,
+                                      (index) => FundraisingContainer(
+                                        fundraising: activeFundraisings[index],
+                                      ),
+                                    )
+                                  : [],
+                            ),
+                          ),
+                ],
+              ),
             ),
           ),
         ),

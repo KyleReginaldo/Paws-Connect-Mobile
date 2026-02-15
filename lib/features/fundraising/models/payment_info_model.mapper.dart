@@ -23,11 +23,12 @@ class PaymentInfoMapper extends ClassMapperBase<PaymentInfo> {
 
   static String _$label(PaymentInfo v) => v.label;
   static const Field<PaymentInfo, String> _f$label = Field('label', _$label);
-  static String _$qrCode(PaymentInfo v) => v.qrCode;
+  static String? _$qrCode(PaymentInfo v) => v.qrCode;
   static const Field<PaymentInfo, String> _f$qrCode = Field(
     'qrCode',
     _$qrCode,
     key: r'qr_code',
+    opt: true,
   );
   static String _$accountNumber(PaymentInfo v) => v.accountNumber;
   static const Field<PaymentInfo, String> _f$accountNumber = Field(
@@ -124,13 +125,14 @@ class _PaymentInfoCopyWithImpl<$R, $Out>
   late final ClassMapperBase<PaymentInfo> $mapper =
       PaymentInfoMapper.ensureInitialized();
   @override
-  $R call({String? label, String? qrCode, String? accountNumber}) => $apply(
-    FieldCopyWithData({
-      if (label != null) #label: label,
-      if (qrCode != null) #qrCode: qrCode,
-      if (accountNumber != null) #accountNumber: accountNumber,
-    }),
-  );
+  $R call({String? label, Object? qrCode = $none, String? accountNumber}) =>
+      $apply(
+        FieldCopyWithData({
+          if (label != null) #label: label,
+          if (qrCode != $none) #qrCode: qrCode,
+          if (accountNumber != null) #accountNumber: accountNumber,
+        }),
+      );
   @override
   PaymentInfo $make(CopyWithData data) => PaymentInfo(
     label: data.get(#label, or: $value.label),

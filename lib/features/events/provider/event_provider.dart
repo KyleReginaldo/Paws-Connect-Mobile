@@ -20,7 +20,9 @@ class EventProvider {
       if (response.statusCode == 200) {
         List<Event> events = [];
         for (var event in data['data']) {
-          events.add(EventMapper.fromMap(event));
+          if (event['ended_at'] != null) {
+            events.add(EventMapper.fromMap(event));
+          }
         }
         return Result.success(events);
       } else {

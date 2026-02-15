@@ -610,11 +610,18 @@ class _SignInScreenState extends State<SignInScreen>
                                                     PawsColors.textSecondary,
                                               ),
                                               hint: '9923189664',
-                                              validator: (value) =>
-                                                  value != null &&
-                                                      value.isNotEmpty
-                                                  ? null
-                                                  : 'Enter a valid phone number',
+                                              validator: (value) {
+                                                if (value == null ||
+                                                    value.isEmpty) {
+                                                  return 'Enter a phone number';
+                                                }
+                                                if (!RegExp(
+                                                  r'^9\d{9}$',
+                                                ).hasMatch(value)) {
+                                                  return 'Must start with 9 and be 10 digits';
+                                                }
+                                                return null;
+                                              },
                                               maxLength: 10,
                                             ),
                                           ],

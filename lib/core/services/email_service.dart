@@ -97,9 +97,22 @@ class EmailService {
     required String userEmail,
     required String userName,
     required String otpCode,
+    String? subject,
+    String? message,
   }) async {
     try {
       debugPrint('EmailService: Sending OTP email to $userEmail');
+
+      // Validate email credentials
+      if (emailFrom.isEmpty || smtpPass.isEmpty) {
+        debugPrint('❌ EmailService: Email credentials not configured!');
+        debugPrint('❌ Please set EMAIL_FROM and SMTP_PASS in your .env file');
+        throw Exception(
+          'Email credentials not configured. Please check .env file.',
+        );
+      }
+
+      debugPrint('✅ EmailService: Using email: $emailFrom');
 
       // Configure Gmail SMTP
       final smtpServer = gmail(emailFrom, smtpPass);
@@ -108,8 +121,9 @@ class EmailService {
       final otpMessage = Message()
         ..from = Address(emailFrom, 'PawsConnect Security')
         ..recipients.add(userEmail)
-        ..subject = 'Password Reset - Verification Code'
+        ..subject = subject ?? 'Password Reset - Verification Code'
         ..html =
+            message ??
             '''
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background-color: #FF7A00; padding: 20px; text-align: center;">

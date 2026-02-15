@@ -806,6 +806,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
         ),
         body: RefreshTrigger(
           onRefresh: () async {
+            sl<ProfileRepository>().fetchUserProfile(USER_ID ?? "");
             context.read<PetRepository>().fetchPetById(
               widget.id,
               userId: USER_ID,
@@ -836,7 +837,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                               ? PawsColors.textSecondary
                               : PawsColors.textPrimary,
                         ),
-
+                        SizedBox(height: 6),
                         Row(
                           children: [
                             Icon(
@@ -845,10 +846,12 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                               color: PawsColors.primaryDark,
                             ),
                             const SizedBox(width: 6),
-                            PawsText(
-                              pet.rescueAddress,
-                              fontSize: 15,
-                              color: PawsColors.textSecondary,
+                            Expanded(
+                              child: PawsText(
+                                pet.rescueAddress,
+                                fontSize: 15,
+                                color: PawsColors.textSecondary,
+                              ),
                             ),
                           ],
                         ),
@@ -1129,7 +1132,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
             spacing: 8,
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (user == null)
+              if (user == null && pet.adopted == null)
                 PawsElevatedButton(
                   label: 'Sign in to Adopt',
                   borderRadius: 25,
@@ -1166,9 +1169,15 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                             (e) => e.user?.id == USER_ID,
                           ))
                       ? 'Cancel Adoption'
-                      : user.status == UserStatus.FULLY_VERIFIED ||
-                            user.status == UserStatus.SEMI_VERIFIED
+                      : user.status == UserStatus.FULLY_VERIFIED
                       ? 'Adopt Now'
+                      : user.status == UserStatus.SEMI_VERIFIED
+                      ? (user.userIdentification != null
+                            ? (user.houseImages != null &&
+                                      user.houseImages!.isNotEmpty)
+                                  ? 'Waiting for Verification'
+                                  : 'Add House Images to Complete Verification'
+                            : 'Complete Verification to Adopt')
                       : user.userIdentification != null
                       ? 'Check Verification Status'
                       : 'Apply for Verification to Adopt',
@@ -1179,8 +1188,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                         )) {
                       return PawsColors.error;
                     }
-                    if ((user.status == UserStatus.FULLY_VERIFIED ||
-                            user.status == UserStatus.SEMI_VERIFIED) &&
+                    if (user.status == UserStatus.FULLY_VERIFIED &&
                         !(pet.adoption ?? []).any(
                           (e) => e.user?.id == USER_ID,
                         ) &&
@@ -1188,7 +1196,8 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                       return PawsColors.primary;
                     }
 
-                    if (user.userIdentification != null) {
+                    if (user.userIdentification != null ||
+                        user.status == UserStatus.SEMI_VERIFIED) {
                       return Colors.orange;
                     }
 
@@ -1204,8 +1213,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                       return;
                     }
 
-                    if (user.status == UserStatus.FULLY_VERIFIED ||
-                        user.status == UserStatus.SEMI_VERIFIED) {
+                    if (user.status == UserStatus.FULLY_VERIFIED) {
                       if (!(pet.adoption ?? []).any(
                             (e) => e.user?.id == USER_ID,
                           ) &&
@@ -1213,6 +1221,25 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                         context.router.push(
                           CreateAdoptionRoute(petId: widget.id),
                         );
+                      }
+                      return;
+                    }
+
+                    // Handle SEMI_VERIFIED users
+                    if (user.status == UserStatus.SEMI_VERIFIED) {
+                      if (user.userIdentification != null) {
+                        if (user.houseImages == null ||
+                            user.houseImages!.isEmpty) {
+                          context.router.push(UserHouseRoute());
+                        } else {
+                          EasyLoading.showInfo(
+                            'Your verification is under review. Please wait for approval.',
+                          );
+                        }
+                        // Already submitted ID, need to add house images
+                      } else {
+                        // Need to submit ID verification first
+                        context.router.push(SetUpVerificationRoute());
                       }
                       return;
                     }

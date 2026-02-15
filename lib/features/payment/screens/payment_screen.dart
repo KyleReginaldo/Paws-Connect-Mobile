@@ -615,7 +615,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ],
-                                      if (paymentInfo.qrCode.isNotEmpty) ...[
+                                      if (paymentInfo.qrCode != null &&
+                                          paymentInfo.qrCode!.isNotEmpty) ...[
                                         SizedBox(height: 8),
                                         Center(
                                           child: Container(
@@ -629,12 +630,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                               ),
                                             ),
                                             child: NetworkImageView(
-                                              paymentInfo.qrCode.startsWith(
+                                              paymentInfo.qrCode!.startsWith(
                                                     'https',
                                                   )
-                                                  ? paymentInfo.qrCode
+                                                  ? paymentInfo.qrCode!
                                                   : paymentInfo
-                                                        .qrCode
+                                                        .qrCode!
                                                         .transformedUrl,
                                               height: 120,
                                               width: 120,
@@ -774,7 +775,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ],
-                                      if (paymentInfo.qrCode.isNotEmpty) ...[
+                                      if (paymentInfo.qrCode != null &&
+                                          paymentInfo.qrCode!.isNotEmpty) ...[
                                         SizedBox(height: 8),
                                         Center(
                                           child: Container(
@@ -788,12 +790,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                               ),
                                             ),
                                             child: NetworkImageView(
-                                              paymentInfo.qrCode.startsWith(
+                                              paymentInfo.qrCode!.startsWith(
                                                     'https',
                                                   )
-                                                  ? paymentInfo.qrCode
+                                                  ? paymentInfo.qrCode!
                                                   : paymentInfo
-                                                        .qrCode
+                                                        .qrCode!
                                                         .transformedUrl,
                                               height: 120,
                                               width: 120,

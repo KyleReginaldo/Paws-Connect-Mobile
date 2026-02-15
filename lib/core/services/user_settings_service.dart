@@ -416,21 +416,71 @@ class UserSettingsService {
         return Result.error('Failed to generate OTP');
       }
 
-      // TODO: Send actual email with OTP
-      // Use existing EmailService to send OTP email
+      // Send email with OTP using professional template
       final emailSent = await EmailService.sendOTPEmail(
         userEmail: email,
-        userName:
-            '', // We don't have username in this context, but the email template handles empty names
+        userName: '',
         otpCode: otp,
+        subject: 'Account Deletion Verification - PawsConnect',
+        message:
+            '''
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #FF7A00; padding: 20px; text-align: center;">
+              <h1 style="color: white; margin: 0;">🐾 PawsConnect</h1>
+            </div>
+            
+            <div style="padding: 30px; background-color: #f9f9f9;">
+              <h2 style="color: #333; margin-bottom: 20px;">Account Deletion Request</h2>
+              
+              <p style="color: #555; font-size: 16px; line-height: 1.5;">
+                Hello User,
+              </p>
+              
+              <p style="color: #555; font-size: 16px; line-height: 1.5;">
+                We received a request to delete your PawsConnect account. This action is permanent and cannot be undone.
+              </p>
+              
+              <div style="background-color: white; border: 2px solid #FF7A00; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center;">
+                <p style="color: #333; font-size: 14px; margin-bottom: 10px;">Your verification code is:</p>
+                <h1 style="color: #FF7A00; font-size: 32px; font-weight: bold; letter-spacing: 3px; margin: 0;">$otp</h1>
+                <p style="color: #666; font-size: 12px; margin-top: 10px;">This code will expire in 10 minutes</p>
+              </div>
+              
+              <p style="color: #555; font-size: 16px; line-height: 1.5;">
+                Enter this code in the PawsConnect app to confirm and proceed with account deletion.
+              </p>
+              
+              <div style="background-color: #fff3e0; border-left: 4px solid #FF7A00; padding: 15px; margin: 20px 0;">
+                <p style="color: #e65100; font-size: 14px; margin: 0;">
+                  <strong>Security Notice:</strong> If you didn't request this account deletion, please ignore this email and consider changing your password. Your account remains secure.
+                </p>
+              </div>
+              
+              <p style="color: #777; font-size: 14px; line-height: 1.5;">
+                Best regards,<br>
+                The PawsConnect Team
+              </p>
+            </div>
+            
+            <div style="background-color: #333; padding: 15px; text-align: center;">
+              <p style="color: #999; font-size: 12px; margin: 0;">
+                This is an automated message from PawsConnect. Please do not reply to this email.
+              </p>
+            </div>
+          </div>
+        ''',
       );
 
       if (!emailSent) {
-        debugPrint(
-          '⚠️ UserSettingsService: Email sending failed, but OTP stored in database',
+        debugPrint('❌ UserSettingsService: Email sending failed');
+        // Delete the OTP since we couldn't send it
+        await _client
+            .from('account_deletion_otps')
+            .delete()
+            .eq('id', response.first['id']);
+        return Result.error(
+          'Failed to send verification email. Please check your email configuration.',
         );
-        // Still return success since OTP is stored - user can still use it
-        // In production, you might want to handle this differently
       }
 
       debugPrint(

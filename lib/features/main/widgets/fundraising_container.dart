@@ -1,6 +1,7 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:paws_connect/core/components/components.dart';
 import 'package:paws_connect/core/extension/ext.dart';
 import 'package:paws_connect/core/router/app_route.gr.dart';
@@ -67,15 +68,38 @@ class FundraisingContainer extends StatelessWidget {
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      PawsText(
-                        '${fundraising.raisedAmount.progress(fundraising.targetAmount).percentage}% target reached',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                      Row(
+                        spacing: 4,
+                        children: [
+                          Icon(
+                            LucideIcons.clock,
+                            size: 12,
+                            color: PawsColors.textSecondary,
+                          ),
+                          PawsText(
+                            timeago.format(fundraising.createdAt),
+                            fontSize: 14,
+                            color: PawsColors.textSecondary,
+
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ],
                       ),
-                      PawsText(
-                        timeago.format(fundraising.createdAt),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                      Row(
+                        spacing: 4,
+                        children: [
+                          Icon(
+                            LucideIcons.target,
+                            size: 12,
+                            color: PawsColors.primary,
+                          ),
+                          PawsText(
+                            '${fundraising.raisedAmount.progress(fundraising.targetAmount).percentage}% target reached',
+                            fontSize: 14,
+                            color: PawsColors.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ],
                       ),
                     ],
                   ),

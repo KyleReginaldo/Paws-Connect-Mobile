@@ -1,10 +1,12 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:paws_connect/core/enum/user.enum.dart';
 import 'package:paws_connect/core/services/supabase_service.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/core/theme/paws_theme.dart';
 import 'package:paws_connect/features/forum/widgets/forum_tile.dart';
+import 'package:paws_connect/features/profile/repository/profile_repository.dart';
 import 'package:provider/provider.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart' show RefreshTrigger;
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -23,8 +25,11 @@ class ForumScreen extends StatefulWidget implements AutoRouteWrapper {
 
   @override
   Widget wrappedRoute(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: sl<ForumRepository>(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: sl<ForumRepository>()),
+        ChangeNotifierProvider.value(value: sl<ProfileRepository>()),
+      ],
       child: this,
     );
   }
@@ -149,6 +154,37 @@ class _ForumScreenState extends State<ForumScreen> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: PawsColors.primary,
         onPressed: () async {
+          final user = context.read<ProfileRepository>().userProfile;
+
+          // Check if user is at least semi-verified
+          if (user == null ||
+              (user.status != UserStatus.SEMI_VERIFIED &&
+                  user.status != UserStatus.FULLY_VERIFIED)) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  user?.userIdentification != null
+                      ? 'Please wait for verification to create forums'
+                      : 'You must be verified to create forums. Please complete verification first.',
+                ),
+                backgroundColor: Colors.orange,
+                action: SnackBarAction(
+                  label: 'Verify',
+                  textColor: Colors.white,
+                  onPressed: () {
+                    context.router.push(
+                      user?.userIdentification != null
+                          ? ProfileRoute(id: USER_ID ?? '')
+                          : SetUpVerificationRoute(),
+                    );
+                  },
+                ),
+              ),
+            );
+            return;
+          }
+
           bool? reload = await context.router.push(const AddForumRoute());
           if (reload == true && mounted) {
             context.read<ForumRepository>().fetchForums(USER_ID ?? '');

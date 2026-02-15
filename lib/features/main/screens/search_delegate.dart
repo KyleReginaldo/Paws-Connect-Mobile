@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:paws_connect/core/supabase/client.dart';
 import 'package:paws_connect/features/pets/models/pet_model.dart';
 import 'package:paws_connect/features/pets/repository/pet_repository.dart';
@@ -95,7 +96,12 @@ class PetSearchDelegate extends SearchDelegate<Pet?> {
   Widget? buildLeading(BuildContext context) {
     return IconButton(
       icon: const Icon(Icons.arrow_back, color: Colors.white),
-      onPressed: () => close(context, null),
+      onPressed: () async {
+        FocusScope.of(context).unfocus();
+        await SystemChannels.textInput.invokeMethod('TextInput.hide');
+        await Future.delayed(const Duration(milliseconds: 100));
+        close(context, null);
+      },
     );
   }
 
@@ -356,32 +362,15 @@ class PetSearchDelegate extends SearchDelegate<Pet?> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
-              if (pet.specialNeeds.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: PawsColors.info,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text(
-                    'SPECIAL NEEDS',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
             ],
           ),
         ],
       ),
 
-      onTap: () {
+      onTap: () async {
+        FocusScope.of(context).unfocus();
+        await SystemChannels.textInput.invokeMethod('TextInput.hide');
+        await Future.delayed(const Duration(milliseconds: 100));
         close(context, pet);
         context.router.push(PetDetailRoute(id: pet.id));
       },
@@ -439,6 +428,7 @@ class PetSearchDelegate extends SearchDelegate<Pet?> {
   @override
   void close(BuildContext context, Pet? result) {
     _cancelDebounce();
+    FocusScope.of(context).unfocus();
     super.close(context, result);
   }
 

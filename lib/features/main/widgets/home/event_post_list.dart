@@ -36,47 +36,14 @@ class EventPostList extends StatelessWidget {
               fontSize: 16,
               fontWeight: FontWeight.w500,
             ),
-            GestureDetector(
-              onTap: () {
-                overlayController.toggle();
-              },
-              child: OverlayPortal(
-                controller: overlayController,
-                overlayChildBuilder: (context) {
-                  return Positioned(
-                    top: 85,
-                    left: 50,
-                    right: 50,
-                    child: Container(
-                      constraints: BoxConstraints(
-                        maxWidth: MediaQuery.sizeOf(context).width * 0.70,
-                      ),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color.fromARGB(66, 94, 85, 85),
-                            blurRadius: 6,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: PawsText(
-                        'Events are posted by the admin to keep you informed about upcoming activities and important announcements.',
-                      ),
-                    ),
-                  );
-                },
-                child: Icon(
-                  Icons.info_outline,
-                  size: 16,
-                  color: PawsColors.textSecondary,
-                ),
+            Tooltip(
+              message:
+                  'Events are posted by the admin to keep you informed about upcoming activities and important announcements.',
+              triggerMode: TooltipTriggerMode.tap,
+              child: Icon(
+                Icons.info_outline,
+                size: 16,
+                color: PawsColors.textSecondary,
               ),
             ),
           ],

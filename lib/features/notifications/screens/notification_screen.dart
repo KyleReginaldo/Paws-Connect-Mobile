@@ -32,7 +32,7 @@ class NotificationScreen extends StatefulWidget implements AutoRouteWrapper {
 }
 
 class _NotificationScreenState extends State<NotificationScreen>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
   late ScrollController _scrollController;
   String? _cachedUserId;
 
@@ -48,6 +48,7 @@ class _NotificationScreenState extends State<NotificationScreen>
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
     _cachedUserId = USER_ID;
+    WidgetsBinding.instance.addObserver(this);
 
     // Fetch on first frame to ensure context is available
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -60,9 +61,34 @@ class _NotificationScreenState extends State<NotificationScreen>
   }
 
   @override
+  void deactivate() {
+    // Clear selection when navigating away from this screen
+    try {
+      context.read<NotificationRepository>().clearNotificationIds();
+    } catch (_) {}
+    super.deactivate();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Clear selection when app goes to background
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      try {
+        context.read<NotificationRepository>().clearNotificationIds();
+      } catch (_) {}
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    // Clear selection on dispose
+    try {
+      context.read<NotificationRepository>().clearNotificationIds();
+    } catch (_) {}
     super.dispose();
   }
 
@@ -335,8 +361,15 @@ class _OptimizedNotificationList extends StatelessWidget {
     BuildContext context,
     notif_model.Notification notification,
   ) {
+    final repo = context.read<NotificationRepository>();
+
+    // Clear selection if there's an active selection
+    if (repo.notificationIds.isNotEmpty) {
+      repo.clearNotificationIds();
+    }
+
     // Mark as read optimistically
-    context.read<NotificationRepository>().markSingleViewed(notification.id);
+    repo.markSingleViewed(notification.id);
 
     // Navigate to detail
     context.router.push(NotificationDetailRoute(notification: notification));
