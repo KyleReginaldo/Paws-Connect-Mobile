@@ -1,5 +1,4 @@
 .env.prod
-.env.dev
 # Miscellaneous
 *.class
 *.log

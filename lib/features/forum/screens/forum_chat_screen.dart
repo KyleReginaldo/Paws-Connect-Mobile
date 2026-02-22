@@ -17,6 +17,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/components/components.dart';
 import '../../../core/repository/common_repository.dart';
 import '../../../core/router/app_route.gr.dart';
+import '../../../core/services/chat_filter_service.dart';
 import '../../../core/services/chat_visibility_service.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../core/services/supabase_service.dart';
@@ -50,6 +51,7 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late final chat_reactions.ReactionsController _controller;
+  final ChatFilterService _chatFilterService = ChatFilterService();
   ForumChat? replyTo;
   XFile? _imageFile;
   int _previousMessageCount = 0;
@@ -95,6 +97,21 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     _loadChats();
     _loadForumMembers();
     _markMessagesAsViewed();
+    _loadChatFilters();
+  }
+
+  Future<void> _loadChatFilters() async {
+    try {
+      debugPrint('Preloading chat filters...');
+      final result = await _chatFilterService.fetchChatFilters();
+      if (result.isSuccess) {
+        debugPrint('Chat filters loaded: ${result.value.length} filters');
+      } else {
+        debugPrint('Failed to load chat filters: ${result.error}');
+      }
+    } catch (e) {
+      debugPrint('Exception loading chat filters: $e');
+    }
   }
 
   Future<void> _loadForumMembers() async {
@@ -579,11 +596,33 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
     }
   }
 
-  void _sendMessage() {
+  void _sendMessage() async {
     final message = _messageController.text.trim();
 
     // Allow sending if there's either text or an image
     if ((message.isEmpty && _imageFile == null) || _isSendingMessage) return;
+
+    debugPrint('💬 ForumChatScreen: Attempting to send message: "$message"');
+    
+    // Validate message for inappropriate content (only if there's text)
+    if (message.isNotEmpty) {
+      debugPrint('🔍 ForumChatScreen: Validating message against chat filters...');
+      final validationResult = await _chatFilterService.validateMessage(
+        message,
+      );
+
+      debugPrint('📊 ForumChatScreen: Validation result - isValid: ${validationResult.isValid}');
+      
+      if (!validationResult.isValid) {
+        debugPrint('🚫 ForumChatScreen: Message blocked! Violations: ${validationResult.violatedWords.length}');
+        // Show error dialog with violated words information
+        if (mounted) {
+          _showFilterViolationDialog(validationResult);
+        }
+        return;
+      }
+      debugPrint('✅ ForumChatScreen: Message passed validation, proceeding to send');
+    }
 
     final mentionUUIDs = _extractMentionsFromMessage(message);
 
@@ -682,6 +721,54 @@ class _ForumChatScreenState extends State<ForumChatScreen> {
         _isSendingMessage = false;
       });
     }
+  }
+
+  void _showFilterViolationDialog(FilterValidationResult validationResult) {
+    final categories = validationResult.getViolatedCategories();
+    final categoriesText = categories.join(', ');
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(LucideIcons.shieldAlert, color: Colors.red, size: 24),
+            SizedBox(width: 8),
+            Text('Inappropriate Content'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              validationResult.getViolationMessage(),
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Categories: $categoriesText',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.red,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Please be respectful and avoid using inappropriate language in this community.',
+              style: TextStyle(fontSize: 13, color: Colors.grey),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> removeChat({required int chatId}) async {
